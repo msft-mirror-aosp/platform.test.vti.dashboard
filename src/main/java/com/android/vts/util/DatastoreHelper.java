@@ -39,7 +39,6 @@ import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.KeyRange;
 import com.google.appengine.api.datastore.PropertyProjection;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
@@ -193,7 +192,6 @@ public class DatastoreHelper {
         String hostName = report.getHostInfo().getHostname().toStringUtf8();
 
         Entity testEntity = new TestEntity(testName).toEntity();
-        List<Long> testCaseIds = new ArrayList<>();
 
         Key testRunKey =
                 KeyFactory.createKey(
@@ -245,20 +243,24 @@ public class DatastoreHelper {
 
             int lastIndex = testCases.size() - 1;
             if (lastIndex < 0 || testCases.get(lastIndex).isFull()) {
-                KeyRange keys = datastore.allocateIds(TestCaseRunEntity.KIND, 1);
-                testCaseIds.add(keys.getStart().getId());
-                testCases.add(new TestCaseRunEntity(keys.getStart()));
+                testCases.add(new TestCaseRunEntity());
                 ++lastIndex;
             }
             TestCaseRunEntity testCaseEntity = testCases.get(lastIndex);
             testCaseEntity.addTestCase(testCaseName, result.getNumber());
             testCaseEntity.setSystraceUrl(systraceLink);
         }
+
         List<Entity> testCasePuts = new ArrayList<>();
         for (TestCaseRunEntity testCaseEntity : testCases) {
             testCasePuts.add(testCaseEntity.toEntity());
         }
-        datastore.put(testCasePuts);
+        List<Key> testCaseKeys = datastore.put(testCasePuts);
+
+        List<Long> testCaseIds = new ArrayList<>();
+        for (Key key : testCaseKeys) {
+            testCaseIds.add(key.getId());
+        }
 
         // Process device information
         TestRunType testRunType = null;
@@ -267,6 +269,7 @@ public class DatastoreHelper {
                     DeviceInfoEntity.fromDeviceInfoMessage(testRunKey, device);
             if (deviceInfoEntity == null) {
                 logger.log(Level.WARNING, "Invalid device info in test run " + testRunKey);
+                continue;
             }
 
             // Run type on devices must be the same, else set to OTHER
