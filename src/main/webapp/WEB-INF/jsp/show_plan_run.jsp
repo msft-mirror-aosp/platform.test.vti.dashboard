@@ -31,6 +31,7 @@
 
       $(document).ready(function() {
           $('#test-results-container').showTests(${testRuns}, true);
+          drawSummary();
       });
 
       // to draw pie chart
@@ -58,13 +59,34 @@
               colors: colors,
               fontName: 'Roboto',
               fontSize: '14px',
-              legend: 'none',
-              tooltip: {showColorCode: true, ignoreBounds: true},
-              chartArea: {height: '90%'}
+              legend: {position: 'bottom'},
+              tooltip: {showColorCode: true, ignoreBounds: false},
+              chartArea: {height: '80%', width: '90%'},
+              pieHole: 0.4
           };
 
           var chart = new google.visualization.PieChart(document.getElementById('pie-chart-div'));
           chart.draw(data, options);
+      }
+
+      // Draw a test plan run summary box.
+      function drawSummary() {
+          var testBuildId = ${testBuildId};
+          var startTime = ${startTime};
+          var endTime = ${endTime};
+          var moduleCount = ${moduleCount};
+          var passingTestCaseCount = ${passingTestCaseCount};
+          var failingTestCaseCount = ${failingTestCaseCount};
+          var div = $('<div></div>');
+          var details = $('<span></span>').appendTo(div);
+          details.append('<b>VTS Build: </b>' + testBuildId + '<br>');
+          details.append('<b>Start Time: </b>' + moment().renderTime(startTime, true) + '<br>');
+          details.append('<b>End Time: </b>' + moment().renderTime(endTime, true) + '<br>');
+          details.append('<b>Duration: </b>' + moment().renderDuration(endTime - startTime) + '<br>');
+          details.append('<b>Modules: </b>' + moduleCount + '<br>');
+          details.append('<b>Passing Test Cases: </b>' + passingTestCaseCount + '<br>');
+          details.append('<b>Non-Passing Test Cases: </b>' + failingTestCaseCount + '<br>');
+          div.appendTo($('#summary-container'));
       }
   </script>
 
@@ -84,35 +106,10 @@
               </c:forEach>
             </div>
           </div>
-          <div id='profiling-container' class='col s12'>
-            <c:choose>
-              <c:when test='${empty profilingPointNames}'>
-                <div id='error-div' class='center-align card'><h5>${error}</h5></div>
-              </c:when>
-              <c:otherwise>
-                <ul id='profiling-body' class='collapsible' data-collapsible='accordion'>
-                  <li>
-                    <div class='collapsible-header'><i class='material-icons'>timeline</i>Profiling Graphs</div>
-                    <div class='collapsible-body'>
-                      <ul id='profiling-list' class='collection'>
-                        <c:forEach items='${profilingPointNames}' var='pt'>
-                          <c:set var='profPointArgs' value='testName=${testName}&profilingPoint=${pt}'/>
-                          <c:set var='timeArgs' value='endTime=${endTime}'/>
-                          <a href='/show_graph?${profPointArgs}&${timeArgs}'
-                             class='collection-item profiling-point-name'>${pt}
-                          </a>
-                        </c:forEach>
-                      </ul>
-                    </div>
-                  </li>
-                  <li>
-                    <a class='collapsible-link' href='/show_performance_digest?testName=${testName}'>
-                      <div class='collapsible-header'><i class='material-icons'>toc</i>Performance Digest</div>
-                    </a>
-                  </li>
-                </ul>
-              </c:otherwise>
-            </c:choose>
+          <div id='summary-container' class='col s12 card'>
+            <span class='summary-header valign-wrapper'>
+              <i class='material-icons'>info_outline</i>Run Details
+            </span>
           </div>
         </div>
         <div class='col s5 valign-wrapper'>
