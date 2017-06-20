@@ -22,17 +22,41 @@
   <%@ include file='header.jsp' %>
   <link type='text/css' href='/css/show_test_runs_common.css' rel='stylesheet'>
   <link type='text/css' href='/css/test_results.css' rel='stylesheet'>
+  <link rel='stylesheet' href='/css/search_header.css'>
   <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
   <script src='https://www.gstatic.com/external_hosted/moment/min/moment-with-locales.min.js'></script>
   <script src='js/time.js'></script>
   <script src='js/test_results.js'></script>
+  <script src='js/search_header.js'></script>
   <script type='text/javascript'>
       google.charts.load('current', {'packages':['table', 'corechart']});
       google.charts.setOnLoadCallback(drawStatsChart);
       google.charts.setOnLoadCallback(drawCoverageCharts);
 
+      var search;
+
       $(document).ready(function() {
           $('#test-results-container').showTests(${testRuns}, true);
+          search = $('#filter-bar').createSearchHeader('Coverage', '', refresh);
+          search.addFilter('Branch', 'branch', {
+            corpus: ${branches}
+          }, ${branch});
+          search.addFilter('Device', 'device', {
+            corpus: ${devices}
+          }, ${device});
+          search.addFilter('Device Build ID', 'deviceBuildId', {}, ${deviceBuildId});
+          search.addFilter('Test Build ID', 'testBuildId', {}, ${testBuildId});
+          search.addFilter('Host', 'hostname', {}, ${hostname});
+          search.addFilter('Passing Count', 'passing', {
+            type: 'number',
+            width: 's2'
+          }, ${passing});
+          search.addFilter('Non-Passing Count', 'nonpassing', {
+            type: 'number',
+            width: 's2'
+          }, ${nonpassing});
+          search.addRunTypeCheckboxes(${showPresubmit}, ${showPostsubmit});
+          search.display();
       });
 
       // draw test statistics chart
@@ -119,10 +143,21 @@
           chart.draw(data, optionsNormalized);
       }
 
+      // refresh the page to see the runs matching the specified filter
+      function refresh() {
+        var link = '${pageContext.request.contextPath}' +
+            '/show_coverage_overview?' + search.args();
+        if (${unfiltered}) {
+          link += '&unfiltered=';
+        }
+        window.open(link,'_self');
+      }
+
   </script>
 
   <body>
     <div class='wide container'>
+      <div id='filter-bar'></div>
       <div class='row'>
         <div class='col s12'>
           <div class='col s12 card center-align'>
