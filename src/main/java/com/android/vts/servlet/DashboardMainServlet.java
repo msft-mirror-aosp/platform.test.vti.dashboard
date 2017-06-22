@@ -16,6 +16,7 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.UserFavoriteEntity;
 import com.google.appengine.api.datastore.DatastoreService;
@@ -146,13 +147,14 @@ public class DashboardMainServlet extends BaseServlet {
                                 new PropertyProjection(TestStatusEntity.PASS_COUNT, Long.class))
                         .addProjection(
                                 new PropertyProjection(TestStatusEntity.FAIL_COUNT, Long.class));
-        for (Entity test : datastore.prepare(q).asIterable()) {
-            TestStatusEntity status = TestStatusEntity.fromEntity(test);
-            if (test != null) {
+        for (Entity status : datastore.prepare(q).asIterable()) {
+            TestStatusEntity statusEntity = TestStatusEntity.fromEntity(status);
+            if (statusEntity != null) {
+                Key testKey = KeyFactory.createKey(TestEntity.KIND, statusEntity.testName);
                 TestDisplay display =
-                        new TestDisplay(test.getKey(), status.passCount, status.failCount);
-                testMap.put(test.getKey(), display);
-                allTests.add(test.getKey().getName());
+                        new TestDisplay(testKey, statusEntity.passCount, statusEntity.failCount);
+                testMap.put(testKey, display);
+                allTests.add(testKey.getName());
             }
         }
 
