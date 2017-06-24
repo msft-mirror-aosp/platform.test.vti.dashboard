@@ -20,7 +20,6 @@
 <html>
   <link rel='stylesheet' href='/css/dashboard_main.css'>
   <%@ include file='header.jsp' %>
-  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js'></script>
   <body>
     <script>
         var allTests = ${allTestsJson};
