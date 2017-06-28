@@ -18,11 +18,9 @@ package com.android.vts.servlet;
 
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
-import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.EmailHelper;
-import com.android.vts.util.FilterUtil;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -32,8 +30,6 @@ import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.Filter;
-import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
@@ -108,22 +104,6 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
         String footer = getFooter(link);
 
         String testName = status.testName;
-        Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
-        Filter testTypeFilter = FilterUtil.getTestTypeFilter(false, true, false);
-        Filter runFilter =
-                FilterUtil.getTimeFilter(
-                        testKey, TestRunEntity.KIND, status.timestamp + 1, null, testTypeFilter);
-        runFilter =
-                Query.CompositeFilterOperator.and(
-                        runFilter,
-                        new Query.FilterPredicate(
-                                TestRunEntity.HAS_COVERAGE, Query.FilterOperator.EQUAL, true));
-
-        Query q =
-                new Query(TestRunEntity.KIND)
-                        .setAncestor(testKey)
-                        .setFilter(runFilter)
-                        .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
 
         double previousPct;
         double coveragePct;

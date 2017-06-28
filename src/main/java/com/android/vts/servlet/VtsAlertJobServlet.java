@@ -78,47 +78,6 @@ public class VtsAlertJobServlet extends HttpServlet {
     }
 
     /**
-     * Compose an email if the test is inactive.
-     *
-     * @param test The TestStatusEntity document storing the test status.
-     * @param link Fully specified link to the test's status page.
-     * @param emails The list of email addresses to send the email.
-     * @param messages The message list in which to insert the inactivity notification email.
-     * @return True if the test is inactive, false otherwise.
-     */
-    private boolean notifyIfInactive(
-            TestStatusEntity test, String link, List<String> emails, List<Message> messages) {
-        long now = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
-        long diff = now - test.timestamp;
-        // Send an email daily to notify that the test hasn't been running.
-        // After 7 full days have passed, notifications will no longer be sent (i.e. the
-        // test is assumed to be deprecated).
-        if (diff > TimeUnit.DAYS.toMicros(1)
-                && diff < TimeUnit.DAYS.toMicros(8)
-                && diff % TimeUnit.DAYS.toMicros(1) < TimeUnit.MINUTES.toMicros(3)) {
-            Date lastUpload = new Date(TimeUnit.MICROSECONDS.toMillis(test.timestamp));
-            String uploadTimeString =
-                    new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(lastUpload);
-            String subject = "Warning! Inactive test: " + test.testName;
-            String body =
-                    "Hello,<br><br>Test \""
-                            + test.testName
-                            + "\" is inactive. "
-                            + "No new data has been uploaded since "
-                            + uploadTimeString
-                            + "."
-                            + getFooter(link);
-            try {
-                messages.add(EmailHelper.composeEmail(emails, subject, body));
-                return true;
-            } catch (MessagingException | UnsupportedEncodingException e) {
-                logger.log(Level.WARNING, "Error composing email : ", e);
-            }
-        }
-        return false;
-    }
-
-    /**
      * Checks whether any new failures have occurred beginning since (and including) startTime.
      *
      * @param status The TestStatusEntity object for the test.
@@ -221,7 +180,6 @@ public class VtsAlertJobServlet extends HttpServlet {
         }
 
         if (mostRecentRun == null) {
-            notifyIfInactive(status, link, emailAddresses, messages);
             return null;
         }
 
@@ -451,12 +409,7 @@ public class VtsAlertJobServlet extends HttpServlet {
 
             TestStatusEntity newStatus =
                     getTestStatus(status, link, failedTestcaseMap, emails, messageQueue);
-
-            // Send any inactivity notifications
             if (newStatus == null) {
-                if (messageQueue.size() > 0) {
-                    EmailHelper.sendAll(messageQueue);
-                }
                 continue;
             }
 
