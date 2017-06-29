@@ -21,6 +21,7 @@ import com.android.vts.entity.TestRunEntity;
 import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.util.EmailHelper;
 import com.android.vts.util.FilterUtil;
+import com.android.vts.util.TaskQueueHelper;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -145,7 +146,7 @@ public class VtsInactivityJobServlet extends HttpServlet {
                             .method(TaskOptions.Method.POST);
             tasks.add(task);
         }
-        queue.add(tasks);
+        TaskQueueHelper.addToQueue(queue, tasks);
     }
 
     @Override
