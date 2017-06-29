@@ -129,7 +129,8 @@ public class DashboardMainServlet extends BaseServlet {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
         List<TestDisplay> displayedTests = new ArrayList<>();
-        List<String> allTests = new ArrayList<>();
+        List<String> allTestNames = new ArrayList<>();
+        List<Key> unprocessedTestKeys = new ArrayList<>();
 
         Map<Key, TestDisplay> testMap = new HashMap<>(); // map from table key to TestDisplay
         Map<String, String> subscriptionMap = new HashMap<>();
@@ -141,21 +142,33 @@ public class DashboardMainServlet extends BaseServlet {
         String buttonLink;
         String error = null;
 
-        Query q =
+        Query query = new Query(TestEntity.KIND).setKeysOnly();
+        for (Entity test : datastore.prepare(query).asIterable()) {
+            allTestNames.add(test.getKey().getName());
+            unprocessedTestKeys.add(test.getKey());
+        }
+
+        query =
                 new Query(TestStatusEntity.KIND)
                         .addProjection(
                                 new PropertyProjection(TestStatusEntity.PASS_COUNT, Long.class))
                         .addProjection(
                                 new PropertyProjection(TestStatusEntity.FAIL_COUNT, Long.class));
-        for (Entity status : datastore.prepare(q).asIterable()) {
+        for (Entity status : datastore.prepare(query).asIterable()) {
             TestStatusEntity statusEntity = TestStatusEntity.fromEntity(status);
-            if (statusEntity != null) {
-                Key testKey = KeyFactory.createKey(TestEntity.KIND, statusEntity.testName);
-                TestDisplay display =
-                        new TestDisplay(testKey, statusEntity.passCount, statusEntity.failCount);
-                testMap.put(testKey, display);
-                allTests.add(testKey.getName());
-            }
+            if (statusEntity == null) continue;
+            Key testKey = KeyFactory.createKey(TestEntity.KIND, statusEntity.testName);
+            if (!unprocessedTestKeys.contains(testKey)) continue;
+            TestDisplay display =
+                    new TestDisplay(testKey, statusEntity.passCount, statusEntity.failCount);
+            testMap.put(testKey, display);
+            unprocessedTestKeys.remove(testKey);
+        }
+
+        // Process tests without statuses
+        for (Key testKey : unprocessedTestKeys) {
+            TestDisplay display = new TestDisplay(testKey, -1, -1);
+            testMap.put(testKey, display);
         }
 
         if (testMap.size() == 0) {
@@ -175,9 +188,9 @@ public class DashboardMainServlet extends BaseServlet {
                 Filter userFilter =
                         new FilterPredicate(
                                 UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
-                q = new Query(UserFavoriteEntity.KIND).setFilter(userFilter);
+                query = new Query(UserFavoriteEntity.KIND).setFilter(userFilter);
 
-                for (Entity favorite : datastore.prepare(q).asIterable()) {
+                for (Entity favorite : datastore.prepare(query).asIterable()) {
                     Key testKey = (Key) favorite.getProperty(UserFavoriteEntity.TEST_KEY);
                     if (!testMap.containsKey(testKey)) {
                         continue;
@@ -195,7 +208,7 @@ public class DashboardMainServlet extends BaseServlet {
         Collections.sort(displayedTests);
 
         response.setStatus(HttpServletResponse.SC_OK);
-        request.setAttribute("allTestsJson", new Gson().toJson(allTests));
+        request.setAttribute("allTestsJson", new Gson().toJson(allTestNames));
         request.setAttribute("subscriptionMapJson", new Gson().toJson(subscriptionMap));
         request.setAttribute("testNames", displayedTests);
         request.setAttribute("headerLabel", header);
