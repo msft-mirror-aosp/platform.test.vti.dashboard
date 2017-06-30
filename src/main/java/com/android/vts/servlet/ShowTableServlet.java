@@ -16,8 +16,6 @@
 
 package com.android.vts.servlet;
 
-import com.android.vts.entity.DeviceInfoEntity;
-import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
@@ -45,7 +43,6 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.lang.StringUtils;
 
 /** Servlet for handling requests to load individual tables. */
 public class ShowTableServlet extends BaseServlet {
@@ -88,14 +85,7 @@ public class ShowTableServlet extends BaseServlet {
             }
         }
 
-        Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND).setAncestor(testRun.getKey());
-        Iterable<Entity> deviceInfos = datastore.prepare(deviceInfoQuery).asIterable();
-
-        Query profilingPointQuery =
-                new Query(ProfilingPointRunEntity.KIND).setAncestor(testRun.getKey()).setKeysOnly();
-        Iterable<Entity> profilingPoints = datastore.prepare(profilingPointQuery).asIterable();
-
-        testResults.addTestRun(testRun, testCases, deviceInfos, profilingPoints);
+        testResults.addTestRun(testRun, testCases);
     }
 
     @Override
@@ -167,15 +157,18 @@ public class ShowTableServlet extends BaseServlet {
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         Filter typeFilter = FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
-        Filter testFilter = FilterUtil.getTimeFilter(
-                testKey, TestRunEntity.KIND, startTime, endTime, typeFilter);
+        Filter testFilter =
+                FilterUtil.getTimeFilter(
+                        testKey, TestRunEntity.KIND, startTime, endTime, typeFilter);
         if (userTestFilter == null && userDeviceFilter == null) {
-            Query testRunQuery = new Query(TestRunEntity.KIND)
-                                         .setAncestor(testKey)
-                                         .setFilter(testFilter)
-                                         .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
+            Query testRunQuery =
+                    new Query(TestRunEntity.KIND)
+                            .setAncestor(testKey)
+                            .setFilter(testFilter)
+                            .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
             for (Entity testRun :
-                    datastore.prepare(testRunQuery)
+                    datastore
+                            .prepare(testRunQuery)
                             .asIterable(FetchOptions.Builder.withLimit(MAX_BUILD_IDS_PER_PAGE))) {
                 processTestRun(testResults, testRun);
             }
@@ -183,8 +176,14 @@ public class ShowTableServlet extends BaseServlet {
             if (userTestFilter != null) {
                 testFilter = CompositeFilterOperator.and(userTestFilter, testFilter);
             }
-            List<Key> gets = FilterUtil.getMatchingKeys(testKey, TestRunEntity.KIND, testFilter,
-                    userDeviceFilter, dir, MAX_BUILD_IDS_PER_PAGE);
+            List<Key> gets =
+                    FilterUtil.getMatchingKeys(
+                            testKey,
+                            TestRunEntity.KIND,
+                            testFilter,
+                            userDeviceFilter,
+                            dir,
+                            MAX_BUILD_IDS_PER_PAGE);
             Map<Key, Entity> entityMap = datastore.get(gets);
             for (Key key : gets) {
                 if (!entityMap.containsKey(key)) {
@@ -193,7 +192,6 @@ public class ShowTableServlet extends BaseServlet {
                 processTestRun(testResults, entityMap.get(key));
             }
         }
-
         testResults.processReport();
 
         if (testResults.profilingPointNames.length == 0) {
@@ -223,10 +221,18 @@ public class ShowTableServlet extends BaseServlet {
         request.setAttribute("topBuildId", testResults.totBuildId);
         request.setAttribute("startTime", new Gson().toJson(testResults.startTime));
         request.setAttribute("endTime", new Gson().toJson(testResults.endTime));
-        request.setAttribute("hasNewer", new Gson().toJson(DatastoreHelper.hasNewer(testKey,
-                                                 TestRunEntity.KIND, testResults.endTime)));
-        request.setAttribute("hasOlder", new Gson().toJson(DatastoreHelper.hasOlder(testKey,
-                                                 TestRunEntity.KIND, testResults.startTime)));
+        request.setAttribute(
+                "hasNewer",
+                new Gson()
+                        .toJson(
+                                DatastoreHelper.hasNewer(
+                                        testKey, TestRunEntity.KIND, testResults.endTime)));
+        request.setAttribute(
+                "hasOlder",
+                new Gson()
+                        .toJson(
+                                DatastoreHelper.hasOlder(
+                                        testKey, TestRunEntity.KIND, testResults.startTime)));
         request.setAttribute("unfiltered", unfiltered);
         request.setAttribute("showPresubmit", showPresubmit);
         request.setAttribute("showPostsubmit", showPostsubmit);

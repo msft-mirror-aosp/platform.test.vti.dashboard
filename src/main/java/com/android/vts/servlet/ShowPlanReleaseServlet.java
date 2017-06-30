@@ -19,17 +19,14 @@ package com.android.vts.servlet;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
-import com.android.vts.entity.TestRunEntity;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.FilterUtil;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.gson.Gson;
@@ -38,11 +35,12 @@ import com.google.gson.JsonPrimitive;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.Set;
-import java.util.HashSet;
+import java.util.logging.Level;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -66,9 +64,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         return links;
     }
 
-    /**
-     * Model to describe each test plan run .
-     */
+    /** Model to describe each test plan run . */
     private class TestPlanRunMetadata implements Comparable<TestPlanRunMetadata> {
         public final TestPlanRunEntity testPlanRun;
         public final List<String> devices;
@@ -81,8 +77,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         }
 
         public void addDevice(DeviceInfoEntity device) {
-            if (device == null || deviceSet.contains(device))
-                return;
+            if (device == null || deviceSet.contains(device)) return;
             devices.add(device.branch + "/" + device.buildFlavor + " (" + device.buildId + ")");
             deviceSet.add(device);
         }
@@ -145,38 +140,53 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         Filter typeFilter = FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
         String testPlan = request.getParameter("plan");
         Key testPlanKey = KeyFactory.createKey(TestPlanEntity.KIND, testPlan);
-        Filter testPlanRunFilter = FilterUtil.getTimeFilter(
-                testPlanKey, TestPlanRunEntity.KIND, startTime, endTime, typeFilter);
+        Filter testPlanRunFilter =
+                FilterUtil.getTimeFilter(
+                        testPlanKey, TestPlanRunEntity.KIND, startTime, endTime, typeFilter);
         Map<String, Object> parameterMap = request.getParameterMap();
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         List<TestPlanRunMetadata> testPlanRuns = new ArrayList<>();
+        Map<Key, TestPlanRunMetadata> testPlanMap = new HashMap<>();
+        Key minKey = null;
+        Key maxKey = null;
         if (userDeviceFilter == null) {
-            Query testPlanRunQuery = new Query(TestPlanRunEntity.KIND)
-                                             .setAncestor(testPlanKey)
-                                             .setFilter(testPlanRunFilter)
-                                             .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
+            Query testPlanRunQuery =
+                    new Query(TestPlanRunEntity.KIND)
+                            .setAncestor(testPlanKey)
+                            .setFilter(testPlanRunFilter)
+                            .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
             for (Entity testPlanRunEntity :
-                    datastore.prepare(testPlanRunQuery)
-                            .asIterable(FetchOptions.Builder.withLimit(MAX_RUNS_PER_PAGE))) {
+                    datastore
+                            .prepare(testPlanRunQuery)
+                            .asIterable(
+                                    DatastoreHelper.LARGE_BATCH_OPTIONS.limit(MAX_RUNS_PER_PAGE))) {
                 TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(testPlanRunEntity);
                 if (testPlanRun == null) {
                     logger.log(
                             Level.WARNING, "Invalid test plan run: " + testPlanRunEntity.getKey());
                     continue;
                 }
+                Key runKey = testPlanRunEntity.getKey();
                 TestPlanRunMetadata metadata = new TestPlanRunMetadata(testPlanRun);
                 testPlanRuns.add(metadata);
-                Query deviceInfoQuery =
-                        new Query(DeviceInfoEntity.KIND).setAncestor(testPlanRun.key);
-                for (Entity deviceInfoEntity : datastore.prepare(deviceInfoQuery).asIterable()) {
-                    DeviceInfoEntity deviceInfo = DeviceInfoEntity.fromEntity(deviceInfoEntity);
-                    metadata.addDevice(deviceInfo);
+                testPlanMap.put(runKey, metadata);
+                if (minKey == null || runKey.compareTo(minKey) < 0) {
+                    minKey = runKey;
+                }
+                if (maxKey == null || runKey.compareTo(maxKey) > 0) {
+                    maxKey = runKey;
                 }
             }
         } else {
-            List<Key> gets = FilterUtil.getMatchingKeys(testPlanKey, TestPlanRunEntity.KIND,
-                    testPlanRunFilter, userDeviceFilter, dir, MAX_RUNS_PER_PAGE);
+            List<Key> gets =
+                    FilterUtil.getMatchingKeys(
+                            testPlanKey,
+                            TestPlanRunEntity.KIND,
+                            testPlanRunFilter,
+                            userDeviceFilter,
+                            dir,
+                            MAX_RUNS_PER_PAGE);
             Map<Key, Entity> entityMap = datastore.get(gets);
             for (Key key : gets) {
                 if (!entityMap.containsKey(key)) {
@@ -188,12 +198,40 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 }
                 TestPlanRunMetadata metadata = new TestPlanRunMetadata(testPlanRun);
                 testPlanRuns.add(metadata);
-                Query deviceInfoQuery =
-                        new Query(DeviceInfoEntity.KIND).setAncestor(testPlanRun.key);
-                for (Entity deviceInfoEntity : datastore.prepare(deviceInfoQuery).asIterable()) {
-                    DeviceInfoEntity deviceInfo = DeviceInfoEntity.fromEntity(deviceInfoEntity);
-                    metadata.addDevice(deviceInfo);
+                testPlanMap.put(key, metadata);
+                if (minKey == null || key.compareTo(minKey) < 0) {
+                    minKey = key;
                 }
+                if (maxKey == null || key.compareTo(maxKey) > 0) {
+                    maxKey = key;
+                }
+            }
+        }
+        if (minKey != null && maxKey != null) {
+            Filter deviceFilter =
+                    FilterUtil.getDeviceTimeFilter(
+                            testPlanKey, TestPlanRunEntity.KIND, minKey.getId(), maxKey.getId());
+            Query deviceQuery =
+                    new Query(DeviceInfoEntity.KIND)
+                            .setAncestor(testPlanKey)
+                            .setFilter(deviceFilter)
+                            .setKeysOnly();
+            List<Key> deviceGets = new ArrayList<>();
+            for (Entity device :
+                    datastore
+                            .prepare(deviceQuery)
+                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                if (testPlanMap.containsKey(device.getParent())) {
+                    deviceGets.add(device.getKey());
+                }
+            }
+            Map<Key, Entity> devices = datastore.get(deviceGets);
+            for (Key key : devices.keySet()) {
+                if (!testPlanMap.containsKey(key.getParent())) continue;
+                DeviceInfoEntity device = DeviceInfoEntity.fromEntity(devices.get(key));
+                if (device == null) continue;
+                TestPlanRunMetadata metadata = testPlanMap.get(key.getParent());
+                metadata.addDevice(device);
             }
         }
 
@@ -215,10 +253,18 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         FilterUtil.setAttributes(request, parameterMap);
 
         request.setAttribute("plan", request.getParameter("plan"));
-        request.setAttribute("hasNewer", new Gson().toJson(DatastoreHelper.hasNewer(
-                                                 testPlanKey, TestPlanRunEntity.KIND, endTime)));
-        request.setAttribute("hasOlder", new Gson().toJson(DatastoreHelper.hasOlder(
-                                                 testPlanKey, TestPlanRunEntity.KIND, startTime)));
+        request.setAttribute(
+                "hasNewer",
+                new Gson()
+                        .toJson(
+                                DatastoreHelper.hasNewer(
+                                        testPlanKey, TestPlanRunEntity.KIND, endTime)));
+        request.setAttribute(
+                "hasOlder",
+                new Gson()
+                        .toJson(
+                                DatastoreHelper.hasOlder(
+                                        testPlanKey, TestPlanRunEntity.KIND, startTime)));
         request.setAttribute("planRuns", new Gson().toJson(testPlanRunObjects));
 
         request.setAttribute("unfiltered", unfiltered);

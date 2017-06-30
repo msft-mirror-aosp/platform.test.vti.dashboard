@@ -16,6 +16,7 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.proto.VtsReportMessage;
@@ -125,6 +126,13 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
                         continue;
                     }
                     TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRunEntity);
+                    Query deviceQuery =
+                            new Query(DeviceInfoEntity.KIND).setAncestor(testRun.getKey());
+                    for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
+                        DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
+                        if (deviceEntity == null) continue;
+                        metadata.addDevice(deviceEntity);
+                    }
                     testRunObjects.add(metadata.toJson());
                     coveredLines += testRunEntity.coveredLineCount;
                     uncoveredLines += testRunEntity.totalLineCount - testRunEntity.coveredLineCount;
