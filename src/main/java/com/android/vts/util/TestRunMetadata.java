@@ -18,10 +18,6 @@ package com.android.vts.util;
 
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestRunEntity;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Query;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
@@ -34,9 +30,9 @@ public class TestRunMetadata {
     private static final String TEST_DETAILS = "testDetails";
     private static final String DEVICE_INFO = "deviceInfo";
     private static final String ABI_INFO = "abiInfo";
-
     public final TestRunEntity testRun;
 
+    private final List<DeviceInfoEntity> devices;
     private String deviceInfo;
     private String abiInfo;
     private TestRunDetails details;
@@ -45,32 +41,45 @@ public class TestRunMetadata {
      * Create a test metadata object.
      *
      * @param testName The name of the test.
+     * @param testRun The test run entity storing run information.
+     * @param devices The list of device entities describing the test run.
      */
-    public TestRunMetadata(String testName, TestRunEntity testRun) {
+    public TestRunMetadata(String testName, TestRunEntity testRun, List<DeviceInfoEntity> devices) {
         this.testRun = testRun;
         this.deviceInfo = "";
         this.abiInfo = "";
         this.details = null;
-        processDeviceInfo();
+        this.devices = devices;
     }
 
     /**
-     * Get device information for the test run and add it to the metadata message.
+     * Create a test metadata object.
+     *
+     * @param testName The name of the test.
+     * @param testRun The test run entity storing run information.
      */
+    public TestRunMetadata(String testName, TestRunEntity testRun) {
+        this(testName, testRun, new ArrayList<DeviceInfoEntity>());
+    }
+
+    /**
+     * Add a device info to the test run metadata.
+     *
+     * @param device The entity to add.
+     */
+    public void addDevice(DeviceInfoEntity device) {
+        this.devices.add(device);
+    }
+
+    /** Get device information for the test run and add it to the metadata message. */
     private void processDeviceInfo() {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND).setAncestor(testRun.key);
         List<String> deviceInfoList = new ArrayList<>();
         List<String> abiInfoList = new ArrayList<>();
 
-        for (Entity device : datastore.prepare(deviceInfoQuery).asIterable()) {
-            DeviceInfoEntity deviceInfoEntity = DeviceInfoEntity.fromEntity(device);
-            if (deviceInfoEntity == null) {
-                continue;
-            }
+        for (DeviceInfoEntity device : this.devices) {
             String abi = "";
-            String abiName = deviceInfoEntity.abiName;
-            String abiBitness = deviceInfoEntity.abiBitness;
+            String abiName = device.abiName;
+            String abiBitness = device.abiBitness;
             if (abiName.length() > 0) {
                 abi += abiName;
                 if (abiBitness.length() > 0) {
@@ -78,8 +87,8 @@ public class TestRunMetadata {
                 }
             }
             abiInfoList.add(abi);
-            deviceInfoList.add(deviceInfoEntity.branch + "/" + deviceInfoEntity.buildFlavor + " ("
-                    + deviceInfoEntity.buildId + ")");
+            deviceInfoList.add(
+                    device.branch + "/" + device.buildFlavor + " (" + device.buildId + ")");
         }
         this.abiInfo = StringUtils.join(abiInfoList, ", ");
         this.deviceInfo = StringUtils.join(deviceInfoList, ", ");
@@ -87,6 +96,7 @@ public class TestRunMetadata {
 
     /**
      * Get the device info string in the test metadata.
+     *
      * @return The string descriptor of the devices used in the test run.
      */
     public String getDeviceInfo() {
@@ -95,6 +105,7 @@ public class TestRunMetadata {
 
     /**
      * Get the test run details (e.g. test case information) for the test run.
+     *
      * @return The TestRunDetails object stored in the metadata, or null if not set.
      */
     public TestRunDetails getDetails() {
@@ -104,7 +115,8 @@ public class TestRunMetadata {
     /**
      * Add test case details to the metadata object.
      *
-     * Used for prefetching details on initial page load.
+     * <p>Used for prefetching details on initial page load.
+     *
      * @param details The TestRunDetails object storing test case results for the test run.
      */
     public void addDetails(TestRunDetails details) {
@@ -117,6 +129,7 @@ public class TestRunMetadata {
      * @return A JsonElement object representing the details object.
      */
     public JsonObject toJson() {
+        processDeviceInfo();
         JsonObject json = new JsonObject();
         json.add(DEVICE_INFO, new JsonPrimitive(this.deviceInfo));
         json.add(ABI_INFO, new JsonPrimitive(this.abiInfo));
