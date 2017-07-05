@@ -199,7 +199,7 @@ public class TestResults {
                         .setKeysOnly();
         List<Key> deviceGets = new ArrayList<>();
         for (Entity device :
-                datastore.prepare(deviceQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                datastore.prepare(deviceQuery).asIterable(DatastoreHelper.getLargeBatchOptions())) {
             if (testCaseRunMap.containsKey(device.getParent())) {
                 deviceGets.add(device.getKey());
             }

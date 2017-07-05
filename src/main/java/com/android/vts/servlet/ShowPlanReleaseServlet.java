@@ -160,7 +160,8 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                     datastore
                             .prepare(testPlanRunQuery)
                             .asIterable(
-                                    DatastoreHelper.LARGE_BATCH_OPTIONS.limit(MAX_RUNS_PER_PAGE))) {
+                                    DatastoreHelper.getLargeBatchOptions()
+                                            .limit(MAX_RUNS_PER_PAGE))) {
                 TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(testPlanRunEntity);
                 if (testPlanRun == null) {
                     logger.log(
@@ -220,7 +221,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
             for (Entity device :
                     datastore
                             .prepare(deviceQuery)
-                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                            .asIterable(DatastoreHelper.getLargeBatchOptions())) {
                 if (testPlanMap.containsKey(device.getParent())) {
                     deviceGets.add(device.getKey());
                 }
