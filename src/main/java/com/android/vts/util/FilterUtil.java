@@ -374,7 +374,7 @@ public class FilterUtil {
         Query testQuery =
                 new Query(kind).setAncestor(ancestorKey).setFilter(testFilter).setKeysOnly();
         for (Entity testRunKey :
-                datastore.prepare(testQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                datastore.prepare(testQuery).asIterable(DatastoreHelper.getLargeBatchOptions())) {
             matchingTestKeys.add(testRunKey.getKey());
         }
 
@@ -391,7 +391,7 @@ public class FilterUtil {
             for (Entity device :
                     datastore
                             .prepare(deviceQuery)
-                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                            .asIterable(DatastoreHelper.getLargeBatchOptions())) {
                 if (matchingTestKeys.contains(device.getKey().getParent())) {
                     allMatchingKeys.add(device.getKey().getParent());
                 }
