@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 public abstract class BaseServlet extends HttpServlet {
     protected final Logger logger = Logger.getLogger(getClass().getName());
@@ -36,6 +37,8 @@ public abstract class BaseServlet extends HttpServlet {
     protected static final String GERRIT_SCOPE = System.getProperty("GERRIT_SCOPE");
     protected static final String CLIENT_ID = System.getProperty("CLIENT_ID");
     protected static final String ANALYTICS_ID = System.getProperty("ANALYTICS_ID");
+
+    protected static final String TREE_DEFAULT_PARAM = "treeDefault";
 
     public enum PageType {
         TOT("ToT", "/"),
@@ -124,7 +127,7 @@ public abstract class BaseServlet extends HttpServlet {
             response.sendRedirect(loginURI);
             return;
         }
-        PageType parentType = getNavParentType();
+
         int activeIndex;
         switch (getNavParentType()) {
             case COVERAGE_OVERVIEW:
@@ -136,6 +139,11 @@ public abstract class BaseServlet extends HttpServlet {
             default:
                 activeIndex = 0;
                 break;
+        }
+        if (request.getParameter(TREE_DEFAULT_PARAM) != null) {
+            HttpSession session = request.getSession(true);
+            boolean treeDefault = request.getParameter(TREE_DEFAULT_PARAM).equals("true");
+            session.setAttribute(TREE_DEFAULT_PARAM, treeDefault);
         }
         request.setAttribute("logoutURL", logoutURI);
         request.setAttribute("email", currentUser.getEmail());
