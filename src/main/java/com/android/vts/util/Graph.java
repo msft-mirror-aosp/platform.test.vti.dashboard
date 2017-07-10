@@ -29,7 +29,7 @@ public abstract class Graph {
     public static final String NAME_KEY = "name";
     public static final String TYPE_KEY = "type";
 
-    public static enum GraphType { LINE_GRAPH, HISTOGRAM }
+    public static enum GraphType { LINE_GRAPH, HISTOGRAM, BOX_PLOT }
 
     /**
      * Get the graph type.

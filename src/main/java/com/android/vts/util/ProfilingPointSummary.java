@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Google Inc. All Rights Reserved.
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you
  * may not use this file except in compliance with the License. You may
@@ -96,14 +96,12 @@ public class ProfilingPointSummary implements Iterable<StatSummary> {
     /**
      * Updates the profiling summary at a label with the data from a new profiling report.
      *
-     * <p>Updates the summary specified by the label with all values provided in the report. If
-     * labels
-     * are provided in the report, they will be ignored -- all values are updated only to the
-     * provided
-     * label.
+     * Updates the summary specified by the label with all values provided in the report. If
+     * labels are provided in the report, they will be ignored -- all values are updated only to the
+     * provided label.
      *
      * @param profilingEntity The ProfilingPointRunEntity object containing profiling data.
-     * @param label The ByteString label for which all values in the report will be updated.
+     * @param label The String label for which all values in the report will be updated.
      */
     public void updateLabel(ProfilingPointRunEntity profilingEntity, String label) {
         if (!labelIndices.containsKey(label)) {
