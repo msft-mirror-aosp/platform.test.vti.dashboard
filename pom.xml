@@ -32,8 +32,8 @@
     <gerrit.scope></gerrit.scope>
     <analytics.id></analytics.id>
 
-    <maven.compiler.target>1.7</maven.compiler.target>
-    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
     <maven.war.filteringDeploymentDescriptors>true</maven.war.filteringDeploymentDescriptors>
 
     <failOnMissingWebXml>false</failOnMissingWebXml>
@@ -41,13 +41,6 @@
 
 
   <dependencies>
-
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>servlet-api</artifactId>
-      <version>2.5</version>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -106,7 +99,7 @@
     <dependency>
       <groupId>com.google.appengine</groupId>
       <artifactId>appengine-api-1.0-sdk</artifactId>
-      <version>1.9.50</version>
+      <version>1.9.54</version>
     </dependency>
 
     <dependency>
@@ -125,7 +118,7 @@
     <dependency>
       <groupId>com.google.appengine</groupId>
       <artifactId>appengine-testing</artifactId>
-      <version>1.9.50</version>
+      <version>1.9.54</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -137,7 +130,7 @@
     <dependency>
         <groupId>com.google.appengine</groupId>
         <artifactId>appengine-tools-sdk</artifactId>
-        <version>1.9.50</version>
+        <version>1.9.54</version>
         <scope>test</scope>
     </dependency>
 
@@ -171,8 +164,8 @@
         <version>3.3</version>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8</target>
         </configuration>
       </plugin>
 

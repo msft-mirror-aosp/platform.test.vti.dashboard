@@ -28,7 +28,7 @@ import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.gson.Gson;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -399,9 +399,9 @@ public class FilterUtil {
         }
         List<Key> gets = new ArrayList<>(allMatchingKeys);
         if (dir == Query.SortDirection.DESCENDING) {
-            Collections.sort(gets, Collections.reverseOrder());
+            gets.sort(Comparator.reverseOrder());
         } else {
-            Collections.sort(gets);
+            gets.sort(Comparator.naturalOrder());
         }
         gets = gets.subList(0, Math.min(gets.size(), maxSize));
         return gets;
