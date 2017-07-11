@@ -32,8 +32,6 @@ import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -223,14 +221,7 @@ public class TestResults {
             processDeviceInfos();
             processProfilingPoints();
         }
-        Comparator<TestRunEntity> comparator =
-                new Comparator<TestRunEntity>() {
-                    @Override
-                    public int compare(TestRunEntity t1, TestRunEntity t2) {
-                        return new Long(t2.startTimestamp).compareTo(t1.startTimestamp);
-                    }
-                };
-        Collections.sort(testRuns, comparator);
+        testRuns.sort((t1, t2) -> new Long(t2.startTimestamp).compareTo(t1.startTimestamp));
         generateToTBreakdown();
 
         headerRow = new String[testRuns.size() + 1];
