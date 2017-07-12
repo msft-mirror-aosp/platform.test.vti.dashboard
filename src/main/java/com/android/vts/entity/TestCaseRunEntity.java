@@ -162,7 +162,7 @@ public class TestCaseRunEntity implements DashboardEntity {
             return null;
         }
         try {
-            TestCaseRunEntity testCaseRun = new TestCaseRunEntity();
+            TestCaseRunEntity testCaseRun = new TestCaseRunEntity(e.getKey().getId());
             if (e.hasProperty(TEST_CASE_NAMES) && e.hasProperty(RESULTS)) {
                 List<String> testCaseNames = (List<String>) e.getProperty(TEST_CASE_NAMES);
                 List<Long> results = (List<Long>) e.getProperty(RESULTS);
