@@ -44,13 +44,15 @@ public abstract class BaseServlet extends HttpServlet {
         TOT("ToT", "/"),
         RELEASE("Release", "/show_release"),
         COVERAGE_OVERVIEW("Coverage", "/show_coverage_overview"),
+        PROFILING_LIST("Profiling", "/show_profiling_list"),
         TABLE("", "/show_table"),
         TREE("", "/show_tree"),
         GRAPH("Profiling", "/show_graph"),
         COVERAGE("Coverage", "/show_coverage"),
-        PERFORMANCE("Performance Digest", "/show_performance_digest"),
+        PERFORMANCE_DIGEST("Performance Digest", "/show_performance_digest"),
         PLAN_RELEASE("", "/show_plan_release"),
-        PLAN_RUN("Plan Run", "/show_plan_run");
+        PLAN_RUN("Plan Run", "/show_plan_run"),
+        PROFILING_OVERVIEW("", "/show_profiling_overview");
 
         public final String defaultName;
         public final String defaultUrl;
@@ -100,6 +102,7 @@ public abstract class BaseServlet extends HttpServlet {
         links.add(new Page(PageType.TOT));
         links.add(new Page(PageType.RELEASE));
         links.add(new Page(PageType.COVERAGE_OVERVIEW));
+        links.add(new Page(PageType.PROFILING_LIST));
         navbarLinks = links;
     }
 
@@ -130,6 +133,9 @@ public abstract class BaseServlet extends HttpServlet {
 
         int activeIndex;
         switch (getNavParentType()) {
+            case PROFILING_LIST:
+                activeIndex = 3;
+                break;
             case COVERAGE_OVERVIEW:
                 activeIndex = 2;
                 break;
