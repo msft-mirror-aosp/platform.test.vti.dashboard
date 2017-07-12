@@ -202,11 +202,11 @@ public class DatastoreHelper {
         String testBuildId = report.getBuildInfo().getId().toStringUtf8();
         String hostName = report.getHostInfo().getHostname().toStringUtf8();
 
-        Entity testEntity = new TestEntity(testName).toEntity();
+        TestEntity testEntity = new TestEntity(testName);
 
         Key testRunKey =
                 KeyFactory.createKey(
-                        testEntity.getKey(), TestRunEntity.KIND, report.getStartTimestamp());
+                    testEntity.key, TestRunEntity.KIND, report.getStartTimestamp());
 
         long passCount = 0;
         long failCount = 0;
@@ -250,6 +250,7 @@ public class DatastoreHelper {
                     logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
                 }
                 puts.add(profilingEntity.toEntity());
+                testEntity.setHasProfilingData(true);
             }
 
             int lastIndex = testCases.size() - 1;
@@ -321,6 +322,7 @@ public class DatastoreHelper {
                 logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
             }
             puts.add(profilingEntity.toEntity());
+            testEntity.setHasProfilingData(true);
         }
 
         List<String> logLinks = new ArrayList<>();
@@ -332,7 +334,7 @@ public class DatastoreHelper {
 
         TestRunEntity testRunEntity =
                 new TestRunEntity(
-                        testEntity.getKey(),
+                        testEntity.key,
                         testRunType,
                         startTimestamp,
                         endTimestamp,
@@ -347,14 +349,19 @@ public class DatastoreHelper {
         puts.add(testRunEntity.toEntity());
 
         int retries = 0;
+        Entity test = testEntity.toEntity();
         while (true) {
             Transaction txn = datastore.beginTransaction();
             try {
                 // Check if test already exists in the database
                 try {
-                    datastore.get(testEntity.getKey());
+                    Entity oldTest = datastore.get(testEntity.key);
+                    TestEntity oldTestEntity = TestEntity.fromEntity(oldTest);
+                    if (oldTestEntity == null || !oldTestEntity.equals(testEntity)) {
+                        puts.add(test);
+                    }
                 } catch (EntityNotFoundException e) {
-                    puts.add(testEntity);
+                    puts.add(test);
                 }
                 datastore.put(puts);
                 txn.commit();
@@ -370,12 +377,12 @@ public class DatastoreHelper {
             } catch (ConcurrentModificationException
                     | DatastoreFailureException
                     | DatastoreTimeoutException e) {
-                puts.remove(testEntity);
-                logger.log(Level.WARNING, "Retrying test run insert: " + testEntity.getKey());
+                puts.remove(test);
+                logger.log(Level.WARNING, "Retrying test run insert: " + test.getKey());
                 if (retries++ >= MAX_WRITE_RETRIES) {
                     logger.log(
                             Level.SEVERE,
-                            "Exceeded maximum test run retries: " + testEntity.getKey());
+                            "Exceeded maximum test run retries: " + test.getKey());
                     throw e;
                 }
             } finally {
