@@ -108,18 +108,17 @@ public class ShowPlanRunServlet extends BaseServlet {
             endTime = testPlanRun.endTimestamp;
             moduleCount = testPlanRun.testRuns.size();
 
-            List<DeviceInfoEntity> devices = new ArrayList<>();
-            Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(planRunKey);
-            for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
-                DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
-                if (deviceEntity == null) continue;
-                devices.add(deviceEntity);
-            }
-
             for (Key key : testPlanRun.testRuns) {
                 if (!testRuns.containsKey(key)) continue;
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRuns.get(key));
                 if (testRunEntity == null) continue;
+                Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND).setAncestor(key);
+                List<DeviceInfoEntity> devices = new ArrayList<>();
+                for (Entity device : datastore.prepare(deviceInfoQuery).asIterable()) {
+                    DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
+                    if (deviceEntity == null) continue;
+                    devices.add(deviceEntity);
+                }
                 TestRunMetadata metadata =
                         new TestRunMetadata(key.getParent().getName(), testRunEntity, devices);
                 testRunMetadata.add(metadata);
