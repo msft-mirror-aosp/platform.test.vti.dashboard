@@ -17,6 +17,8 @@
 package com.android.vts.entity;
 
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,22 +27,58 @@ public class TestEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(TestEntity.class.getName());
 
     public static final String KIND = "Test";
+    public static final String HAS_PROFILING_DATA = "hasProfilingData";
 
     public final String testName;
+    public final Key key;
+    public boolean hasProfilingData;
 
     /**
-     * Create a TestEntity object with status metadata.
+     * Create a TestEntity object.
+     *
+     * @param testName The name of the test.
+     * @param hasProfilingData True if the test includes profiling data.
+     */
+    public TestEntity(String testName, boolean hasProfilingData) {
+        this.testName = testName;
+        this.key = KeyFactory.createKey(KIND, testName);
+        this.hasProfilingData = hasProfilingData;
+    }
+
+    /**
+     * Create a TestEntity object.
      *
      * @param testName The name of the test.
      */
     public TestEntity(String testName) {
-        this.testName = testName;
+        this(testName, false);
     }
 
     @Override
     public Entity toEntity() {
-        Entity testEntity = new Entity(KIND, this.testName);
+        Entity testEntity = new Entity(this.key);
+        testEntity.setProperty(HAS_PROFILING_DATA, this.hasProfilingData);
         return testEntity;
+    }
+
+    /**
+     * Set to true if the test has profiling data.
+     *
+     * @param hasProfilingData The value to store.
+     */
+    public void setHasProfilingData(boolean hasProfilingData) {
+        this.hasProfilingData = hasProfilingData;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !TestEntity.class.isAssignableFrom(obj.getClass())) {
+            return false;
+        }
+        TestEntity test2 = (TestEntity) obj;
+        return (
+            this.testName.equals(test2.testName) &&
+                this.hasProfilingData == test2.hasProfilingData);
     }
 
     /**
@@ -56,6 +94,10 @@ public class TestEntity implements DashboardEntity {
             return null;
         }
         String testName = e.getKey().getName();
-        return new TestEntity(testName);
+        boolean hasProfilingData = false;
+        if (e.hasProperty(HAS_PROFILING_DATA)) {
+            hasProfilingData = (boolean) e.getProperty(HAS_PROFILING_DATA);
+        }
+        return new TestEntity(testName, hasProfilingData);
     }
 }
