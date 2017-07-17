@@ -16,28 +16,21 @@
 
 package com.android.vts.servlet;
 
-import com.android.vts.entity.ProfilingPointRunEntity;
-import com.android.vts.entity.TestEntity;
-import com.android.vts.entity.TestRunEntity;
-import com.android.vts.proto.VtsReportMessage;
+import com.android.vts.entity.ProfilingPointEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.util.BoxPlot;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.FilterUtil;
 import com.android.vts.util.GraphSerializer;
-import com.android.vts.util.PerformanceUtil;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -54,10 +48,6 @@ import javax.servlet.http.HttpServletResponse;
 /** Servlet for handling requests to load graphs. */
 public class ShowProfilingOverviewServlet extends BaseServlet {
     private static final String PROFILING_OVERVIEW_JSP = "WEB-INF/jsp/show_profiling_overview.jsp";
-
-    private static final String HIDL_HAL_OPTION = "hidl_hal_mode";
-    private static final String[] splitKeysArray = new String[] {HIDL_HAL_OPTION};
-    private static final Set<String> splitKeySet = new HashSet<>(Arrays.asList(splitKeysArray));
 
     @Override
     public PageType getNavParentType() {
@@ -77,40 +67,95 @@ public class ShowProfilingOverviewServlet extends BaseServlet {
             throws IOException {
         RequestDispatcher dispatcher = null;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
         String testName = request.getParameter("testName");
         long endTime = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
-        long startTime = endTime - TimeUnit.DAYS.toMicros(14);
+        long startTime = endTime - TimeUnit.DAYS.toMicros(30);
 
         // Create a query for test runs matching the time window filter
-        Key parentKey = KeyFactory.createKey(TestEntity.KIND, testName);
-        Filter profilingFilter =
-                FilterUtil.getProfilingTimeFilter(
-                        parentKey, TestRunEntity.KIND, startTime, endTime);
-        Query profilingQuery =
-                new Query(ProfilingPointRunEntity.KIND)
-                        .setAncestor(parentKey)
-                        .setFilter(profilingFilter);
+
+        Map<String, Object> parameterMap = request.getParameterMap();
+        boolean hasBranchFilter = parameterMap.containsKey(FilterUtil.FilterKey.BRANCH.getValue());
+        Filter deviceFilter;
+        if (hasBranchFilter) {
+            deviceFilter =
+                    FilterUtil.FilterKey.BRANCH.getFilterForString(
+                            FilterUtil.getFirstParameter(
+                                    parameterMap, FilterUtil.FilterKey.BRANCH.getValue()));
+        } else {
+            deviceFilter =
+                    FilterUtil.FilterKey.BRANCH.getFilterForString(ProfilingPointSummaryEntity.ALL);
+        }
+
+        boolean hasTargetFilter = parameterMap.containsKey(FilterUtil.FilterKey.TARGET.getValue());
+        if (hasTargetFilter) {
+            deviceFilter =
+                    Query.CompositeFilterOperator.and(
+                            deviceFilter,
+                            FilterUtil.FilterKey.TARGET.getFilterForString(
+                                    FilterUtil.getFirstParameter(
+                                            parameterMap, FilterUtil.FilterKey.TARGET.getValue())));
+        } else {
+            deviceFilter =
+                    Query.CompositeFilterOperator.and(
+                            deviceFilter,
+                            FilterUtil.FilterKey.TARGET.getFilterForString(
+                                    ProfilingPointSummaryEntity.ALL));
+        }
+
+        Filter startFilter =
+                new Query.FilterPredicate(
+                        ProfilingPointSummaryEntity.START_TIME,
+                        Query.FilterOperator.GREATER_THAN_OR_EQUAL,
+                        startTime);
+        Filter endFilter =
+                new Query.FilterPredicate(
+                        ProfilingPointSummaryEntity.START_TIME,
+                        Query.FilterOperator.LESS_THAN_OR_EQUAL,
+                        endTime);
+        Filter timeFilter = Query.CompositeFilterOperator.and(startFilter, endFilter);
+
+        Filter filter = Query.CompositeFilterOperator.and(timeFilter, deviceFilter);
+
+        Query profilingPointQuery =
+                new Query(ProfilingPointEntity.KIND)
+                        .setFilter(
+                                new Query.FilterPredicate(
+                                        ProfilingPointEntity.TEST_NAME,
+                                        Query.FilterOperator.EQUAL,
+                                        testName));
+
+        List<ProfilingPointEntity> profilingPoints = new ArrayList<>();
+        for (Entity e : datastore.prepare(profilingPointQuery).asIterable()) {
+            ProfilingPointEntity pp = ProfilingPointEntity.fromEntity(e);
+            if (pp == null) continue;
+            profilingPoints.add(pp);
+        }
+
         Map<String, BoxPlot> plotMap = new HashMap<>();
-        for (Entity e :
-                datastore
-                        .prepare(profilingQuery)
-                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
-            ProfilingPointRunEntity pt = ProfilingPointRunEntity.fromEntity(e);
-            if (pt == null
-                    || pt.regressionMode
-                            == VtsReportMessage.VtsProfilingRegressionMode
-                                    .VTS_REGRESSION_MODE_DISABLED) continue;
-            String option = PerformanceUtil.getOptionAlias(pt, splitKeySet);
-
-            if (!plotMap.containsKey(pt.name)) {
-                plotMap.put(pt.name, new BoxPlot(pt.name));
+        for (ProfilingPointEntity pp : profilingPoints) {
+            if (!plotMap.containsKey(pp.profilingPointName)) {
+                plotMap.put(
+                        pp.profilingPointName,
+                        new BoxPlot(pp.profilingPointName, null, pp.xLabel));
             }
-
-            BoxPlot plot = plotMap.get(pt.name);
-            long days = (endTime - e.getParent().getId()) / TimeUnit.DAYS.toMicros(1);
-            long time = endTime - days * TimeUnit.DAYS.toMicros(1);
-
-            plot.addSeriesData(Long.toString(time), option, pt);
+            BoxPlot plot = plotMap.get(pp.profilingPointName);
+            Set<Long> timestamps = new HashSet<>();
+            Query profilingQuery =
+                    new Query(ProfilingPointSummaryEntity.KIND)
+                            .setAncestor(pp.key)
+                            .setFilter(filter);
+            for (Entity e : datastore.prepare(profilingQuery).asIterable()) {
+                ProfilingPointSummaryEntity pps = ProfilingPointSummaryEntity.fromEntity(e);
+                if (pps == null) continue;
+                plot.addSeriesData(Long.toString(pps.startTime), pps.series, pps.globalStats);
+                timestamps.add(pps.startTime);
+            }
+            List<Long> timestampList = new ArrayList<>(timestamps);
+            timestampList.sort(Comparator.reverseOrder());
+            List<String> timestampStrings =
+                    timestampList.stream().map(Object::toString).collect(Collectors.toList());
+            plot.setLabels(timestampStrings);
         }
 
         List<BoxPlot> plots = new ArrayList<>();
@@ -119,21 +164,18 @@ public class ShowProfilingOverviewServlet extends BaseServlet {
             if (plot.size() == 0) continue;
             plots.add(plot);
         }
-        Collections.sort(
-                plots,
-                new Comparator<BoxPlot>() {
-                    @Override
-                    public int compare(BoxPlot b1, BoxPlot b2) {
-                        return b1.getName().compareTo(b2.getName());
-                    }
-                });
+        plots.sort((b1, b2) -> b1.getName().compareTo(b2.getName()));
 
         Gson gson =
                 new GsonBuilder()
                         .registerTypeHierarchyAdapter(BoxPlot.class, new GraphSerializer())
                         .create();
+
+        FilterUtil.setAttributes(request, parameterMap);
         request.setAttribute("plots", gson.toJson(plots));
         request.setAttribute("testName", request.getParameter("testName"));
+        request.setAttribute("branches", new Gson().toJson(DatastoreHelper.getAllBranches()));
+        request.setAttribute("devices", new Gson().toJson(DatastoreHelper.getAllBuildFlavors()));
         dispatcher = request.getRequestDispatcher(PROFILING_OVERVIEW_JSP);
         try {
             dispatcher.forward(request, response);

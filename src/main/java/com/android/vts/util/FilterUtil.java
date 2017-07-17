@@ -114,6 +114,28 @@ public class FilterUtil {
         public Filter getFilterForNumber(long matchNumber) {
             return new FilterPredicate(this.property, FilterOperator.EQUAL, matchNumber);
         }
+
+        /**
+         * Get the enum value
+         *
+         * @return The string value associated with the key.
+         */
+        public String getValue() {
+            return this.keyString;
+        }
+    }
+
+    /**
+     * Get the first value associated with the key in the parameter map.
+     *
+     * @param parameterMap The parameter map with string keys and (Object) String[] values.
+     * @param key The key whose value to get.
+     * @return The first value associated with the provided key.
+     */
+    public static String getFirstParameter(Map<String, Object> parameterMap, String key) {
+        String[] values = (String[]) parameterMap.get(key);
+        if (values.length == 0) return null;
+        return values[0];
     }
 
     /**
@@ -126,9 +148,8 @@ public class FilterUtil {
         Filter deviceFilter = null;
         for (String key : parameterMap.keySet()) {
             if (!FilterKey.isDeviceKey(key)) continue;
-            String[] values = (String[]) parameterMap.get(key);
-            if (values.length == 0) continue;
-            String value = values[0];
+            String value = getFirstParameter(parameterMap, key);
+            if (value == null) continue;
             FilterKey filterKey = FilterKey.parse(key);
             Filter f = filterKey.getFilterForString(value);
             if (deviceFilter == null) {
@@ -150,9 +171,8 @@ public class FilterUtil {
         Filter testFilter = null;
         for (String key : parameterMap.keySet()) {
             if (!FilterKey.isTestKey(key)) continue;
-            String[] values = (String[]) parameterMap.get(key);
-            if (values.length == 0) continue;
-            String stringValue = values[0];
+            String stringValue = getFirstParameter(parameterMap, key);
+            if (stringValue == null) continue;
             FilterKey filterKey = FilterKey.parse(key);
             Filter f = null;
             switch (filterKey) {

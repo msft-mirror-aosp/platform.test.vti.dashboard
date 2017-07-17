@@ -74,4 +74,9 @@
     <property name="startTimestamp" direction="desc"/>
   </datastore-index>
 
+  <datastore-index kind="ProfilingPointSummary" ancestor="true" source="manual">
+    <property name="branch" direction="asc"/>
+    <property name="buildFlavor" direction="asc"/>
+    <property name="startTime" direction="asc"/>
+  </datastore-index>
 </datastore-indexes>
