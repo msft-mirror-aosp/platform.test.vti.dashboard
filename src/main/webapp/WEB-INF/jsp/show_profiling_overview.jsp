@@ -72,7 +72,9 @@
                         '</br><b>Mean:</b> ' +
                         stat.mean.toFixed(2) +
                         '</br><b>Std:</b> ' +
-                        stat.std.toFixed(2));
+                        stat.std.toFixed(2) +
+                        '</br><b>Count:</b> ' +
+                        stat.count.toFixed(0));
                     return [
                         stat.mean,
                         stat.mean + stat.std,
