@@ -24,28 +24,51 @@ public class StatSummary {
     private double min;
     private double max;
     private double mean;
-    private double var;
+    private double sumSq;
     private int n;
     private VtsProfilingRegressionMode regression_mode;
+
+    /**
+     * Create a statistical summary.
+     *
+     * <p>Sets the label, min, max, mean, sum of squared error, n, and mode as provided.
+     *
+     * @param label The (String) label to assign to the summary.
+     * @param min The minimum observed value.
+     * @param max The maximum observed value.
+     * @param mean The average observed value.
+     * @param sumSq The sum of squared error.
+     * @param n The number of values observed.
+     * @param mode The VtsProfilingRegressionMode to use when analyzing performance.
+     */
+    public StatSummary(
+            String label,
+            double min,
+            double max,
+            double mean,
+            double sumSq,
+            int n,
+            VtsProfilingRegressionMode mode) {
+        this.label = label;
+        this.min = min;
+        this.max = max;
+        this.mean = mean;
+        this.sumSq = sumSq;
+        this.n = n;
+        this.regression_mode = mode;
+    }
 
     /**
      * Initializes the statistical summary.
      *
      * <p>Sets the label as provided. Initializes the mean, variance, and n (number of values seen)
-     * to
-     * 0.
+     * to 0.
      *
      * @param label The (String) label to assign to the summary.
      * @param mode The VtsProfilingRegressionMode to use when analyzing performance.
      */
     public StatSummary(String label, VtsProfilingRegressionMode mode) {
-        this.label = label;
-        this.min = Double.MAX_VALUE;
-        this.max = Double.MIN_VALUE;
-        this.mean = 0;
-        this.var = 0;
-        this.n = 0;
-        this.regression_mode = mode;
+        this(label, Double.MAX_VALUE, Double.MIN_VALUE, 0, 0, 0, mode);
     }
 
     /**
@@ -57,11 +80,9 @@ public class StatSummary {
         n += 1;
         double oldMean = mean;
         mean = oldMean + (value - oldMean) / n;
-        var = var + (value - mean) * (value - oldMean);
-        if (value < min)
-            min = value;
-        if (value > max)
-            max = value;
+        sumSq = sumSq + (value - mean) * (value - oldMean);
+        if (value < min) min = value;
+        if (value > max) max = value;
     }
 
     /**
@@ -106,12 +127,21 @@ public class StatSummary {
     }
 
     /**
+     * Gets the calculated sum of squared error of the stream.
+     *
+     * @return The sum of squared error.
+     */
+    public double getSumSq() {
+        return sumSq;
+    }
+
+    /**
      * Gets the calculated standard deviation of the stream.
      *
      * @return The standard deviation.
      */
     public double getStd() {
-        return Math.sqrt(var / (n - 1));
+        return Math.sqrt(sumSq / (n - 1));
     }
 
     /**

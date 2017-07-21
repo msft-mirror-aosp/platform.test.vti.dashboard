@@ -21,11 +21,10 @@ import com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode;
 import com.android.vts.proto.VtsReportMessage.VtsProfilingType;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,7 +44,7 @@ public class ProfilingPointRunEntity implements DashboardEntity {
     public static final String Y_LABEL = "yLabel";
     public static final String OPTIONS = "options";
 
-    private final Key parentKey;
+    public final Key key;
 
     public final String name;
     public final VtsProfilingType type;
@@ -69,10 +68,17 @@ public class ProfilingPointRunEntity implements DashboardEntity {
      * @param yLabel The y axis label.
      * @param options The list of key=value options for the profiling point run.
      */
-    public ProfilingPointRunEntity(Key parentKey, String name, int type, int regressionMode,
-            List<String> labels, List<Long> values, String xLabel, String yLabel,
+    public ProfilingPointRunEntity(
+            Key parentKey,
+            String name,
+            int type,
+            int regressionMode,
+            List<String> labels,
+            List<Long> values,
+            String xLabel,
+            String yLabel,
             List<String> options) {
-        this.parentKey = parentKey;
+        this.key = KeyFactory.createKey(parentKey, KIND, name);
         this.name = name;
         this.type = VtsProfilingType.valueOf(type);
         this.regressionMode = VtsProfilingRegressionMode.valueOf(regressionMode);
@@ -85,7 +91,7 @@ public class ProfilingPointRunEntity implements DashboardEntity {
 
     @Override
     public Entity toEntity() {
-        Entity profilingRun = new Entity(KIND, this.name, this.parentKey);
+        Entity profilingRun = new Entity(this.key);
         profilingRun.setUnindexedProperty(TYPE, this.type.getNumber());
         profilingRun.setUnindexedProperty(REGRESSION_MODE, this.regressionMode.getNumber());
         if (this.labels != null) {
@@ -109,9 +115,13 @@ public class ProfilingPointRunEntity implements DashboardEntity {
      */
     @SuppressWarnings("unchecked")
     public static ProfilingPointRunEntity fromEntity(Entity e) {
-        if (!e.getKind().equals(KIND) || e.getKey().getName() == null || !e.hasProperty(TYPE)
-                || !e.hasProperty(REGRESSION_MODE) || !e.hasProperty(VALUES)
-                || !e.hasProperty(X_LABEL) || !e.hasProperty(Y_LABEL)) {
+        if (!e.getKind().equals(KIND)
+                || e.getKey().getName() == null
+                || !e.hasProperty(TYPE)
+                || !e.hasProperty(REGRESSION_MODE)
+                || !e.hasProperty(VALUES)
+                || !e.hasProperty(X_LABEL)
+                || !e.hasProperty(Y_LABEL)) {
             logger.log(
                     Level.WARNING, "Missing profiling point attributes in entity: " + e.toString());
             return null;
@@ -150,9 +160,11 @@ public class ProfilingPointRunEntity implements DashboardEntity {
      */
     public static ProfilingPointRunEntity fromProfilingReport(
             Key parentKey, ProfilingReportMessage profilingReport) {
-        if (!profilingReport.hasName() || !profilingReport.hasType()
+        if (!profilingReport.hasName()
+                || !profilingReport.hasType()
                 || profilingReport.getType() == VtsProfilingType.UNKNOWN_VTS_PROFILING_TYPE
-                || !profilingReport.hasRegressionMode() || !profilingReport.hasXAxisLabel()
+                || !profilingReport.hasRegressionMode()
+                || !profilingReport.hasXAxisLabel()
                 || !profilingReport.hasYAxisLabel()) {
             return null; // invalid profiling report;
         }
@@ -165,7 +177,8 @@ public class ProfilingPointRunEntity implements DashboardEntity {
         List<String> labels = null;
         switch (type) {
             case VTS_PROFILING_TYPE_TIMESTAMP:
-                if (!profilingReport.hasStartTimestamp() || !profilingReport.hasEndTimestamp()
+                if (!profilingReport.hasStartTimestamp()
+                        || !profilingReport.hasEndTimestamp()
                         || profilingReport.getEndTimestamp()
                                 < profilingReport.getStartTimestamp()) {
                     return null; // missing timestamp
@@ -198,7 +211,15 @@ public class ProfilingPointRunEntity implements DashboardEntity {
                 options.add(optionBytes.toStringUtf8());
             }
         }
-        return new ProfilingPointRunEntity(parentKey, name, type.getNumber(),
-                regressionMode.getNumber(), labels, values, xLabel, yLabel, options);
+        return new ProfilingPointRunEntity(
+                parentKey,
+                name,
+                type.getNumber(),
+                regressionMode.getNumber(),
+                labels,
+                values,
+                xLabel,
+                yLabel,
+                options);
     }
 }
