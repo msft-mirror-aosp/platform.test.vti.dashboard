@@ -144,13 +144,14 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 FilterUtil.getTimeFilter(
                         testPlanKey, TestPlanRunEntity.KIND, startTime, endTime, typeFilter);
         Map<String, Object> parameterMap = request.getParameterMap();
+        Filter userTestFilter = FilterUtil.getUserTestFilter(parameterMap);
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         List<TestPlanRunMetadata> testPlanRuns = new ArrayList<>();
         Map<Key, TestPlanRunMetadata> testPlanMap = new HashMap<>();
         Key minKey = null;
         Key maxKey = null;
-        if (userDeviceFilter == null) {
+        if (userTestFilter == null && userDeviceFilter == null) {
             Query testPlanRunQuery =
                     new Query(TestPlanRunEntity.KIND)
                             .setAncestor(testPlanKey)
@@ -180,6 +181,10 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 }
             }
         } else {
+            if (userTestFilter != null) {
+                testPlanRunFilter =
+                        Query.CompositeFilterOperator.and(userTestFilter, testPlanRunFilter);
+            }
             List<Key> gets =
                     FilterUtil.getMatchingKeys(
                             testPlanKey,
