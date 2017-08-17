@@ -126,26 +126,37 @@ public class ShowProfilingOverviewServlet extends BaseServlet {
                                         testName));
 
         List<ProfilingPointEntity> profilingPoints = new ArrayList<>();
-        for (Entity e : datastore.prepare(profilingPointQuery).asIterable()) {
+        for (Entity e :
+                datastore
+                        .prepare(profilingPointQuery)
+                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
             ProfilingPointEntity pp = ProfilingPointEntity.fromEntity(e);
             if (pp == null) continue;
             profilingPoints.add(pp);
+        }
+
+        Map<ProfilingPointEntity, Iterable<Entity>> asyncEntities = new HashMap<>();
+        for (ProfilingPointEntity pp : profilingPoints) {
+            Query profilingQuery =
+                    new Query(ProfilingPointSummaryEntity.KIND)
+                            .setAncestor(pp.key)
+                            .setFilter(filter);
+            asyncEntities.put(
+                    pp,
+                    datastore
+                            .prepare(profilingQuery)
+                            .asIterable(DatastoreHelper.getLargeBatchOptions()));
         }
 
         Map<String, BoxPlot> plotMap = new HashMap<>();
         for (ProfilingPointEntity pp : profilingPoints) {
             if (!plotMap.containsKey(pp.profilingPointName)) {
                 plotMap.put(
-                        pp.profilingPointName,
-                        new BoxPlot(pp.profilingPointName, null, pp.xLabel));
+                        pp.profilingPointName, new BoxPlot(pp.profilingPointName, null, pp.xLabel));
             }
             BoxPlot plot = plotMap.get(pp.profilingPointName);
             Set<Long> timestamps = new HashSet<>();
-            Query profilingQuery =
-                    new Query(ProfilingPointSummaryEntity.KIND)
-                            .setAncestor(pp.key)
-                            .setFilter(filter);
-            for (Entity e : datastore.prepare(profilingQuery).asIterable()) {
+            for (Entity e : asyncEntities.get(pp)) {
                 ProfilingPointSummaryEntity pps = ProfilingPointSummaryEntity.fromEntity(e);
                 if (pps == null) continue;
                 plot.addSeriesData(Long.toString(pps.startTime), pps.series, pps.globalStats);
