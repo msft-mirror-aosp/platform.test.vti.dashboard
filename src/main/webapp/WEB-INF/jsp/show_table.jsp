@@ -25,6 +25,7 @@
   <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
   <script src='https://www.gstatic.com/external_hosted/moment/min/moment-with-locales.min.js'></script>
   <script src='js/search_header.js'></script>
+  <script src='js/time.js'></script>
   <script type='text/javascript'>
       google.charts.load('current', {'packages':['table', 'corechart']});
       google.charts.setOnLoadCallback(drawGridTable);
@@ -195,13 +196,7 @@
           timeGrid = timeGrid.map(function(row) {
               return row.map(function(cell, j) {
                   if (j == 0) return cell;
-                  var time = moment(cell/1000);
-                  // If today, don't display the date
-                  if (time.isSame(moment(), 'd')) {
-                      return time.format('H:mm:ssZZ');
-                  } else {
-                      return time.format('M/D/YY H:mm:ssZZ');
-                  }
+                  return moment().renderTime(cell);
               });
           });
 
@@ -209,7 +204,7 @@
           durationGrid = durationGrid.map(function(row) {
               return row.map(function(cell, j) {
                   if (j == 0) return cell;
-                  return moment.utc(cell/1000).format("HH:mm:ss.SSS");
+                  return moment().renderDuration(cell);
               });
           });
 
