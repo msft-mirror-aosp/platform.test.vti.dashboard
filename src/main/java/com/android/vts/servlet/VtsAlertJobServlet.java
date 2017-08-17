@@ -428,7 +428,8 @@ public class VtsAlertJobServlet extends HttpServlet {
 
         StringBuffer fullUrl = request.getRequestURL();
         String baseUrl = fullUrl.substring(0, fullUrl.indexOf(request.getRequestURI()));
-        String link = baseUrl + "/show_tree?testName=" + testName;
+        String link =
+                baseUrl + "/show_tree?testName=" + testName + "&endTime=" + testRunKey.getId();
 
         List<Message> messageQueue = new ArrayList<>();
         Map<String, TestCase> failedTestcaseMap = getCurrentFailures(status);
