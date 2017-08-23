@@ -16,6 +16,7 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestRunEntity;
@@ -27,6 +28,7 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Query;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.IOException;
@@ -106,14 +108,20 @@ public class ShowPlanRunServlet extends BaseServlet {
             endTime = testPlanRun.endTimestamp;
             moduleCount = testPlanRun.testRuns.size();
 
+            List<DeviceInfoEntity> devices = new ArrayList<>();
+            Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(planRunKey);
+            for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
+                DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
+                if (deviceEntity == null) continue;
+                devices.add(deviceEntity);
+            }
+
             for (Key key : testPlanRun.testRuns) {
-                if (!testRuns.containsKey(key))
-                    continue;
+                if (!testRuns.containsKey(key)) continue;
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRuns.get(key));
-                if (testRunEntity == null)
-                    continue;
+                if (testRunEntity == null) continue;
                 TestRunMetadata metadata =
-                        new TestRunMetadata(key.getParent().getName(), testRunEntity);
+                        new TestRunMetadata(key.getParent().getName(), testRunEntity, devices);
                 testRunMetadata.add(metadata);
                 testRunObjects.add(metadata.toJson());
             }
