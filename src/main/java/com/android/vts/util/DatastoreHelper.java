@@ -30,6 +30,7 @@ import com.android.vts.proto.VtsReportMessage.TestCaseReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestCaseResult;
 import com.android.vts.proto.VtsReportMessage.TestPlanReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestReportMessage;
+import com.android.vts.servlet.VtsCoverageAlertJobServlet;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -367,6 +368,11 @@ public class DatastoreHelper {
                     txn.rollback();
                 }
             }
+        }
+
+        // Add a coverage task
+        if (testRunEntity.hasCoverage && testRunEntity.type == TestRunType.POSTSUBMIT) {
+            VtsCoverageAlertJobServlet.addTask(testRunEntity.key);
         }
     }
 
