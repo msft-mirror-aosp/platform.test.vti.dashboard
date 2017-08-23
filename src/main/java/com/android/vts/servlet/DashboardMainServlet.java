@@ -16,7 +16,7 @@
 
 package com.android.vts.servlet;
 
-import com.android.vts.entity.TestEntity;
+import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.UserFavoriteEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -140,14 +140,17 @@ public class DashboardMainServlet extends BaseServlet {
         String buttonLink;
         String error = null;
 
-        Query q = new Query(TestEntity.KIND)
-                          .addProjection(new PropertyProjection(TestEntity.PASS_COUNT, Long.class))
-                          .addProjection(new PropertyProjection(TestEntity.FAIL_COUNT, Long.class));
+        Query q =
+                new Query(TestStatusEntity.KIND)
+                        .addProjection(
+                                new PropertyProjection(TestStatusEntity.PASS_COUNT, Long.class))
+                        .addProjection(
+                                new PropertyProjection(TestStatusEntity.FAIL_COUNT, Long.class));
         for (Entity test : datastore.prepare(q).asIterable()) {
-            TestEntity testEntity = TestEntity.fromEntity(test);
+            TestStatusEntity status = TestStatusEntity.fromEntity(test);
             if (test != null) {
                 TestDisplay display =
-                        new TestDisplay(test.getKey(), testEntity.passCount, testEntity.failCount);
+                        new TestDisplay(test.getKey(), status.passCount, status.failCount);
                 testMap.put(test.getKey(), display);
                 allTests.add(test.getKey().getName());
             }
@@ -167,8 +170,9 @@ public class DashboardMainServlet extends BaseServlet {
             buttonLink = DASHBOARD_FAVORITES_LINK;
         } else {
             if (testMap.size() > 0) {
-                Filter userFilter = new FilterPredicate(
-                        UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
+                Filter userFilter =
+                        new FilterPredicate(
+                                UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
                 q = new Query(UserFavoriteEntity.KIND).setFilter(userFilter);
 
                 for (Entity favorite : datastore.prepare(q).asIterable()) {
