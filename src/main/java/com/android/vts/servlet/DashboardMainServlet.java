@@ -44,6 +44,7 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /** Represents the servlet that is invoked on loading the first page of dashboard. */
 public class DashboardMainServlet extends BaseServlet {
@@ -127,6 +128,14 @@ public class DashboardMainServlet extends BaseServlet {
         User currentUser = userService.getCurrentUser();
         RequestDispatcher dispatcher = null;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        HttpSession session = request.getSession(true);
+        PageType referTo = PageType.TREE;
+        if (session.getAttribute("treeDefault") != null) {
+            boolean treeDefault = (boolean) session.getAttribute("treeDefault");
+            if (!treeDefault) {
+                referTo = PageType.TABLE;
+            }
+        }
 
         List<TestDisplay> displayedTests = new ArrayList<>();
         List<String> allTestNames = new ArrayList<>();
@@ -217,6 +226,7 @@ public class DashboardMainServlet extends BaseServlet {
         request.setAttribute("buttonIcon", buttonIcon);
         request.setAttribute("buttonLink", buttonLink);
         request.setAttribute("error", error);
+        request.setAttribute("resultsUrl", referTo.defaultUrl);
         dispatcher = request.getRequestDispatcher(DASHBOARD_MAIN_JSP);
         try {
             dispatcher.forward(request, response);

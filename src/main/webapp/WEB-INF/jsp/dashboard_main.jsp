@@ -42,7 +42,7 @@
                 subscriptionMap[test] = data.key;
                 var wrapper = $('<div></div>');
                 var a = $('<a></a>')
-                    .attr('href', '/show_table?testName=' + test);
+                    .attr('href', '${resultsUrl}?testName=' + test);
                 var div = $('<div class="col s11 card hoverable option"></div>');
                 div.addClass('valign-wrapper waves-effect');
                 div.appendTo(a);
@@ -141,7 +141,7 @@
           <div class='row' id='options'>
             <c:forEach items='${testNames}' var='test'>
               <div>
-                <a href='/show_table?testName=${test.name}'>
+                <a href='${resultsUrl}?testName=${test.name}'>
                   <div class='col s${width} card hoverable option valign-wrapper waves-effect'>
                     <span class='entry valign'>${test.name}
                       <c:if test='${test.failCount >= 0 && test.passCount >= 0}'>
