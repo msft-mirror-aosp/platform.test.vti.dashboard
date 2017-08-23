@@ -56,7 +56,7 @@ public class ShowTreeServlet extends BaseServlet {
     // Error message displayed on the webpage is tableName passed is null.
     private static final String TABLE_NAME_ERROR = "Error : Table name must be passed!";
     private static final String PROFILING_DATA_ALERT = "No profiling data was found.";
-    private static final int MAX_BUILD_IDS_PER_PAGE = 20;
+    private static final int MAX_RESULT_COUNT = 60;
     private static final int MAX_PREFETCH_COUNT = 10;
 
     @Override
@@ -183,7 +183,7 @@ public class ShowTreeServlet extends BaseServlet {
                             .prepare(testRunQuery)
                             .asIterable(
                                     DatastoreHelper.getLargeBatchOptions()
-                                            .limit(MAX_BUILD_IDS_PER_PAGE))) {
+                                            .limit(MAX_RESULT_COUNT))) {
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
                 if (testRunEntity == null) {
                     continue;
@@ -209,7 +209,7 @@ public class ShowTreeServlet extends BaseServlet {
                             testFilter,
                             userDeviceFilter,
                             dir,
-                            MAX_BUILD_IDS_PER_PAGE);
+                            MAX_RESULT_COUNT);
             Map<Key, Entity> entityMap = datastore.get(gets);
             for (Key key : gets) {
                 if (!entityMap.containsKey(key)) {
