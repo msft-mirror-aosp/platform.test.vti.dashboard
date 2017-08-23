@@ -17,7 +17,7 @@
 package com.android.vts.entity;
 
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -39,7 +39,7 @@ public class TestCaseRunEntity implements DashboardEntity {
     // Maximum number of test cases in the entity.
     private static final int SIZE_LIMIT = 500;
 
-    public final Key key;
+    public final long id;
     public final List<TestCase> testCases;
     private String systraceUrl;
 
@@ -68,11 +68,20 @@ public class TestCaseRunEntity implements DashboardEntity {
     }
 
     /**
-     * Create a TestCaseRunEntity with the specified key.
-     * @param key The key to use for the entity in Cloud Datastore.
+     * Create a TestCaseRunEntity.
      */
-    public TestCaseRunEntity(Key key) {
-        this.key = key;
+    public TestCaseRunEntity() {
+        this.id = -1;
+        this.testCases = new ArrayList<>();
+        this.systraceUrl = null;
+    }
+
+    /**
+     * Create a TestCaseRunEntity with the specified id.
+     * @param id The entity id.
+     */
+    public TestCaseRunEntity(long id) {
+        this.id = id;
         this.testCases = new ArrayList<>();
         this.systraceUrl = null;
     }
@@ -110,14 +119,19 @@ public class TestCaseRunEntity implements DashboardEntity {
     public boolean addTestCase(String name, int result) {
         if (isFull())
             return false;
-        long parentId = this.key.getId();
-        this.testCases.add(new TestCase(parentId, this.testCases.size(), name, result));
+        this.testCases.add(new TestCase(this.id, this.testCases.size(), name, result));
         return true;
     }
 
     @Override
     public Entity toEntity() {
-        Entity testCaseRunEntity = new Entity(key);
+        Entity testCaseRunEntity;
+        if (this.id >= 0) {
+            testCaseRunEntity = new Entity(KeyFactory.createKey(KIND, id));
+        } else {
+            testCaseRunEntity = new Entity(KIND);
+        }
+
         if (this.testCases.size() > 0) {
             List<String> testCaseNames = new ArrayList<>();
             List<Integer> results = new ArrayList<>();
@@ -148,7 +162,7 @@ public class TestCaseRunEntity implements DashboardEntity {
             return null;
         }
         try {
-            TestCaseRunEntity testCaseRun = new TestCaseRunEntity(e.getKey());
+            TestCaseRunEntity testCaseRun = new TestCaseRunEntity();
             if (e.hasProperty(TEST_CASE_NAMES) && e.hasProperty(RESULTS)) {
                 List<String> testCaseNames = (List<String>) e.getProperty(TEST_CASE_NAMES);
                 List<Long> results = (List<Long>) e.getProperty(RESULTS);
