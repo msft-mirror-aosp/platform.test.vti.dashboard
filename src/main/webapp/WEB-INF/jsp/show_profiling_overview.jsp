@@ -21,17 +21,30 @@
   <%@ include file="header.jsp" %>
   <link type='text/css' href='/css/datepicker.css' rel='stylesheet'>
   <link type='text/css' href='/css/show_profiling_overview.css' rel='stylesheet'>
-  <link rel='stylesheet' href='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.css'>
+  <link rel='stylesheet' href='/css/search_header.css'>
   <script src='https://www.gstatic.com/external_hosted/moment/min/moment-with-locales.min.js'></script>
+  <script src='js/search_header.js'></script>
   <script src='js/time.js'></script>
   <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
-  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js'></script>
   <body>
     <script type='text/javascript'>
         google.charts.load('current', {'packages':['corechart']});
         google.charts.setOnLoadCallback(drawAllPlots);
 
         var plots = ${plots};
+        var search;
+
+        $(document).ready(function() {
+            search = $('#filter-bar').createSearchHeader(
+                'Profiling Analysis', '', refresh);
+            search.addFilter('Branch', 'branch', {
+                corpus: ${branches}
+            }, ${branch});
+            search.addFilter('Device', 'device', {
+                corpus: ${devices}
+            }, ${device});
+          search.display();
+      });
 
         /**
         * Draw a box plot.
@@ -138,8 +151,17 @@
                 drawBoxPlot(plot.append('<div></div>'), g);
             });
         }
+
+        // refresh the page to see the runs matching the specified filter
+        function refresh() {
+            if($(this).hasClass('disabled')) return;
+            var link = '${pageContext.request.contextPath}' +
+                '/show_profiling_overview?testName=${testName}' + search.args();
+            window.open(link,'_self');
+        }
     </script>
     <div class='container wide'>
+      <div id='filter-bar' class='row'></div>
       <div id='profiling-container'>
       </div>
     </div>

@@ -17,10 +17,11 @@
 package com.android.vts.util;
 
 import com.android.vts.entity.ProfilingPointRunEntity;
+import com.android.vts.proto.VtsReportMessage;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,21 +35,26 @@ public class BoxPlot extends Graph {
     private static final String MEAN_KEY = "mean";
     private static final String STD_KEY = "std";
 
-    private final String xLabel = "Day";
-    private String yLabel;
-    private String name;
-    private GraphType type = GraphType.BOX_PLOT;
-    private int count;
-    private final Map<String, ProfilingPointSummary> seriesMap;
-    private final Set<String> labelSet;
-    private final List<String> labels;
+    private static final String DAY = "Day";
 
-    public BoxPlot(String name) {
+    private final GraphType type = GraphType.BOX_PLOT;
+    private final String name;
+    private final String xLabel;
+    private final String yLabel;
+    private final Map<String, Map<String, StatSummary>> labelSeriesMap;
+    private final Set<String> seriesSet;
+
+    private int count;
+    private List<String> labels;
+
+    public BoxPlot(String name, String xLabel, String yLabel) {
         this.name = name;
+        this.xLabel = xLabel == null ? DAY : xLabel;
+        this.yLabel = yLabel;
         this.count = 0;
-        seriesMap = new HashMap<>();
-        labelSet = new HashSet<>();
-        labels = new ArrayList<>();
+        this.labelSeriesMap = new HashMap<>();
+        this.seriesSet = new HashSet<>();
+        this.labels = new ArrayList<>();
     }
 
     /**
@@ -109,29 +115,27 @@ public class BoxPlot extends Graph {
      */
     @Override
     public void addData(String label, ProfilingPointRunEntity profilingPoint) {
-        addSeriesData(label, "", profilingPoint);
+        StatSummary stat =
+                new StatSummary(
+                        label, VtsReportMessage.VtsProfilingRegressionMode.UNKNOWN_REGRESSION_MODE);
+        for (long value : profilingPoint.values) {
+            stat.updateStats(value);
+        }
+        addSeriesData(label, "", stat);
     }
 
-    /**
-     * Add data to the graph.
-     *
-     * @param label The name of the category.
-     * @param series The data series to add data to.
-     * @param profilingPoint The ProfilingPointRunEntity containing data to add.
-     */
-    public void addSeriesData(String label, String series, ProfilingPointRunEntity profilingPoint) {
-        if (profilingPoint.values.size() == 0)
-            return;
-        if (!seriesMap.containsKey(series)) {
-            seriesMap.put(series, new ProfilingPointSummary());
+    public void addSeriesData(String label, String series, StatSummary stats) {
+        if (!labelSeriesMap.containsKey(label)) {
+            labelSeriesMap.put(label, new HashMap<>());
         }
-        ProfilingPointSummary summary = seriesMap.get(series);
-        summary.updateLabel(profilingPoint, label);
-        if (labelSet.add(label)) {
-            labels.add(label);
-        }
-        yLabel = profilingPoint.xLabel;
-        ++count;
+        Map<String, StatSummary> seriesMap = labelSeriesMap.get(label);
+        seriesMap.put(series, stats);
+        seriesSet.add(series);
+        count += stats.getCount();
+    }
+
+    public void setLabels(List<String> labels) {
+        this.labels = labels;
     }
 
     /**
@@ -143,21 +147,19 @@ public class BoxPlot extends Graph {
     public JsonObject toJson() {
         JsonObject json = super.toJson();
         List<JsonObject> stats = new ArrayList<>();
-        List<String> seriesList = new ArrayList<>(seriesMap.keySet());
-        Collections.sort(seriesList);
-        Collections.reverse(labels);
+        List<String> seriesList = new ArrayList<>(seriesSet);
+        seriesList.sort(Comparator.naturalOrder());
         for (String label : labels) {
             JsonObject statJson = new JsonObject();
-            String boxLabel = null;
+            String boxLabel = label;
             List<JsonObject> statList = new ArrayList<>(seriesList.size());
+            Map<String, StatSummary> seriesMap = labelSeriesMap.get(label);
             for (String series : seriesList) {
-                ProfilingPointSummary summary = seriesMap.get(series);
                 JsonObject statSummary = new JsonObject();
                 Double mean = null;
                 Double std = null;
-                if (summary.hasLabel(label) && summary.getStatSummary(label).getCount() > 0) {
-                    StatSummary stat = summary.getStatSummary(label);
-                    boxLabel = stat.getLabel();
+                if (seriesMap.containsKey(series) && seriesMap.get(series).getCount() > 0) {
+                    StatSummary stat = seriesMap.get(series);
                     mean = stat.getMean();
                     std = 0.;
                     if (stat.getCount() > 1) {
