@@ -35,7 +35,7 @@ import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -214,7 +214,7 @@ public class DashboardMainServlet extends BaseServlet {
             buttonIcon = DOWN_ARROW;
             buttonLink = DASHBOARD_ALL_LINK;
         }
-        Collections.sort(displayedTests);
+        displayedTests.sort(Comparator.naturalOrder());
 
         response.setStatus(HttpServletResponse.SC_OK);
         request.setAttribute("allTestsJson", new Gson().toJson(allTestNames));

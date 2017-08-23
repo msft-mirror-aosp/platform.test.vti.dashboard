@@ -34,7 +34,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -236,7 +236,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
             }
         }
 
-        Collections.sort(testPlanRuns);
+        testPlanRuns.sort(Comparator.naturalOrder());
 
         if (testPlanRuns.size() > 0) {
             TestPlanRunMetadata firstRun = testPlanRuns.get(0);
