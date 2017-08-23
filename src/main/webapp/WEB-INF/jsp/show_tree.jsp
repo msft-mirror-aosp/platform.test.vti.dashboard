@@ -132,9 +132,10 @@
               colors: colors,
               fontName: 'Roboto',
               fontSize: '14px',
-              legend: 'none',
-              tooltip: {showColorCode: true, ignoreBounds: true},
-              chartArea: {height: '90%'}
+              legend: {position: 'bottom'},
+              tooltip: {showColorCode: true, ignoreBounds: false},
+              chartArea: {height: '80%', width: '90%'},
+              pieHole: 0.4
           };
 
           var chart = new google.visualization.PieChart(document.getElementById('pie-chart-div'));
