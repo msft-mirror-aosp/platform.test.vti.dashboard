@@ -312,10 +312,13 @@ public class VtsAlertJobServlet extends HttpServlet {
             }
         }
 
+        Date lastUpload = new Date(TimeUnit.MICROSECONDS.toMillis(mostRecentRun.startTimestamp));
+        String uploadDateString =
+                new SimpleDateFormat("MM/dd/yyyy").format(lastUpload);
+        String subject = "VTS Test Alert: " + testName + " @ " + uploadDateString;
         if (newTestcaseFailures.size() > 0) {
-            String subject = "New test failures in " + testName + " @ " + buildId;
             String body =
-                    "Hello,<br><br>Test cases are failing in "
+                    "Hello,<br><br>New test case failure(s) in "
                             + testName
                             + " for device build ID(s): "
                             + buildId
@@ -328,9 +331,8 @@ public class VtsAlertJobServlet extends HttpServlet {
                 logger.log(Level.WARNING, "Error composing email : ", e);
             }
         } else if (continuedTestcaseFailures.size() > 0) {
-            String subject = "Continued test failures in " + testName + " @ " + buildId;
             String body =
-                    "Hello,<br><br>Test cases are failing in "
+                    "Hello,<br><br>Continuous test case failure(s) in "
                             + testName
                             + " for device build ID(s): "
                             + buildId
@@ -343,9 +345,8 @@ public class VtsAlertJobServlet extends HttpServlet {
                 logger.log(Level.WARNING, "Error composing email : ", e);
             }
         } else if (transientTestcaseFailures.size() > 0) {
-            String subject = "Transient test failure in " + testName + " @ " + buildId;
             String body =
-                    "Hello,<br><br>Some test cases failed in "
+                    "Hello,<br><br>Transient test case failure(s) in "
                             + testName
                             + " but tests all "
                             + "are passing in the latest device build(s): "
@@ -359,7 +360,6 @@ public class VtsAlertJobServlet extends HttpServlet {
                 logger.log(Level.WARNING, "Error composing email : ", e);
             }
         } else if (fixedTestcases.size() > 0) {
-            String subject = "All test cases passing in " + testName + " @ " + buildId;
             String body =
                     "Hello,<br><br>All test cases passed in "
                             + testName
