@@ -31,7 +31,9 @@ import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -41,13 +43,12 @@ import org.apache.commons.lang.StringUtils;
 public class PerformanceUtil {
     protected static Logger logger = Logger.getLogger(PerformanceUtil.class.getName());
 
+    private static final int MAX_BATCH_SIZE = 2000;
     private static final DecimalFormat FORMATTER;
     private static final String NAME_DELIMITER = ", ";
     private static final String OPTION_DELIMITER = "=";
 
-    /**
-     * Initialize the decimal formatter.
-     */
+    /** Initialize the decimal formatter. */
     static {
         FORMATTER = new DecimalFormat("#.##");
         FORMATTER.setRoundingMode(RoundingMode.HALF_UP);
@@ -65,8 +66,12 @@ public class PerformanceUtil {
         }
 
         public TimeInterval(long start, long end) {
-            this(start, end, "<span class='date-label'>"
-                            + Long.toString(TimeUnit.MICROSECONDS.toMillis(end)) + "</span>");
+            this(
+                    start,
+                    end,
+                    "<span class='date-label'>"
+                            + Long.toString(TimeUnit.MICROSECONDS.toMillis(end))
+                            + "</span>");
         }
     }
 
@@ -85,8 +90,12 @@ public class PerformanceUtil {
      * @param style A string containing additional CSS styles.
      * @returns An HTML string for a colored table cell containing the percent change.
      */
-    public static String getPercentChangeHTML(double baseline, double test, String classNames,
-            String style, VtsProfilingRegressionMode mode) {
+    public static String getPercentChangeHTML(
+            double baseline,
+            double test,
+            String classNames,
+            String style,
+            VtsProfilingRegressionMode mode) {
         String pctChangeString = "0 %";
         double alpha = 0;
         double delta = test - baseline;
@@ -119,8 +128,12 @@ public class PerformanceUtil {
      * @param outerStyles CSS styles to apply to cells on the outside of the grid
      * @return HTML string representing the performance of the test versus the baseline
      */
-    public static String getBestCasePerformanceComparisonHTML(StatSummary baseline,
-            StatSummary test, String innerClasses, String outerClasses, String innerStyles,
+    public static String getBestCasePerformanceComparisonHTML(
+            StatSummary baseline,
+            StatSummary test,
+            String innerClasses,
+            String outerClasses,
+            String innerStyles,
             String outerStyles) {
         if (test == null || baseline == null) {
             return "<td></td><td></td><td></td><td></td>";
@@ -129,8 +142,13 @@ public class PerformanceUtil {
         // Intensity of red color is a function of the relative (percent) change
         // in the new value compared to the previous day's. Intensity is a linear function
         // of percentage change, reaching a ceiling at 100% change (e.g. a doubling).
-        row += getPercentChangeHTML(baseline.getBestCase(), test.getBestCase(), innerClasses,
-                innerStyles, test.getRegressionMode());
+        row +=
+                getPercentChangeHTML(
+                        baseline.getBestCase(),
+                        test.getBestCase(),
+                        innerClasses,
+                        innerStyles,
+                        test.getRegressionMode());
         row += "<td class='" + innerClasses + "' style='" + innerStyles + "'>";
         row += FORMATTER.format(baseline.getBestCase());
         row += "<td class='" + innerClasses + "' style='" + innerStyles + "'>";
@@ -151,8 +169,13 @@ public class PerformanceUtil {
      * @param outerStyles CSS styles to apply to cells on the outside of the grid
      * @return HTML string representing the performance of the test versus the baseline
      */
-    public static String getAvgCasePerformanceComparisonHTML(StatSummary baseline, StatSummary test,
-            String innerClasses, String outerClasses, String innerStyles, String outerStyles) {
+    public static String getAvgCasePerformanceComparisonHTML(
+            StatSummary baseline,
+            StatSummary test,
+            String innerClasses,
+            String outerClasses,
+            String innerStyles,
+            String outerStyles) {
         if (test == null || baseline == null) {
             return "<td></td><td></td><td></td><td></td>";
         }
@@ -160,8 +183,13 @@ public class PerformanceUtil {
         // Intensity of red color is a function of the relative (percent) change
         // in the new value compared to the previous day's. Intensity is a linear function
         // of percentage change, reaching a ceiling at 100% change (e.g. a doubling).
-        row += getPercentChangeHTML(baseline.getMean(), test.getMean(), innerClasses, innerStyles,
-                test.getRegressionMode());
+        row +=
+                getPercentChangeHTML(
+                        baseline.getMean(),
+                        test.getMean(),
+                        innerClasses,
+                        innerStyles,
+                        test.getRegressionMode());
         row += "<td class='" + innerClasses + "' style='" + innerStyles + "'>";
         row += FORMATTER.format(baseline.getBestCase());
         row += "<td class='" + innerClasses + "' style='" + innerStyles + "'>";
@@ -181,36 +209,91 @@ public class PerformanceUtil {
      * @param perfSummary The PerformanceSummary object to update with data.
      * @throws IOException
      */
-    public static void updatePerformanceSummary(String testName, long startTime, long endTime,
-            String selectedDevice, PerformanceSummary perfSummary) throws IOException {
+    public static void updatePerformanceSummary(
+            String testName,
+            long startTime,
+            long endTime,
+            String selectedDevice,
+            PerformanceSummary perfSummary)
+            throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
         Filter testTypeFilter = FilterUtil.getTestTypeFilter(false, true, false);
-        Filter runFilter = FilterUtil.getTimeFilter(
-                testKey, TestRunEntity.KIND, startTime, endTime, testTypeFilter);
+        Filter runFilter =
+                FilterUtil.getTimeFilter(
+                        testKey, TestRunEntity.KIND, startTime, endTime, testTypeFilter);
 
-        Filter deviceFilter = null;
-        if (selectedDevice != null) {
-            deviceFilter = new FilterPredicate(
-                    DeviceInfoEntity.PRODUCT, FilterOperator.EQUAL, selectedDevice);
+        Query testRunQuery =
+                new Query(TestRunEntity.KIND)
+                        .setAncestor(testKey)
+                        .setFilter(runFilter)
+                        .setKeysOnly();
+
+        Set<Key> testRunKeys = new HashSet<>();
+        for (Entity e :
+                datastore.prepare(testRunQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+            testRunKeys.add(e.getKey());
         }
-        Query testRunQuery = new Query(TestRunEntity.KIND)
-                                     .setAncestor(testKey)
-                                     .setFilter(runFilter)
-                                     .setKeysOnly();
-        for (Entity testRun : datastore.prepare(testRunQuery).asIterable()) {
-            if (deviceFilter != null) {
-                Query deviceQuery = new Query(DeviceInfoEntity.KIND)
-                                            .setAncestor(testRun.getKey())
-                                            .setFilter(deviceFilter)
-                                            .setKeysOnly();
-                if (!DatastoreHelper.hasEntities(deviceQuery))
-                    continue;
-            }
-            Query q = new Query(ProfilingPointRunEntity.KIND).setAncestor(testRun.getKey());
 
-            for (Entity profilingRun : datastore.prepare(q).asIterable()) {
-                perfSummary.addData(profilingRun);
+        if (selectedDevice != null) {
+            Filter deviceFilter =
+                    FilterUtil.getDeviceTimeFilter(testKey, TestRunEntity.KIND, startTime, endTime);
+            deviceFilter =
+                    Query.CompositeFilterOperator.and(
+                            deviceFilter,
+                            new FilterPredicate(
+                                    DeviceInfoEntity.PRODUCT,
+                                    FilterOperator.EQUAL,
+                                    selectedDevice));
+            Query deviceQuery =
+                    new Query(DeviceInfoEntity.KIND)
+                            .setAncestor(testKey)
+                            .setFilter(deviceFilter)
+                            .setKeysOnly();
+            Set<Key> matchingTestRunKeys = new HashSet<>();
+            for (Entity e :
+                    datastore
+                            .prepare(deviceQuery)
+                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                if (testRunKeys.contains(e.getKey().getParent())) {
+                    matchingTestRunKeys.add(e.getKey().getParent());
+                }
+            }
+            testRunKeys = matchingTestRunKeys;
+        }
+
+        Filter profilingFilter =
+                FilterUtil.getProfilingTimeFilter(
+                        testKey, TestRunEntity.KIND, startTime, endTime);
+        Query profilingQuery =
+                new Query(ProfilingPointRunEntity.KIND)
+                        .setAncestor(testKey)
+                        .setFilter(profilingFilter)
+                        .setKeysOnly();
+
+        List<Key> profilingKeys = new ArrayList<>();
+        for (Entity e :
+                datastore.prepare(profilingQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+            if (testRunKeys.contains(e.getKey().getParent())) {
+                profilingKeys.add(e.getKey());
+            }
+        }
+
+        List<Key> gets = new ArrayList<>();
+        for (Key key : profilingKeys) {
+            gets.add(key);
+            if (gets.size() == MAX_BATCH_SIZE) {
+                Map<Key, Entity> profilingPoints = datastore.get(gets);
+                for (Key key2 : profilingPoints.keySet()) {
+                    perfSummary.addData(profilingPoints.get(key2));
+                }
+                gets = new ArrayList<>();
+            }
+        }
+        if (gets.size() > 0) {
+            Map<Key, Entity> profilingPoints = datastore.get(gets);
+            for (Key key2 : profilingPoints.keySet()) {
+                perfSummary.addData(profilingPoints.get(key2));
             }
         }
     }
