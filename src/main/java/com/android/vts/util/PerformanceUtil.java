@@ -231,7 +231,9 @@ public class PerformanceUtil {
 
         Set<Key> testRunKeys = new HashSet<>();
         for (Entity e :
-                datastore.prepare(testRunQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                datastore
+                        .prepare(testRunQuery)
+                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
             testRunKeys.add(e.getKey());
         }
 
@@ -254,7 +256,7 @@ public class PerformanceUtil {
             for (Entity e :
                     datastore
                             .prepare(deviceQuery)
-                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                            .asIterable(DatastoreHelper.getLargeBatchOptions())) {
                 if (testRunKeys.contains(e.getKey().getParent())) {
                     matchingTestRunKeys.add(e.getKey().getParent());
                 }
@@ -263,8 +265,7 @@ public class PerformanceUtil {
         }
 
         Filter profilingFilter =
-                FilterUtil.getProfilingTimeFilter(
-                        testKey, TestRunEntity.KIND, startTime, endTime);
+                FilterUtil.getProfilingTimeFilter(testKey, TestRunEntity.KIND, startTime, endTime);
         Query profilingQuery =
                 new Query(ProfilingPointRunEntity.KIND)
                         .setAncestor(testKey)
@@ -273,7 +274,9 @@ public class PerformanceUtil {
 
         List<Key> profilingKeys = new ArrayList<>();
         for (Entity e :
-                datastore.prepare(profilingQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                datastore
+                        .prepare(profilingQuery)
+                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
             if (testRunKeys.contains(e.getKey().getParent())) {
                 profilingKeys.add(e.getKey());
             }

@@ -162,7 +162,9 @@ public class ShowGraphServlet extends BaseServlet {
         // Process the test runs in the query
         List<Key> gets = new ArrayList<>();
         for (Entity testRun :
-                datastore.prepare(testRunQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                datastore
+                        .prepare(testRunQuery)
+                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
             gets.add(
                     KeyFactory.createKey(
                             testRun.getKey(), ProfilingPointRunEntity.KIND, profilingPointName));
@@ -191,7 +193,7 @@ public class ShowGraphServlet extends BaseServlet {
                         .setKeysOnly();
         gets = new ArrayList<>();
         for (Entity device :
-                datastore.prepare(deviceQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                datastore.prepare(deviceQuery).asIterable(DatastoreHelper.getLargeBatchOptions())) {
             if (testRunProfiling.containsKey(device.getParent())) {
                 gets.add(device.getKey());
             }

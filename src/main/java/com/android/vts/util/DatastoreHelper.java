@@ -61,8 +61,15 @@ import java.util.logging.Logger;
 public class DatastoreHelper {
     protected static final Logger logger = Logger.getLogger(DatastoreHelper.class.getName());
     public static final int MAX_WRITE_RETRIES = 5;
-    public static final FetchOptions LARGE_BATCH_OPTIONS =
-            FetchOptions.Builder.withChunkSize(1000).prefetchSize(1000);
+
+    /**
+     * Get query fetch options for large batches of entities.
+     *
+     * @return FetchOptions with a large chunk and prefetch size.
+     */
+    public static FetchOptions getLargeBatchOptions() {
+        return FetchOptions.Builder.withChunkSize(1000).prefetchSize(1000);
+    }
 
     /**
      * Returns true if there are data points newer than lowerBound in the results table.

@@ -184,8 +184,8 @@ public class ShowTreeServlet extends BaseServlet {
                     datastore
                             .prepare(testRunQuery)
                             .asIterable(
-                                    DatastoreHelper.LARGE_BATCH_OPTIONS.limit(
-                                            MAX_BUILD_IDS_PER_PAGE))) {
+                                    DatastoreHelper.getLargeBatchOptions()
+                                            .limit(MAX_BUILD_IDS_PER_PAGE))) {
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
                 if (testRunEntity == null) {
                     continue;
@@ -247,7 +247,7 @@ public class ShowTreeServlet extends BaseServlet {
             for (Entity device :
                     datastore
                             .prepare(deviceQuery)
-                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                            .asIterable(DatastoreHelper.getLargeBatchOptions())) {
                 if (metadataMap.containsKey(device.getParent())) {
                     deviceGets.add(device.getKey());
                 }
