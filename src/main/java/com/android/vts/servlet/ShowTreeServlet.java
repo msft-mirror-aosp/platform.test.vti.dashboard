@@ -29,7 +29,6 @@ import com.android.vts.util.TestRunMetadata;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
@@ -41,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +50,6 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.lang.StringUtils;
 
 /** Servlet for handling requests to load individual tables. */
 public class ShowTreeServlet extends BaseServlet {
@@ -76,6 +75,7 @@ public class ShowTreeServlet extends BaseServlet {
 
     /**
      * Get the test run details for a test run.
+     *
      * @param metadata The metadata for the test run whose details will be fetched.
      * @return The TestRunDetails object for the provided test run.
      */
@@ -166,31 +166,52 @@ public class ShowTreeServlet extends BaseServlet {
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         Filter typeFilter = FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
-        Filter testFilter = FilterUtil.getTimeFilter(
-                testKey, TestRunEntity.KIND, startTime, endTime, typeFilter);
+        Filter testFilter =
+                FilterUtil.getTimeFilter(
+                        testKey, TestRunEntity.KIND, startTime, endTime, typeFilter);
 
         List<TestRunMetadata> testRunMetadata = new ArrayList<>();
+        Map<Key, TestRunMetadata> metadataMap = new HashMap<>();
+        Key minKey = null;
+        Key maxKey = null;
         if (userTestFilter == null && userDeviceFilter == null) {
-            Query testRunQuery = new Query(TestRunEntity.KIND)
-                                         .setAncestor(testKey)
-                                         .setFilter(testFilter)
-                                         .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
+            Query testRunQuery =
+                    new Query(TestRunEntity.KIND)
+                            .setAncestor(testKey)
+                            .setFilter(testFilter)
+                            .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
             for (Entity testRun :
-                    datastore.prepare(testRunQuery)
-                            .asIterable(FetchOptions.Builder.withLimit(MAX_BUILD_IDS_PER_PAGE))) {
+                    datastore
+                            .prepare(testRunQuery)
+                            .asIterable(
+                                    DatastoreHelper.LARGE_BATCH_OPTIONS.limit(
+                                            MAX_BUILD_IDS_PER_PAGE))) {
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
                 if (testRunEntity == null) {
                     continue;
                 }
+                if (minKey == null || testRun.getKey().compareTo(minKey) < 0) {
+                    minKey = testRun.getKey();
+                }
+                if (maxKey == null || testRun.getKey().compareTo(maxKey) > 0) {
+                    maxKey = testRun.getKey();
+                }
                 TestRunMetadata metadata = new TestRunMetadata(testName, testRunEntity);
                 testRunMetadata.add(metadata);
+                metadataMap.put(testRun.getKey(), metadata);
             }
         } else {
             if (userTestFilter != null) {
                 testFilter = Query.CompositeFilterOperator.and(userTestFilter, testFilter);
             }
-            List<Key> gets = FilterUtil.getMatchingKeys(testKey, TestRunEntity.KIND, testFilter,
-                    userDeviceFilter, dir, MAX_BUILD_IDS_PER_PAGE);
+            List<Key> gets =
+                    FilterUtil.getMatchingKeys(
+                            testKey,
+                            TestRunEntity.KIND,
+                            testFilter,
+                            userDeviceFilter,
+                            dir,
+                            MAX_BUILD_IDS_PER_PAGE);
             Map<Key, Entity> entityMap = datastore.get(gets);
             for (Key key : gets) {
                 if (!entityMap.containsKey(key)) {
@@ -200,17 +221,75 @@ public class ShowTreeServlet extends BaseServlet {
                 if (testRunEntity == null) {
                     continue;
                 }
+                if (minKey == null || key.compareTo(minKey) < 0) {
+                    minKey = key;
+                }
+                if (maxKey == null || key.compareTo(maxKey) > 0) {
+                    maxKey = key;
+                }
                 TestRunMetadata metadata = new TestRunMetadata(testName, testRunEntity);
                 testRunMetadata.add(metadata);
+                metadataMap.put(key, metadata);
             }
         }
 
-        Comparator<TestRunMetadata> comparator = new Comparator<TestRunMetadata>() {
-            @Override
-            public int compare(TestRunMetadata t1, TestRunMetadata t2) {
-                return new Long(t2.testRun.startTimestamp).compareTo(t1.testRun.startTimestamp);
+        List<String> profilingPointNames = new ArrayList<>();
+        if (minKey != null && maxKey != null) {
+            Filter deviceFilter =
+                    FilterUtil.getDeviceTimeFilter(
+                            testKey, TestRunEntity.KIND, minKey.getId(), maxKey.getId());
+            Query deviceQuery =
+                    new Query(DeviceInfoEntity.KIND)
+                            .setAncestor(testKey)
+                            .setFilter(deviceFilter)
+                            .setKeysOnly();
+            List<Key> deviceGets = new ArrayList<>();
+            for (Entity device :
+                    datastore
+                            .prepare(deviceQuery)
+                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+                if (metadataMap.containsKey(device.getParent())) {
+                    deviceGets.add(device.getKey());
+                }
             }
-        };
+            Map<Key, Entity> devices = datastore.get(deviceGets);
+            for (Key key : devices.keySet()) {
+                if (!metadataMap.containsKey(key.getParent())) continue;
+                DeviceInfoEntity device = DeviceInfoEntity.fromEntity(devices.get(key));
+                if (device == null) continue;
+                TestRunMetadata metadata = metadataMap.get(key.getParent());
+                metadata.addDevice(device);
+            }
+
+            Filter profilingFilter =
+                    FilterUtil.getProfilingTimeFilter(
+                            testKey, TestRunEntity.KIND, minKey.getId(), maxKey.getId());
+
+            Set<String> profilingPoints = new HashSet<>();
+            Query profilingPointQuery =
+                    new Query(ProfilingPointRunEntity.KIND)
+                            .setAncestor(testKey)
+                            .setFilter(profilingFilter)
+                            .setKeysOnly();
+            for (Entity e : datastore.prepare(profilingPointQuery).asIterable()) {
+                profilingPoints.add(e.getKey().getName());
+            }
+
+            if (profilingPoints.size() == 0) {
+                profilingDataAlert = PROFILING_DATA_ALERT;
+            }
+            profilingPointNames.addAll(profilingPoints);
+            Collections.sort(profilingPointNames);
+        }
+
+        Comparator<TestRunMetadata> comparator =
+                new Comparator<TestRunMetadata>() {
+                    @Override
+                    public int compare(TestRunMetadata t1, TestRunMetadata t2) {
+                        return new Long(t2.testRun.startTimestamp)
+                                .compareTo(t1.testRun.startTimestamp);
+                    }
+                };
         Collections.sort(testRunMetadata, comparator);
         List<JsonObject> testRunObjects = new ArrayList<>();
 
@@ -240,19 +319,6 @@ public class ShowTreeServlet extends BaseServlet {
             startTime = lastRun.testRun.startTimestamp;
         }
 
-        Set<String> profilingPoints = new HashSet<>();
-        Query profilingPointQuery =
-                new Query(ProfilingPointRunEntity.KIND).setAncestor(testKey).setKeysOnly();
-        for (Entity e : datastore.prepare(profilingPointQuery).asIterable()) {
-            profilingPoints.add(e.getKey().getName());
-        }
-
-        if (profilingPoints.size() == 0) {
-            profilingDataAlert = PROFILING_DATA_ALERT;
-        }
-        List<String> profilingPointNames = new ArrayList<>(profilingPoints);
-        Collections.sort(profilingPointNames);
-
         FilterUtil.setAttributes(request, parameterMap);
 
         request.setAttribute("testName", request.getParameter("testName"));
@@ -269,10 +335,13 @@ public class ShowTreeServlet extends BaseServlet {
         request.setAttribute("topBuildId", topBuild);
         request.setAttribute("startTime", new Gson().toJson(startTime));
         request.setAttribute("endTime", new Gson().toJson(endTime));
-        request.setAttribute("hasNewer",
+        request.setAttribute(
+                "hasNewer",
                 new Gson().toJson(DatastoreHelper.hasNewer(testKey, TestRunEntity.KIND, endTime)));
-        request.setAttribute("hasOlder", new Gson().toJson(DatastoreHelper.hasOlder(
-                                                 testKey, TestRunEntity.KIND, startTime)));
+        request.setAttribute(
+                "hasOlder",
+                new Gson()
+                        .toJson(DatastoreHelper.hasOlder(testKey, TestRunEntity.KIND, startTime)));
         request.setAttribute("unfiltered", unfiltered);
         request.setAttribute("showPresubmit", showPresubmit);
         request.setAttribute("showPostsubmit", showPostsubmit);
