@@ -34,6 +34,7 @@ public class BoxPlot extends Graph {
     private static final String SERIES_KEY = "seriesList";
     private static final String MEAN_KEY = "mean";
     private static final String STD_KEY = "std";
+    private static final String COUNT_KEY = "count";
 
     private static final String DAY = "Day";
 
@@ -158,6 +159,7 @@ public class BoxPlot extends Graph {
                 JsonObject statSummary = new JsonObject();
                 Double mean = null;
                 Double std = null;
+                Integer count = null;
                 if (seriesMap.containsKey(series) && seriesMap.get(series).getCount() > 0) {
                     StatSummary stat = seriesMap.get(series);
                     mean = stat.getMean();
@@ -165,9 +167,11 @@ public class BoxPlot extends Graph {
                     if (stat.getCount() > 1) {
                         std = stat.getStd();
                     }
+                    count = stat.getCount();
                 }
                 statSummary.addProperty(MEAN_KEY, mean);
                 statSummary.addProperty(STD_KEY, std);
+                statSummary.addProperty(COUNT_KEY, count);
                 statList.add(statSummary);
             }
             statJson.addProperty(LABEL_KEY, boxLabel);
