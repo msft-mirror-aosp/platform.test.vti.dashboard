@@ -135,22 +135,3 @@ div.status-icon {
 .test-case-status.width-1 {
     width: calc(100% - 18px);
 }
-.TEST_CASE_RESULT_PASS {
-    background-color: #7FFF00;
-}
-.TEST_CASE_RESULT_FAIL {
-    background-color: #ff4d4d;
-}
-.TEST_CASE_RESULT_SKIP {
-    background-color: #A8A8A8;
-}
-.TEST_CASE_RESULT_EXCEPTION {
-    background-color: black;
-}
-.TEST_CASE_RESULT_TIMEOUT {
-    background-color: #9900CC;
-}
-.UNKNOWN_RESULT {
-    background-color: white;
-    border: 1px #A8A8A8 solid;
-}
