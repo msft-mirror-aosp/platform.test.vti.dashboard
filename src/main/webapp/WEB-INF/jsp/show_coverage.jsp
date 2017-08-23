@@ -146,6 +146,7 @@
                     html += '<li url="' + url + '" index="' + i + '">' +
                             '<div class="collapsible-header">' +
                             '<i class="material-icons">library_books</i>' +
+                            '<b>' + projects[i] + '/</b>' +
                             sourceFilenames[i] + indicators[i] + '</div>';
                     html += '<div class="collapsible-body row">' +
                             '<div class="html-container">' +
