@@ -22,7 +22,11 @@
    * @param metadataList The list of metadata objects to render on the display.
    */
   function renderCard(container, entry) {
-    var card = $('<div class="col s12 m6 l4"></div>');
+    var card = $('<a class="col s12 m6 l4"></a>');
+    var link = (
+      '/show_plan_run?plan=' + entry.testPlanRun.testPlanName +
+      '&time=' + entry.testPlanRun.startTimestamp);
+    card.attr('href', link);
     card.appendTo(container);
     var div = $('<div class="hoverable card release-entry"></div>');
     var startTime = entry.testPlanRun.startTimestamp;
@@ -47,11 +51,6 @@
       entry.testPlanRun.passCount + '/' +
       (entry.testPlanRun.passCount + entry.testPlanRun.failCount));
     counter.appendTo(div);
-    div.click(function () {
-      window.location.href = (
-        '/show_plan_run?plan=' + entry.testPlanRun.testPlanName +
-        '&time=' + entry.testPlanRun.startTimestamp);
-    })
   }
 
   $.fn.showPlanRuns = function(data) {

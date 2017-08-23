@@ -35,6 +35,26 @@
 #profiling-container {
     padding: 0;
 }
+#summary-container {
+    padding: 0;
+    line-height: 18px;
+    font-weight: 300;
+    color: rgb(97, 97, 97);
+}
+#summary-container .summary-header {
+    font-size: 18px;
+    font-weight: normal;
+    color: rgba(0, 0, 0, 0.87);
+    border-bottom: 1px solid rgb(221, 221, 221);
+    margin: 0;
+    padding: 10px 15px;
+}
+#summary-container .summary-header i {
+    margin-right: 10px;
+}
+#summary-container div {
+    margin: 15px;
+}
 #error-div {
     padding: 30px 25px;
 }
