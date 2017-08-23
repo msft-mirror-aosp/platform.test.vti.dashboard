@@ -105,7 +105,6 @@ public class ShowTreeServlet extends BaseServlet {
         boolean unfiltered = request.getParameter("unfiltered") != null;
         boolean showPresubmit = request.getParameter("showPresubmit") != null;
         boolean showPostsubmit = request.getParameter("showPostsubmit") != null;
-        String searchString = request.getParameter("search");
         Long startTime = null; // time in microseconds
         Long endTime = null; // time in microseconds
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
