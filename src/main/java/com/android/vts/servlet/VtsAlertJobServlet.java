@@ -127,6 +127,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
             if (testRunEntity == null) {
                 logger.log(Level.WARNING, "Invalid test run detected: " + testRun.getKey());
+                continue;
             }
             if (mostRecentRun == null) {
                 mostRecentRun = testRunEntity;
