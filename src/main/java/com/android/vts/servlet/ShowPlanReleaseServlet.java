@@ -62,7 +62,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
     public List<Page> getBreadcrumbLinks(HttpServletRequest request) {
         List<Page> links = new ArrayList<>();
         String planName = request.getParameter("plan");
-        links.add(new Page(PageType.PLAN_RELEASE, planName.toUpperCase(), "?plan=" + planName));
+        links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
         return links;
     }
 
