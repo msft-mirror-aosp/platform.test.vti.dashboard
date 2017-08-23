@@ -177,17 +177,17 @@ Copyright 2016 Google Inc. All Rights Reserved.
 
 <servlet-mapping>
   <servlet-name>vts_alert_job</servlet-name>
-  <url-pattern>/cron/vts_alert_job/*</url-pattern>
-</servlet-mapping>
-
-<servlet-mapping>
-  <servlet-name>vts_performance_job</servlet-name>
-  <url-pattern>/cron/vts_performance_job/*</url-pattern>
+  <url-pattern>/task/vts_alert_job/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
   <servlet-name>vts_coverage_job</servlet-name>
   <url-pattern>/task/vts_coverage_job/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>vts_performance_job</servlet-name>
+  <url-pattern>/cron/vts_performance_job/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
