@@ -114,13 +114,14 @@
     }
     if (animate) {
       wrapper.hide().appendTo(container).slideDown({
-        duration: 350,
+        duration: 200,
         easing: "easeOutQuart",
         queue: false
       });
     } else {
       wrapper.appendTo(container);
     }
+    container.addClass('expanded')
   }
 
   function _renderHeader(
