@@ -26,4 +26,10 @@ Copyright 2016 Google Inc. All Rights Reserved.
     <schedule>every day 07:30</schedule>
     <timezone>America/Los_Angeles</timezone>
   </cron>
+  <cron>
+    <url>/cron/vts_inactivity_job</url>
+    <description>Send daily inactivity warnings.</description>
+    <schedule>every day 07:30</schedule>
+    <timezone>America/Los_Angeles</timezone>
+  </cron>
 </cronentries>
