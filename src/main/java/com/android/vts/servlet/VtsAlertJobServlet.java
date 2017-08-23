@@ -47,7 +47,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
@@ -233,7 +233,7 @@ public class VtsAlertJobServlet extends HttpServlet {
 
             // Add new test case failures to top of summary in bold font.
             List<String> sortedNewTestcaseFailures = new ArrayList<>(newTestcaseFailures);
-            Collections.sort(sortedNewTestcaseFailures);
+            sortedNewTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedNewTestcaseFailures) {
                 summary += "- " + "<b>" + testcaseName + "</b><br>";
             }
@@ -241,7 +241,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             // Add continued test case failures to summary.
             List<String> sortedContinuedTestcaseFailures =
                     new ArrayList<>(continuedTestcaseFailures);
-            Collections.sort(sortedContinuedTestcaseFailures);
+            sortedContinuedTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedContinuedTestcaseFailures) {
                 summary += "- " + testcaseName + "<br>";
             }
@@ -250,7 +250,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             // Add fixed test cases to summary.
             summary += "<br><br>The following test cases were fixed in the latest test run:<br>";
             List<String> sortedFixedTestcases = new ArrayList<>(fixedTestcases);
-            Collections.sort(sortedFixedTestcases);
+            sortedFixedTestcases.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedFixedTestcases) {
                 summary += "- <i>" + testcaseName + "</i><br>";
             }
@@ -260,7 +260,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             summary += "<br><br>The following transient test case failures occured:<br>";
             List<String> sortedTransientTestcaseFailures =
                     new ArrayList<>(transientTestcaseFailures);
-            Collections.sort(sortedTransientTestcaseFailures);
+            sortedTransientTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedTransientTestcaseFailures) {
                 summary += "- " + testcaseName + "<br>";
             }
@@ -269,7 +269,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             // Add skipped test case failures to summary.
             summary += "<br><br>The following test cases have not been run since failing:<br>";
             List<String> sortedSkippedTestcaseFailures = new ArrayList<>(skippedTestcaseFailures);
-            Collections.sort(sortedSkippedTestcaseFailures);
+            sortedSkippedTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedSkippedTestcaseFailures) {
                 summary += "- " + testcaseName + "<br>";
             }

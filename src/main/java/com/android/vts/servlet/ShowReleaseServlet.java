@@ -16,30 +16,16 @@
 
 package com.android.vts.servlet;
 
-import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestPlanEntity;
-import com.android.vts.entity.UserFavoriteEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.PropertyProjection;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.Filter;
-import com.google.appengine.api.datastore.Query.FilterOperator;
-import com.google.appengine.api.datastore.Query.FilterPredicate;
-import com.google.appengine.api.users.User;
-import com.google.appengine.api.users.UserService;
-import com.google.appengine.api.users.UserServiceFactory;
-import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import javax.servlet.RequestDispatcher;
@@ -64,8 +50,6 @@ public class ShowReleaseServlet extends BaseServlet {
     @Override
     public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        UserService userService = UserServiceFactory.getUserService();
-        User currentUser = userService.getCurrentUser();
         RequestDispatcher dispatcher = null;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
@@ -77,7 +61,7 @@ public class ShowReleaseServlet extends BaseServlet {
         }
 
         List<String> plans = new ArrayList<>(planSet);
-        Collections.sort(plans);
+        plans.sort(Comparator.naturalOrder());
 
         response.setStatus(HttpServletResponse.SC_OK);
         request.setAttribute("planNames", plans);

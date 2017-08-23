@@ -38,7 +38,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -278,18 +277,12 @@ public class ShowTreeServlet extends BaseServlet {
                 profilingDataAlert = PROFILING_DATA_ALERT;
             }
             profilingPointNames.addAll(profilingPoints);
-            Collections.sort(profilingPointNames);
+            profilingPointNames.sort(Comparator.naturalOrder());
         }
 
-        Comparator<TestRunMetadata> comparator =
-                new Comparator<TestRunMetadata>() {
-                    @Override
-                    public int compare(TestRunMetadata t1, TestRunMetadata t2) {
-                        return new Long(t2.testRun.startTimestamp)
-                                .compareTo(t1.testRun.startTimestamp);
-                    }
-                };
-        Collections.sort(testRunMetadata, comparator);
+        testRunMetadata.sort(
+                (t1, t2) ->
+                        new Long(t2.testRun.startTimestamp).compareTo(t1.testRun.startTimestamp));
         List<JsonObject> testRunObjects = new ArrayList<>();
 
         int prefetchCount = 0;
