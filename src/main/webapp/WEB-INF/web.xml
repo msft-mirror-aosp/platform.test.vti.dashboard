@@ -46,6 +46,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet>
 
 <servlet>
+  <servlet-name>show_profiling_overview</servlet-name>
+  <servlet-class>com.android.vts.servlet.ShowProfilingOverviewServlet</servlet-class>
+</servlet>
+
+<servlet>
   <servlet-name>show_plan_release</servlet-name>
   <servlet-class>com.android.vts.servlet.ShowPlanReleaseServlet</servlet-class>
 </servlet>
@@ -133,6 +138,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 <servlet-mapping>
   <servlet-name>show_graph</servlet-name>
   <url-pattern>/show_graph/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>show_profiling_overview</servlet-name>
+  <url-pattern>/show_profiling_overview/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>

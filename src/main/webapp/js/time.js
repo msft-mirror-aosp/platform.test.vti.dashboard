@@ -26,8 +26,23 @@
     var time = moment(timestamp / 1000);
     var format = 'H:mm:ss';
     if (!time.isSame(moment(), 'd')) {
-        format = 'M/D/YY ' + format;
+        format = 'YY/M/DD ' + format;
     }
+    if (!!showTimezone) {
+        format = format + 'ZZ';
+    }
+    return time.format(format);
+  }
+
+  /**
+   * Renders a date in the user timezone.
+   * @param timestamp The long timestamp to render (in microseconds).
+   * @param showTimezone True if the timezone should be rendered, false otherwise.
+   * @returns the string-formatted version of the provided timestamp.
+   */
+  moment.prototype.renderDate = function (timestamp, showTimezone) {
+    var time = moment(timestamp / 1000);
+    var format = 'YY/M/DD';
     if (!!showTimezone) {
         format = format + 'ZZ';
     }
