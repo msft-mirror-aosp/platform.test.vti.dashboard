@@ -31,26 +31,50 @@ public class UserFavoriteEntity implements DashboardEntity {
     // Property keys
     public static final String USER = "user";
     public static final String TEST_KEY = "testKey";
+    public static final String MUTE_NOTIFICATIONS = "muteNotifications";
 
+    private final Key key;
     public final User user;
     public final Key testKey;
+    public boolean muteNotifications;
+
+    /**
+     * Create a user favorite relationship.
+     *
+     * @param key The key of the entity in the database.
+     * @param user The User object for the subscribing user.
+     * @param testKey The key of the TestEntity object describing the test.
+     * @param muteNotifications True if the subscriber has muted notifications, false otherwise.
+     */
+    private UserFavoriteEntity(Key key, User user, Key testKey, boolean muteNotifications) {
+        this.key = key;
+        this.user = user;
+        this.testKey = testKey;
+        this.muteNotifications = muteNotifications;
+    }
 
     /**
      * Create a user favorite relationship.
      *
      * @param user The User object for the subscribing user.
      * @param testKey The key of the TestEntity object describing the test.
+     * @param muteNotifications True if the subscriber has muted notifications, false otherwise.
      */
-    public UserFavoriteEntity(User user, Key testKey) {
-        this.user = user;
-        this.testKey = testKey;
+    public UserFavoriteEntity(User user, Key testKey, boolean muteNotifications) {
+        this(null, user, testKey, muteNotifications);
     }
 
     @Override
     public Entity toEntity() {
-        Entity favoriteEntity = new Entity(KIND);
+        Entity favoriteEntity;
+        if (this.key != null) {
+            favoriteEntity = new Entity(key);
+        } else {
+            favoriteEntity = new Entity(KIND);
+        }
         favoriteEntity.setProperty(USER, this.user);
         favoriteEntity.setProperty(TEST_KEY, this.testKey);
+        favoriteEntity.setProperty(MUTE_NOTIFICATIONS, this.muteNotifications);
         return favoriteEntity;
     }
 
@@ -69,7 +93,11 @@ public class UserFavoriteEntity implements DashboardEntity {
         try {
             User user = (User) e.getProperty(USER);
             Key testKey = (Key) e.getProperty(TEST_KEY);
-            return new UserFavoriteEntity(user, testKey);
+            boolean muteNotifications = false;
+            if (e.hasProperty(MUTE_NOTIFICATIONS)) {
+                muteNotifications = (boolean) e.getProperty(MUTE_NOTIFICATIONS);
+            }
+            return new UserFavoriteEntity(e.getKey(), user, testKey, muteNotifications);
         } catch (ClassCastException exception) {
             // Invalid cast
             logger.log(Level.WARNING, "Error parsing user favorite entity.", exception);
