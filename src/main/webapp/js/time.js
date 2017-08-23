@@ -24,10 +24,7 @@
    */
   moment.prototype.renderTime = function (timestamp, showTimezone) {
     var time = moment(timestamp / 1000);
-    var format = 'H:mm:ss';
-    if (!time.isSame(moment(), 'd')) {
-        format = 'YY/M/DD ' + format;
-    }
+    var format = 'YYYY-M-DD H:mm:ss';
     if (!!showTimezone) {
         format = format + 'ZZ';
     }
@@ -42,7 +39,7 @@
    */
   moment.prototype.renderDate = function (timestamp, showTimezone) {
     var time = moment(timestamp / 1000);
-    var format = 'YY/M/DD';
+    var format = 'YYYY-M-DD';
     if (!!showTimezone) {
         format = format + 'ZZ';
     }
