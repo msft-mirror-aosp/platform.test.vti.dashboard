@@ -158,8 +158,8 @@ public class TestRunEntity implements DashboardEntity {
         this.hostName = hostName;
         this.passCount = passCount;
         this.failCount = failCount;
-        this.testCaseIds = testCaseIds;
-        this.logLinks = logLinks;
+        this.testCaseIds = testCaseIds == null ? new ArrayList<Long>() : testCaseIds;
+        this.logLinks = logLinks == null ? new ArrayList<String>() : logLinks;
         this.coveredLineCount = coveredLineCount;
         this.totalLineCount = totalLineCount;
         this.hasCoverage = totalLineCount > 0;
