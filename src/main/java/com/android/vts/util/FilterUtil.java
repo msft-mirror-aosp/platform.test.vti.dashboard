@@ -14,6 +14,7 @@
 package com.android.vts.util;
 
 import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -35,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 
@@ -125,11 +125,9 @@ public class FilterUtil {
     public static Filter getUserDeviceFilter(Map<String, Object> parameterMap) {
         Filter deviceFilter = null;
         for (String key : parameterMap.keySet()) {
-            if (!FilterKey.isDeviceKey(key))
-                continue;
+            if (!FilterKey.isDeviceKey(key)) continue;
             String[] values = (String[]) parameterMap.get(key);
-            if (values.length == 0)
-                continue;
+            if (values.length == 0) continue;
             String value = values[0];
             FilterKey filterKey = FilterKey.parse(key);
             Filter f = filterKey.getFilterForString(value);
@@ -151,11 +149,9 @@ public class FilterUtil {
     public static Filter getUserTestFilter(Map<String, Object> parameterMap) {
         Filter testFilter = null;
         for (String key : parameterMap.keySet()) {
-            if (!FilterKey.isTestKey(key))
-                continue;
+            if (!FilterKey.isTestKey(key)) continue;
             String[] values = (String[]) parameterMap.get(key);
-            if (values.length == 0)
-                continue;
+            if (values.length == 0) continue;
             String stringValue = values[0];
             FilterKey filterKey = FilterKey.parse(key);
             Filter f = null;
@@ -198,10 +194,14 @@ public class FilterUtil {
         if (unfiltered) {
             return null;
         } else if (showPresubmit && !showPostsubmit) {
-            return new FilterPredicate(TestRunEntity.TYPE, FilterOperator.EQUAL,
+            return new FilterPredicate(
+                    TestRunEntity.TYPE,
+                    FilterOperator.EQUAL,
                     TestRunEntity.TestRunType.PRESUBMIT.getNumber());
         } else if (showPostsubmit && !showPresubmit) {
-            return new FilterPredicate(TestRunEntity.TYPE, FilterOperator.EQUAL,
+            return new FilterPredicate(
+                    TestRunEntity.TYPE,
+                    FilterOperator.EQUAL,
                     TestRunEntity.TestRunType.POSTSUBMIT.getNumber());
         } else {
             List<Integer> types = new ArrayList<>();
@@ -209,6 +209,96 @@ public class FilterUtil {
             types.add(TestRunEntity.TestRunType.POSTSUBMIT.getNumber());
             return new FilterPredicate(TestRunEntity.TYPE, FilterOperator.IN, types);
         }
+    }
+
+    /**
+     * Get a filter for profiling points between a specified time window.
+     *
+     * @param grandparentKey The key of the profiling point grandparent entity.
+     * @param parentKind The kind of the profiling point parent.
+     * @param startTime The start time of the window, or null if unbounded.
+     * @param endTime The end time of the window, or null if unbounded.
+     * @return A filter to query for profiling points in the time window.
+     */
+    public static Filter getProfilingTimeFilter(
+            Key grandparentKey, String parentKind, Long startTime, Long endTime) {
+        if (startTime == null && endTime == null) {
+            endTime = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
+        }
+        Filter startFilter = null;
+        Filter endFilter = null;
+        Filter filter = null;
+        if (startTime != null) {
+            Key minRunKey = KeyFactory.createKey(grandparentKey, parentKind, startTime);
+            Key startKey =
+                    KeyFactory.createKey(
+                            minRunKey, ProfilingPointRunEntity.KIND, String.valueOf((char) 0x0));
+            startFilter =
+                    new FilterPredicate(
+                            Entity.KEY_RESERVED_PROPERTY,
+                            FilterOperator.GREATER_THAN_OR_EQUAL,
+                            startKey);
+            filter = startFilter;
+        }
+        if (endTime != null) {
+            Key maxRunKey = KeyFactory.createKey(grandparentKey, parentKind, endTime);
+            Key endKey =
+                    KeyFactory.createKey(
+                            maxRunKey, ProfilingPointRunEntity.KIND, String.valueOf((char) 0xff));
+            endFilter =
+                    new FilterPredicate(
+                            Entity.KEY_RESERVED_PROPERTY,
+                            FilterOperator.LESS_THAN_OR_EQUAL,
+                            endKey);
+            filter = endFilter;
+        }
+        if (startFilter != null && endFilter != null) {
+            filter = CompositeFilterOperator.and(startFilter, endFilter);
+        }
+        return filter;
+    }
+
+    /**
+     * Get a filter for device information between a specified time window.
+     *
+     * @param grandparentKey The key of the device's grandparent entity.
+     * @param parentKind The kind of the device's parent.
+     * @param startTime The start time of the window, or null if unbounded.
+     * @param endTime The end time of the window, or null if unbounded.
+     * @return A filter to query for devices in the time window.
+     */
+    public static Filter getDeviceTimeFilter(
+            Key grandparentKey, String parentKind, Long startTime, Long endTime) {
+        if (startTime == null && endTime == null) {
+            endTime = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
+        }
+        Filter startFilter = null;
+        Filter endFilter = null;
+        Filter filter = null;
+        if (startTime != null) {
+            Key minRunKey = KeyFactory.createKey(grandparentKey, parentKind, startTime);
+            Key startKey = KeyFactory.createKey(minRunKey, DeviceInfoEntity.KIND, 1);
+            startFilter =
+                    new FilterPredicate(
+                            Entity.KEY_RESERVED_PROPERTY,
+                            FilterOperator.GREATER_THAN_OR_EQUAL,
+                            startKey);
+            filter = startFilter;
+        }
+        if (endTime != null) {
+            Key maxRunKey = KeyFactory.createKey(grandparentKey, parentKind, endTime);
+            Key endKey = KeyFactory.createKey(maxRunKey, DeviceInfoEntity.KIND, Long.MAX_VALUE);
+            endFilter =
+                    new FilterPredicate(
+                            Entity.KEY_RESERVED_PROPERTY,
+                            FilterOperator.LESS_THAN_OR_EQUAL,
+                            endKey);
+            filter = endFilter;
+        }
+        if (startFilter != null && endFilter != null) {
+            filter = CompositeFilterOperator.and(startFilter, endFilter);
+        }
+        return filter;
     }
 
     /**
@@ -232,14 +322,20 @@ public class FilterUtil {
         Filter filter = null;
         if (startTime != null) {
             Key startKey = KeyFactory.createKey(testKey, kind, startTime);
-            startFilter = new FilterPredicate(
-                    Entity.KEY_RESERVED_PROPERTY, FilterOperator.GREATER_THAN_OR_EQUAL, startKey);
+            startFilter =
+                    new FilterPredicate(
+                            Entity.KEY_RESERVED_PROPERTY,
+                            FilterOperator.GREATER_THAN_OR_EQUAL,
+                            startKey);
             filter = startFilter;
         }
         if (endTime != null) {
             Key endKey = KeyFactory.createKey(testKey, kind, endTime);
-            endFilter = new FilterPredicate(
-                    Entity.KEY_RESERVED_PROPERTY, FilterOperator.LESS_THAN_OR_EQUAL, endKey);
+            endFilter =
+                    new FilterPredicate(
+                            Entity.KEY_RESERVED_PROPERTY,
+                            FilterOperator.LESS_THAN_OR_EQUAL,
+                            endKey);
             filter = endFilter;
         }
         if (startFilter != null && endFilter != null) {
@@ -266,13 +362,19 @@ public class FilterUtil {
      * @param maxSize The maximum number of entities to return.
      * @return a list of keys matching the provided test and device filters.
      */
-    public static List<Key> getMatchingKeys(Key ancestorKey, String kind, Filter testFilter,
-            Filter deviceFilter, Query.SortDirection dir, int maxSize) {
+    public static List<Key> getMatchingKeys(
+            Key ancestorKey,
+            String kind,
+            Filter testFilter,
+            Filter deviceFilter,
+            Query.SortDirection dir,
+            int maxSize) {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Set<Key> matchingTestKeys = new HashSet<>();
         Query testQuery =
                 new Query(kind).setAncestor(ancestorKey).setFilter(testFilter).setKeysOnly();
-        for (Entity testRunKey : datastore.prepare(testQuery).asIterable()) {
+        for (Entity testRunKey :
+                datastore.prepare(testQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
             matchingTestKeys.add(testRunKey.getKey());
         }
 
@@ -281,11 +383,15 @@ public class FilterUtil {
             allMatchingKeys = matchingTestKeys;
         } else {
             allMatchingKeys = new HashSet<>();
-            Query deviceQuery = new Query(DeviceInfoEntity.KIND)
-                                        .setAncestor(ancestorKey)
-                                        .setFilter(deviceFilter)
-                                        .setKeysOnly();
-            for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
+            Query deviceQuery =
+                    new Query(DeviceInfoEntity.KIND)
+                            .setAncestor(ancestorKey)
+                            .setFilter(deviceFilter)
+                            .setKeysOnly();
+            for (Entity device :
+                    datastore
+                            .prepare(deviceQuery)
+                            .asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
                 if (matchingTestKeys.contains(device.getKey().getParent())) {
                     allMatchingKeys.add(device.getKey().getParent());
                 }
@@ -303,17 +409,16 @@ public class FilterUtil {
 
     /**
      * Set the request with the provided key/value attribute map.
+     *
      * @param request The request whose attributes to set.
      * @param parameterMap The map from key to (Object) String[] value whose entries to parse.
      */
     public static void setAttributes(HttpServletRequest request, Map<String, Object> parameterMap) {
         for (String key : parameterMap.keySet()) {
-            if (!FilterKey.isDeviceKey(key) && !FilterKey.isTestKey(key))
-                continue;
+            if (!FilterKey.isDeviceKey(key) && !FilterKey.isTestKey(key)) continue;
             FilterKey filterKey = FilterKey.parse(key);
             String[] values = (String[]) parameterMap.get(key);
-            if (values.length == 0)
-                continue;
+            if (values.length == 0) continue;
             String stringValue = values[0];
             request.setAttribute(filterKey.keyString, new Gson().toJson(stringValue));
         }

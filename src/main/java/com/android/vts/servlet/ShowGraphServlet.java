@@ -30,7 +30,6 @@ import com.android.vts.util.PerformanceUtil;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
@@ -75,8 +74,10 @@ public class ShowGraphServlet extends BaseServlet {
         links.add(new Page(PageType.TABLE, testName, "?testName=" + testName));
 
         String profilingPointName = request.getParameter("profilingPoint");
-        links.add(new Page(
-                PageType.GRAPH, "?testName=" + testName + "&profilingPoint=" + profilingPointName));
+        links.add(
+                new Page(
+                        PageType.GRAPH,
+                        "?testName=" + testName + "&profilingPoint=" + profilingPointName));
         return links;
     }
 
@@ -90,8 +91,7 @@ public class ShowGraphServlet extends BaseServlet {
     private static void processProfilingRun(
             Entity profilingRun, String idString, Map<String, Graph> graphMap) {
         ProfilingPointRunEntity pt = ProfilingPointRunEntity.fromEntity(profilingRun);
-        if (pt == null)
-            return;
+        if (pt == null) return;
         String name = PerformanceUtil.getOptionAlias(pt, splitKeySet);
         Graph g = null;
         if (pt.labels != null && pt.labels.size() == pt.values.size()) {
@@ -110,24 +110,16 @@ public class ShowGraphServlet extends BaseServlet {
     /**
      * Get a summary string describing the devices in the test run.
      *
-     * @param testRun The entity storing test run information.
-     * @param selectedDevice The name of the selected device.
-     * @return A string describing the devices in the test run, or null if it doesn't match filter.
+     * @param devices The list of device descriptors for a particular test run.
+     * @return A string describing the devices in the test run.
      */
-    private static String getDeviceSummary(Entity testRun, String selectedDevice) {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    private static String getDeviceSummary(List<DeviceInfoEntity> devices) {
+        if (devices == null) return null;
         List<String> buildInfos = new ArrayList<>();
-        Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(testRun.getKey());
-        boolean isSelectedDevice = selectedDevice == null;
-        for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
-            String product = (String) device.getProperty(DeviceInfoEntity.PRODUCT);
-            if (selectedDevice != null && product.equals(selectedDevice)) {
-                isSelectedDevice = true;
-            }
-            String buildId = (String) device.getProperty(DeviceInfoEntity.BUILD_ID);
-            buildInfos.add(product + " (" + buildId + ")");
+        for (DeviceInfoEntity device : devices) {
+            buildInfos.add(device.product + " (" + device.buildId + ")");
         }
-        return isSelectedDevice ? StringUtils.join(buildInfos, ", ") : null;
+        return StringUtils.join(buildInfos, ", ");
     }
 
     @Override
@@ -153,8 +145,7 @@ public class ShowGraphServlet extends BaseServlet {
 
         // Set of device names
         List<String> devices = DatastoreHelper.getAllProducts();
-        if (!devices.contains(selectedDevice))
-            selectedDevice = null;
+        if (!devices.contains(selectedDevice)) selectedDevice = null;
 
         Map<String, Graph> graphMap = new HashMap<>();
 
@@ -162,27 +153,68 @@ public class ShowGraphServlet extends BaseServlet {
         Key parentKey = KeyFactory.createKey(TestEntity.KIND, testName);
         Filter timeFilter =
                 FilterUtil.getTimeFilter(parentKey, TestRunEntity.KIND, startTime, endTime);
-        Query testRunQuery = new Query(TestRunEntity.KIND)
-                                     .setAncestor(parentKey)
-                                     .setFilter(timeFilter)
-                                     .setKeysOnly();
+        Query testRunQuery =
+                new Query(TestRunEntity.KIND)
+                        .setAncestor(parentKey)
+                        .setFilter(timeFilter)
+                        .setKeysOnly();
 
         // Process the test runs in the query
-        for (Entity testRun : datastore.prepare(testRunQuery).asIterable()) {
-            String buildInfoString = getDeviceSummary(testRun, selectedDevice);
-            if (buildInfoString == null) {
-                continue;
-            }
+        List<Key> gets = new ArrayList<>();
+        for (Entity testRun :
+                datastore.prepare(testRunQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+            gets.add(
+                    KeyFactory.createKey(
+                            testRun.getKey(), ProfilingPointRunEntity.KIND, profilingPointName));
+        }
+        Map<Key, Entity> profilingPoints = datastore.get(gets);
+        Map<Key, Entity> testRunProfiling = new HashMap<>();
+        for (Key key : profilingPoints.keySet()) {
+            testRunProfiling.put(key.getParent(), profilingPoints.get(key));
+        }
 
-            try {
-                Entity profilingRun = datastore.get(KeyFactory.createKey(
-                        testRun.getKey(), ProfilingPointRunEntity.KIND, profilingPointName));
-                processProfilingRun(profilingRun, buildInfoString, graphMap);
-            } catch (EntityNotFoundException e) {
-                // Profiling point not collected during this test run
-                continue;
+        Filter deviceFilter =
+                FilterUtil.getDeviceTimeFilter(parentKey, TestRunEntity.KIND, startTime, endTime);
+        if (selectedDevice != null) {
+            deviceFilter =
+                    Query.CompositeFilterOperator.and(
+                            deviceFilter,
+                            new Query.FilterPredicate(
+                                    DeviceInfoEntity.PRODUCT,
+                                    Query.FilterOperator.EQUAL,
+                                    selectedDevice));
+        }
+        Query deviceQuery =
+                new Query(DeviceInfoEntity.KIND)
+                        .setAncestor(parentKey)
+                        .setFilter(deviceFilter)
+                        .setKeysOnly();
+        gets = new ArrayList<>();
+        for (Entity device :
+                datastore.prepare(deviceQuery).asIterable(DatastoreHelper.LARGE_BATCH_OPTIONS)) {
+            if (testRunProfiling.containsKey(device.getParent())) {
+                gets.add(device.getKey());
             }
         }
+
+        Map<Key, Entity> deviceInfos = datastore.get(gets);
+        Map<Key, List<DeviceInfoEntity>> testRunDevices = new HashMap<>();
+        for (Key deviceKey : deviceInfos.keySet()) {
+            if (!testRunDevices.containsKey(deviceKey.getParent())) {
+                testRunDevices.put(deviceKey.getParent(), new ArrayList<DeviceInfoEntity>());
+            }
+            DeviceInfoEntity device = DeviceInfoEntity.fromEntity(deviceInfos.get(deviceKey));
+            if (device == null) continue;
+            testRunDevices.get(deviceKey.getParent()).add(device);
+        }
+
+        for (Key runKey : testRunProfiling.keySet()) {
+            String idString = getDeviceSummary(testRunDevices.get(runKey));
+            if (idString != null) {
+                processProfilingRun(testRunProfiling.get(runKey), idString, graphMap);
+            }
+        }
+
         // Get the names of the graphs to render
         String[] names = graphMap.keySet().toArray(new String[graphMap.size()]);
         Arrays.sort(names);
@@ -193,8 +225,7 @@ public class ShowGraphServlet extends BaseServlet {
             Graph g = graphMap.get(name);
             if (g.size() > 0) {
                 graphList.add(g);
-                if (g instanceof Histogram)
-                    hasHistogram = true;
+                if (g instanceof Histogram) hasHistogram = true;
             }
         }
 
@@ -210,12 +241,12 @@ public class ShowGraphServlet extends BaseServlet {
         request.setAttribute("devices", devices);
         request.setAttribute("selectedDevice", selectedDevice);
         request.setAttribute("showFilterDropdown", hasHistogram);
-        if (graphList.size() == 0)
-            request.setAttribute("error", PROFILING_DATA_ALERT);
+        if (graphList.size() == 0) request.setAttribute("error", PROFILING_DATA_ALERT);
 
-        Gson gson = new GsonBuilder()
-                            .registerTypeHierarchyAdapter(Graph.class, new GraphSerializer())
-                            .create();
+        Gson gson =
+                new GsonBuilder()
+                        .registerTypeHierarchyAdapter(Graph.class, new GraphSerializer())
+                        .create();
         request.setAttribute("graphs", gson.toJson(graphList));
 
         request.setAttribute("profilingPointName", profilingPointName);
