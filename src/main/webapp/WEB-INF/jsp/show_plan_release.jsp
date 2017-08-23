@@ -47,6 +47,16 @@
             corpus: ${devices}
           }, ${device});
           search.addFilter('Device Build ID', 'deviceBuildId', {}, ${deviceBuildId});
+          search.addFilter('Test Build ID', 'testBuildId', {}, ${testBuildId});
+          search.addFilter('Host', 'hostname', {}, ${hostname});
+          search.addFilter('Passing Count', 'passing', {
+            type: 'number',
+            width: 's2'
+          }, ${passing});
+          search.addFilter('Non-Passing Count', 'nonpassing', {
+            type: 'number',
+            width: 's2'
+          }, ${nonpassing});
           search.addRunTypeCheckboxes(${showPresubmit}, ${showPostsubmit});
           search.display();
           $('#release-container').showPlanRuns(${planRuns});
