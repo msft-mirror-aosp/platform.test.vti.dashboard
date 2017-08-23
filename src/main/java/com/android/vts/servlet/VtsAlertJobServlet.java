@@ -40,6 +40,9 @@ import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
@@ -64,6 +67,7 @@ import org.apache.commons.lang.StringUtils;
 
 /** Represents the notifications service which is automatically called on a fixed schedule. */
 public class VtsAlertJobServlet extends HttpServlet {
+    private static final String ALERT_JOB_URL = "/task/vts_alert_job";
     protected final Logger logger = Logger.getLogger(getClass().getName());
     protected final int MAX_RUN_COUNT = 1000; // maximum number of runs to query for
 
@@ -272,8 +276,7 @@ public class VtsAlertJobServlet extends HttpServlet {
         }
 
         Date lastUpload = new Date(TimeUnit.MICROSECONDS.toMillis(mostRecentRun.startTimestamp));
-        String uploadDateString =
-                new SimpleDateFormat("MM/dd/yyyy").format(lastUpload);
+        String uploadDateString = new SimpleDateFormat("MM/dd/yyyy").format(lastUpload);
         String subject = "VTS Test Alert: " + testName + " @ " + uploadDateString;
         if (newTestcaseFailures.size() > 0) {
             String body =
@@ -378,71 +381,93 @@ public class VtsAlertJobServlet extends HttpServlet {
         return failingTestcases;
     }
 
+    /**
+     * Add a task to process test run data
+     *
+     * @param testRunKey The key of the test run whose data process.
+     */
+    public static void addTask(Key testRunKey) {
+        Queue queue = QueueFactory.getDefaultQueue();
+        String keyString = KeyFactory.keyToString(testRunKey);
+        queue.add(
+                TaskOptions.Builder.withUrl(ALERT_JOB_URL)
+                        .param("runKey", keyString)
+                        .method(TaskOptions.Method.POST));
+    }
+
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Query q = new Query(TestEntity.KIND).setKeysOnly();
-        List<Key> testKeys = new ArrayList<>();
-        for (Entity test : datastore.prepare(q).asIterable()) {
-            testKeys.add(test.getKey());
+        String runKeyString = request.getParameter("runKey");
+
+        Key testRunKey;
+        try {
+            testRunKey = KeyFactory.stringToKey(runKeyString);
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.WARNING, "Invalid key specified: " + runKeyString);
+            return;
         }
-        for (Key testKey : testKeys) {
-            String testName = testKey.getName();
+        String testName = testRunKey.getParent().getName();
 
-            TestStatusEntity status = null;
-            Key statusKey = KeyFactory.createKey(TestStatusEntity.KIND, testName);
+        TestStatusEntity status = null;
+        Key statusKey = KeyFactory.createKey(TestStatusEntity.KIND, testName);
+        try {
+            status = TestStatusEntity.fromEntity(datastore.get(statusKey));
+        } catch (EntityNotFoundException e) {
+            // no existing status
+        }
+        if (status == null) {
+            status = new TestStatusEntity(testName);
+        }
+        if (status.timestamp >= testRunKey.getId()) {
+            // Another job has already updated the status first
+            return;
+        }
+        List<String> emails = EmailHelper.getSubscriberEmails(testRunKey.getParent());
+
+        StringBuffer fullUrl = request.getRequestURL();
+        String baseUrl = fullUrl.substring(0, fullUrl.indexOf(request.getRequestURI()));
+        String link = baseUrl + "/show_tree?testName=" + testName;
+
+        List<Message> messageQueue = new ArrayList<>();
+        Map<String, TestCase> failedTestcaseMap = getCurrentFailures(status);
+
+        TestStatusEntity newStatus =
+                getTestStatus(status, link, failedTestcaseMap, emails, messageQueue);
+        if (newStatus == null) {
+            // No changes to status
+            return;
+        }
+
+        int retries = 0;
+        while (true) {
+            Transaction txn = datastore.beginTransaction();
             try {
-                status = TestStatusEntity.fromEntity(datastore.get(statusKey));
-            } catch (EntityNotFoundException e) {
-                // no existing status
-            }
-            if (status == null) {
-                status = new TestStatusEntity(testName);
-            }
-            List<String> emails = EmailHelper.getSubscriberEmails(testKey);
-
-            StringBuffer fullUrl = request.getRequestURL();
-            String baseUrl = fullUrl.substring(0, fullUrl.indexOf(request.getRequestURI()));
-            String link = baseUrl + "/show_table?testName=" + testName;
-
-            List<Message> messageQueue = new ArrayList<>();
-            Map<String, TestCase> failedTestcaseMap = getCurrentFailures(status);
-
-            TestStatusEntity newStatus =
-                    getTestStatus(status, link, failedTestcaseMap, emails, messageQueue);
-            if (newStatus == null) {
-                continue;
-            }
-
-            int retries = 0;
-            while (true) {
-                Transaction txn = datastore.beginTransaction();
                 try {
-                    try {
-                        status = TestStatusEntity.fromEntity(datastore.get(statusKey));
-                    } catch (EntityNotFoundException e) {
-                        // no status left
-                    }
-                    if (status == null || status.timestamp >= newStatus.timestamp) {
-                        txn.rollback();
-                    } else { // This update is most recent.
-                        datastore.put(newStatus.toEntity());
-                        txn.commit();
-                        EmailHelper.sendAll(messageQueue);
-                    }
-                    break;
-                } catch (ConcurrentModificationException
-                        | DatastoreFailureException
-                        | DatastoreTimeoutException e) {
-                    logger.log(Level.WARNING, "Retrying alert job insert: " + statusKey);
-                    if (retries++ >= DatastoreHelper.MAX_WRITE_RETRIES) {
-                        logger.log(Level.SEVERE, "Exceeded alert job retries: " + statusKey);
-                        throw e;
-                    }
-                } finally {
-                    if (txn.isActive()) {
-                        txn.rollback();
-                    }
+                    status = TestStatusEntity.fromEntity(datastore.get(statusKey));
+                } catch (EntityNotFoundException e) {
+                    // no status left
+                }
+                if (status == null || status.timestamp >= newStatus.timestamp) {
+                    txn.rollback();
+                } else { // This update is most recent.
+                    datastore.put(newStatus.toEntity());
+                    txn.commit();
+                    EmailHelper.sendAll(messageQueue);
+                }
+                break;
+            } catch (ConcurrentModificationException
+                    | DatastoreFailureException
+                    | DatastoreTimeoutException e) {
+                logger.log(Level.WARNING, "Retrying alert job insert: " + statusKey);
+                if (retries++ >= DatastoreHelper.MAX_WRITE_RETRIES) {
+                    logger.log(Level.SEVERE, "Exceeded alert job retries: " + statusKey);
+                    throw e;
+                }
+            } finally {
+                if (txn.isActive()) {
+                    txn.rollback();
                 }
             }
         }
