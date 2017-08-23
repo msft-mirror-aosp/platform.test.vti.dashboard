@@ -140,6 +140,12 @@ public class ProfilingPointSummary implements Iterable<StatSummary> {
                 String label = labels.get(currentIndex++);
                 return statSummaries.get(labelIndices.get(label));
             }
+
+            @Override
+            public void remove() {
+                // Not supported
+                throw new UnsupportedOperationException();
+            }
         };
         return it;
     }
