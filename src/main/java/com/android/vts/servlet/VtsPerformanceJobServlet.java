@@ -23,27 +23,36 @@ import com.android.vts.util.PerformanceUtil;
 import com.android.vts.util.PerformanceUtil.TimeInterval;
 import com.android.vts.util.ProfilingPointSummary;
 import com.android.vts.util.StatSummary;
+import com.android.vts.util.TaskQueueHelper;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /** Represents the notifications service which is automatically called on a fixed schedule. */
 public class VtsPerformanceJobServlet extends HttpServlet {
+    protected static final Logger logger =
+            Logger.getLogger(VtsPerformanceJobServlet.class.getName());
+
+    private static final String PERFORMANCE_JOB_URL = "/cron/vts_performance_job";
     private static final String MEAN = "Mean";
     private static final String MAX = "Max";
     private static final String MIN = "Min";
@@ -73,9 +82,7 @@ public class VtsPerformanceJobServlet extends HttpServlet {
 
     private static final DecimalFormat FORMATTER;
 
-    /**
-     * Initialize the decimal formatter.
-     */
+    /** Initialize the decimal formatter. */
     static {
         FORMATTER = new DecimalFormat("#.##");
         FORMATTER.setRoundingMode(RoundingMode.HALF_UP);
@@ -83,14 +90,11 @@ public class VtsPerformanceJobServlet extends HttpServlet {
 
     /**
      * Generates an HTML summary of the performance changes for the profiling results in the
-     * specified
-     * table.
+     * specified table.
      *
      * <p>Retrieves the past 24 hours of profiling data and compares it to the 24 hours that
-     * preceded
-     * it. Creates a table representation of the mean and standard deviation for each profiling
-     * point.
-     * When performance degrades, the cell is shaded red.
+     * preceded it. Creates a table representation of the mean and standard deviation for each
+     * profiling point. When performance degrades, the cell is shaded red.
      *
      * @param testName The name of the test whose profiling data to summarize.
      * @param perfSummaries List of PerformanceSummary objects for each profiling run (in reverse
@@ -98,10 +102,9 @@ public class VtsPerformanceJobServlet extends HttpServlet {
      * @param labels List of string labels for use as the column headers.
      * @returns An HTML string containing labeled table summaries.
      */
-    public static String getPeformanceSummary(
+    public static String getPerformanceSummary(
             String testName, List<PerformanceSummary> perfSummaries, List<String> labels) {
-        if (perfSummaries.size() == 0)
-            return "";
+        if (perfSummaries.size() == 0) return "";
         PerformanceSummary now = perfSummaries.get(0);
         String tableHTML = "<p style='" + LABEL_STYLE + "'><b>";
         tableHTML += testName + "</b></p>";
@@ -121,12 +124,9 @@ public class VtsPerformanceJobServlet extends HttpServlet {
             for (int i = 0; i < labels.size(); i++) {
                 String content = labels.get(i);
                 tableHTML += "<th style='" + SECTION_LABEL_STYLE + "' ";
-                if (i == 0)
-                    tableHTML += "colspan='1'";
-                else if (i == 1)
-                    tableHTML += "colspan='3'";
-                else
-                    tableHTML += "colspan='4'";
+                if (i == 0) tableHTML += "colspan='1'";
+                else if (i == 1) tableHTML += "colspan='3'";
+                else tableHTML += "colspan='4'";
                 tableHTML += ">" + content + "</th>";
             }
             tableHTML += "</tr>";
@@ -178,12 +178,18 @@ public class VtsPerformanceJobServlet extends HttpServlet {
                     PerformanceSummary oldPerfSummary = perfSummaries.get(i);
                     if (oldPerfSummary.hasProfilingPoint(profilingPoint)) {
                         StatSummary baseline =
-                                oldPerfSummary.getProfilingPointSummary(profilingPoint)
+                                oldPerfSummary
+                                        .getProfilingPointSummary(profilingPoint)
                                         .getStatSummary(label);
-                        tableHTML += PerformanceUtil.getBestCasePerformanceComparisonHTML(
-                                baseline, stats, "", "", INNER_CELL_STYLE, OUTER_CELL_STYLE);
-                    } else
-                        tableHTML += "<td></td><td></td><td></td><td></td>";
+                        tableHTML +=
+                                PerformanceUtil.getBestCasePerformanceComparisonHTML(
+                                        baseline,
+                                        stats,
+                                        "",
+                                        "",
+                                        INNER_CELL_STYLE,
+                                        OUTER_CELL_STYLE);
+                    } else tableHTML += "<td></td><td></td><td></td><td></td>";
                 }
                 tableHTML += "</tr>";
             }
@@ -196,17 +202,34 @@ public class VtsPerformanceJobServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Set<Key> allTestKeys = new HashSet<>();
-
+        Queue queue = QueueFactory.getDefaultQueue();
         Query q = new Query(TestEntity.KIND).setKeysOnly();
+        List<TaskOptions> tasks = new ArrayList<>();
         for (Entity test : datastore.prepare(q).asIterable()) {
             if (test.getKey().getName() == null) {
                 continue;
             }
-            allTestKeys.add(test.getKey());
+            TaskOptions task =
+                    TaskOptions.Builder.withUrl(PERFORMANCE_JOB_URL)
+                            .param("testKey", KeyFactory.keyToString(test.getKey()))
+                            .method(TaskOptions.Method.POST);
+            tasks.add(task);
+        }
+        TaskQueueHelper.addToQueue(queue, tasks);
+    }
+
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String testKeyString = request.getParameter("testKey");
+        Key testKey;
+        try {
+            testKey = KeyFactory.stringToKey(testKeyString);
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.WARNING, "Invalid key specified: " + testKeyString);
+            return;
         }
 
-        // Add today to the list of time intervals to analyze
         List<TimeInterval> timeIntervals = new ArrayList<>();
         long nowMilli = System.currentTimeMillis();
         long nowMicro = TimeUnit.MILLISECONDS.toMicros(nowMilli);
@@ -217,10 +240,12 @@ public class VtsPerformanceJobServlet extends HttpServlet {
 
         // Add yesterday as a baseline time interval for analysis
         long oneDayAgo = nowMicro - TimeUnit.DAYS.toMicros(1);
-        String dateStringYesterday = new SimpleDateFormat(
-                "MM-dd-yyyy").format(new Date(TimeUnit.MICROSECONDS.toMillis(oneDayAgo)));
-        TimeInterval yesterday = new TimeInterval(
-                oneDayAgo - TimeUnit.DAYS.toMicros(1), oneDayAgo, dateStringYesterday);
+        String dateStringYesterday =
+                new SimpleDateFormat("MM-dd-yyyy")
+                        .format(new Date(TimeUnit.MICROSECONDS.toMillis(oneDayAgo)));
+        TimeInterval yesterday =
+                new TimeInterval(
+                        oneDayAgo - TimeUnit.DAYS.toMicros(1), oneDayAgo, dateStringYesterday);
         timeIntervals.add(yesterday);
 
         // Add last week as a baseline time interval for analysis
@@ -229,30 +254,28 @@ public class VtsPerformanceJobServlet extends HttpServlet {
         TimeInterval lastWeek = new TimeInterval(oneWeekAgo - oneWeek, oneWeekAgo, LAST_WEEK);
         timeIntervals.add(lastWeek);
 
-        for (Key testKey : allTestKeys) {
-            List<PerformanceSummary> perfSummaries = new ArrayList<>();
-            List<String> labels = new ArrayList<>();
-            labels.add("");
-            for (TimeInterval interval : timeIntervals) {
-                PerformanceSummary perfSummary = new PerformanceSummary();
-                PerformanceUtil.updatePerformanceSummary(
-                        testKey.getName(), interval.start, interval.end, null, perfSummary);
-                if (perfSummary.size() == 0) {
-                    continue;
-                }
-                perfSummaries.add(perfSummary);
-                labels.add(interval.label);
-            }
-            String body = getPeformanceSummary(testKey.getName(), perfSummaries, labels);
-            if (body == null || body.equals("")) {
+        List<PerformanceSummary> perfSummaries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        labels.add("");
+        for (TimeInterval interval : timeIntervals) {
+            PerformanceSummary perfSummary = new PerformanceSummary();
+            PerformanceUtil.updatePerformanceSummary(
+                    testKey.getName(), interval.start, interval.end, null, perfSummary);
+            if (perfSummary.size() == 0) {
                 continue;
             }
-            List<String> emails = EmailHelper.getSubscriberEmails(testKey);
-            if (emails.size() == 0) {
-                continue;
-            }
-            String subject = SUBJECT_PREFIX + testKey.getName();
-            EmailHelper.send(emails, subject, body);
+            perfSummaries.add(perfSummary);
+            labels.add(interval.label);
         }
+        String body = getPerformanceSummary(testKey.getName(), perfSummaries, labels);
+        if (body == null || body.equals("")) {
+            return;
+        }
+        List<String> emails = EmailHelper.getSubscriberEmails(testKey);
+        if (emails.size() == 0) {
+            return;
+        }
+        String subject = SUBJECT_PREFIX + testKey.getName();
+        EmailHelper.send(emails, subject, body);
     }
 }
