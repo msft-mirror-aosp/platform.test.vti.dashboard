@@ -86,7 +86,8 @@ public class ShowPlanRunServlet extends BaseServlet {
             resultNames.add(r.name());
         }
 
-        List<TestRunMetadata> testRunMetadata = new ArrayList<>();
+        List<JsonObject> passingTestObjects = new ArrayList<>();
+        List<JsonObject> failingTestObjects = new ArrayList<>();
         List<JsonObject> testRunObjects = new ArrayList<>();
 
         Key planKey = KeyFactory.createKey(TestPlanEntity.KIND, plan);
@@ -121,12 +122,17 @@ public class ShowPlanRunServlet extends BaseServlet {
                 }
                 TestRunMetadata metadata =
                         new TestRunMetadata(key.getParent().getName(), testRunEntity, devices);
-                testRunMetadata.add(metadata);
-                testRunObjects.add(metadata.toJson());
+                if (metadata.testRun.failCount > 0) {
+                    failingTestObjects.add(metadata.toJson());
+                } else {
+                    passingTestObjects.add(metadata.toJson());
+                }
             }
         } catch (EntityNotFoundException e) {
             // Invalid parameters
         }
+        testRunObjects.addAll(failingTestObjects);
+        testRunObjects.addAll(passingTestObjects);
 
         int[] topBuildResultCounts = new int[TestCaseResult.values().length];
         topBuildResultCounts[TestCaseResult.TEST_CASE_RESULT_PASS.getNumber()] = passCount;
