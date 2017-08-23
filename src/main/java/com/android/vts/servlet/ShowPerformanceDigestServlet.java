@@ -75,7 +75,7 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
         List<Page> links = new ArrayList<>();
         String testName = request.getParameter("testName");
         links.add(new Page(PageType.TABLE, testName, "?testName=" + testName));
-        links.add(new Page(PageType.PERFORMANCE, "?testName=" + testName));
+        links.add(new Page(PageType.PERFORMANCE_DIGEST, "?testName=" + testName));
         return links;
     }
 

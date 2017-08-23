@@ -61,16 +61,14 @@ public class ShowProfilingOverviewServlet extends BaseServlet {
 
     @Override
     public PageType getNavParentType() {
-        return PageType.TOT;
+        return PageType.PROFILING_LIST;
     }
 
     @Override
     public List<Page> getBreadcrumbLinks(HttpServletRequest request) {
         List<Page> links = new ArrayList<>();
         String testName = request.getParameter("testName");
-        links.add(new Page(PageType.TABLE, testName, "?testName=" + testName));
-
-        links.add(new Page(PageType.GRAPH, "?testName=" + testName));
+        links.add(new Page(PageType.PROFILING_OVERVIEW, testName, "?testName=" + testName));
         return links;
     }
 
