@@ -311,21 +311,34 @@ public class PerformanceUtil {
     public static String getOptionAlias(
             ProfilingPointRunEntity profilingRun, Set<String> optionKeys) {
         String name = "";
-        List<String> nameSuffixes = new ArrayList<>();
         if (profilingRun.options != null) {
-            for (String optionString : profilingRun.options) {
-                String[] optionParts = optionString.split(OPTION_DELIMITER);
-                if (optionParts.length != 2) {
-                    continue;
-                }
-                if (optionKeys.contains(optionParts[0].trim().toLowerCase())) {
-                    nameSuffixes.add(optionParts[1].trim().toLowerCase());
-                }
+            name = getOptionAlias(profilingRun.options, optionKeys);
+        }
+        return name;
+    }
+
+    /**
+     * Generates a string of the values in optionsList which have matches in the profiling entity.
+     *
+     * @param optionList The list of key=value option pair strings.
+     * @param optionKeys A list of keys to match against the optionsList key value pairs.
+     * @return The values in optionsList whose key match a key in optionKeys.
+     */
+    public static String getOptionAlias(List<String> optionList, Set<String> optionKeys) {
+        String name = "";
+        List<String> nameSuffixes = new ArrayList<>();
+        for (String optionString : optionList) {
+            String[] optionParts = optionString.split(OPTION_DELIMITER);
+            if (optionParts.length != 2) {
+                continue;
             }
-            if (nameSuffixes.size() > 0) {
-                StringUtils.join(nameSuffixes, NAME_DELIMITER);
-                name += StringUtils.join(nameSuffixes, NAME_DELIMITER);
+            if (optionKeys.contains(optionParts[0].trim().toLowerCase())) {
+                nameSuffixes.add(optionParts[1].trim().toLowerCase());
             }
+        }
+        if (nameSuffixes.size() > 0) {
+            StringUtils.join(nameSuffixes, NAME_DELIMITER);
+            name += StringUtils.join(nameSuffixes, NAME_DELIMITER);
         }
         return name;
     }

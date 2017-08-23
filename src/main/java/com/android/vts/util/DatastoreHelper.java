@@ -32,6 +32,7 @@ import com.android.vts.proto.VtsReportMessage.TestPlanReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestReportMessage;
 import com.android.vts.servlet.VtsAlertJobServlet;
 import com.android.vts.servlet.VtsCoverageAlertJobServlet;
+import com.android.vts.servlet.VtsProfilingStatsJobServlet;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -206,7 +207,7 @@ public class DatastoreHelper {
 
         Key testRunKey =
                 KeyFactory.createKey(
-                    testEntity.key, TestRunEntity.KIND, report.getStartTimestamp());
+                        testEntity.key, TestRunEntity.KIND, report.getStartTimestamp());
 
         long passCount = 0;
         long failCount = 0;
@@ -214,6 +215,7 @@ public class DatastoreHelper {
         long totalLineCount = 0;
 
         List<TestCaseRunEntity> testCases = new ArrayList<>();
+        List<Key> profilingPointKeys = new ArrayList<>();
 
         // Process test cases
         for (TestCaseReportMessage testCase : report.getTestCaseList()) {
@@ -250,6 +252,7 @@ public class DatastoreHelper {
                     logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
                 }
                 puts.add(profilingEntity.toEntity());
+                profilingPointKeys.add(profilingEntity.key);
                 testEntity.setHasProfilingData(true);
             }
 
@@ -322,6 +325,7 @@ public class DatastoreHelper {
                 logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
             }
             puts.add(profilingEntity.toEntity());
+            profilingPointKeys.add(profilingEntity.key);
             testEntity.setHasProfilingData(true);
         }
 
@@ -372,6 +376,9 @@ public class DatastoreHelper {
                     if (testRunEntity.hasCoverage) {
                         VtsCoverageAlertJobServlet.addTask(testRunKey);
                     }
+                    if (profilingPointKeys.size() > 0) {
+                        VtsProfilingStatsJobServlet.addTasks(profilingPointKeys);
+                    }
                 }
                 break;
             } catch (ConcurrentModificationException
@@ -380,9 +387,7 @@ public class DatastoreHelper {
                 puts.remove(test);
                 logger.log(Level.WARNING, "Retrying test run insert: " + test.getKey());
                 if (retries++ >= MAX_WRITE_RETRIES) {
-                    logger.log(
-                            Level.SEVERE,
-                            "Exceeded maximum test run retries: " + test.getKey());
+                    logger.log(Level.SEVERE, "Exceeded maximum test run retries: " + test.getKey());
                     throw e;
                 }
             } finally {
