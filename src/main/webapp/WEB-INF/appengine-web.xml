@@ -16,6 +16,8 @@
   <application>s~google.com:android-vts-staging</application>
   <version>4</version>
   <threadsafe>true</threadsafe>
+  <sessions-enabled>true</sessions-enabled>
+  <runtime>java8</runtime>
 
   <system-properties>
     <property name="EMAIL_DOMAIN" value="${appengine.emailDomain}" />

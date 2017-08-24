@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright 2016 Google Inc. All Rights Reserved.
+Copyright (C) 2017 The Android Open Source Project
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -14,17 +14,10 @@ Copyright 2016 Google Inc. All Rights Reserved.
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<cronentries>
-  <cron>
-    <url>/cron/vts_performance_job</url>
-    <description>Send daily performance digests.</description>
-    <schedule>every day 07:30</schedule>
-    <timezone>America/Los_Angeles</timezone>
-  </cron>
-  <cron>
-    <url>/cron/vts_inactivity_job</url>
-    <description>Send daily inactivity warnings.</description>
-    <schedule>every day 07:30</schedule>
-    <timezone>America/Los_Angeles</timezone>
-  </cron>
-</cronentries>
+<queue-entries>
+  <queue>
+    <name>profilingStatsQueue</name>
+    <rate>200/s</rate>
+    <bucket-size>40</bucket-size>
+  </queue>
+</queue-entries>

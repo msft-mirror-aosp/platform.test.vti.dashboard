@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Google Inc. All Rights Reserved.
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you
  * may not use this file except in compliance with the License. You may
@@ -16,7 +16,7 @@
 
 package com.android.vts.servlet;
 
-import com.android.vts.entity.TestPlanEntity;
+import com.android.vts.entity.TestEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -33,13 +33,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/** Represents the servlet that is invoked on loading the release page. */
-public class ShowReleaseServlet extends BaseServlet {
-    private static final String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
+/** Servlet for handling requests to display profiling tests. */
+public class ShowProfilingListServlet extends BaseServlet {
+    private static final String PROFILING_LIST_JSP = "WEB-INF/jsp/show_profiling_list.jsp";
 
     @Override
     public PageType getNavParentType() {
-        return PageType.RELEASE;
+        return PageType.PROFILING_LIST;
     }
 
     @Override
@@ -50,22 +50,23 @@ public class ShowReleaseServlet extends BaseServlet {
     @Override
     public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        RequestDispatcher dispatcher = null;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-
-        Set<String> planSet = new HashSet<>();
-
-        Query q = new Query(TestPlanEntity.KIND).setKeysOnly();
-        for (Entity testPlanEntity : datastore.prepare(q).asIterable()) {
-            planSet.add(testPlanEntity.getKey().getName());
+        Query.Filter profilingFilter = new Query.FilterPredicate(
+                TestEntity.HAS_PROFILING_DATA, Query.FilterOperator.EQUAL, true);
+        Query query = new Query(TestEntity.KIND)
+                            .setFilter(profilingFilter)
+                            .setKeysOnly();
+        Set<String> profilingTests = new HashSet<>();
+        for (Entity test : datastore.prepare(query).asIterable()) {
+            profilingTests.add(test.getKey().getName());
         }
 
-        List<String> plans = new ArrayList<>(planSet);
-        plans.sort(Comparator.naturalOrder());
+        List<String> tests = new ArrayList<>(profilingTests);
+        tests.sort(Comparator.naturalOrder());
 
         response.setStatus(HttpServletResponse.SC_OK);
-        request.setAttribute("planNames", plans);
-        dispatcher = request.getRequestDispatcher(RELEASE_JSP);
+        request.setAttribute("testNames", tests);
+        RequestDispatcher dispatcher = request.getRequestDispatcher(PROFILING_LIST_JSP);
         try {
             dispatcher.forward(request, response);
         } catch (ServletException e) {

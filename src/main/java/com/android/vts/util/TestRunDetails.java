@@ -24,7 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /** Helper object for describing test results data. */
@@ -50,7 +50,7 @@ public class TestRunDetails {
         }
 
         public JsonObject toJson() {
-            Collections.sort(testCases);
+            testCases.sort(Comparator.naturalOrder());
             JsonObject json = new JsonObject();
             json.add(NAME_KEY, new JsonPrimitive(name));
             json.add(DATA_KEY, new Gson().toJsonTree(testCases));

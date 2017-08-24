@@ -16,9 +16,12 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.proto.VtsReportMessage;
+import com.android.vts.util.DatastoreHelper;
+import com.android.vts.util.FilterUtil;
 import com.android.vts.util.TestRunMetadata;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -31,6 +34,7 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -56,6 +60,20 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
             throws IOException {
         RequestDispatcher dispatcher = null;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        boolean unfiltered = request.getParameter("unfiltered") != null;
+        boolean showPresubmit = request.getParameter("showPresubmit") != null;
+        boolean showPostsubmit = request.getParameter("showPostsubmit") != null;
+
+        // If no params are specified, set to default of postsubmit-only.
+        if (!(showPresubmit || showPostsubmit)) {
+            showPostsubmit = true;
+        }
+
+        // If unfiltered, set showPre- and Post-submit to true for accurate UI.
+        if (unfiltered) {
+            showPostsubmit = true;
+            showPresubmit = true;
+        }
 
         Query q = new Query(TestEntity.KIND).setKeysOnly();
         List<Key> allTests = new ArrayList<>();
@@ -69,33 +87,91 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
             resultNames.add(r.name());
         }
 
+        Map<String, Object> parameterMap = request.getParameterMap();
+        Query.Filter userTestFilter = FilterUtil.getUserTestFilter(parameterMap);
+        Query.Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
+
         List<JsonObject> testRunObjects = new ArrayList<>();
 
-        Query.Filter coverageFilter = new Query.FilterPredicate(
-                TestRunEntity.HAS_COVERAGE, Query.FilterOperator.EQUAL, true);
+        Query.Filter testFilter =
+                new Query.FilterPredicate(
+                        TestRunEntity.HAS_COVERAGE, Query.FilterOperator.EQUAL, true);
+        Query.Filter timeFilter =
+                FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
+        if (timeFilter != null) {
+            testFilter = Query.CompositeFilterOperator.and(testFilter, timeFilter);
+        }
+        if (userTestFilter != null) {
+            testFilter = Query.CompositeFilterOperator.and(testFilter, userTestFilter);
+        }
         int coveredLines = 0;
         int uncoveredLines = 0;
         int passCount = 0;
         int failCount = 0;
         for (Key key : allTests) {
-            Query testRunQuery =
-                    new Query(TestRunEntity.KIND)
-                            .setAncestor(key)
-                            .setFilter(coverageFilter)
-                            .addSort(Entity.KEY_RESERVED_PROPERTY, Query.SortDirection.DESCENDING);
-            for (Entity testRunEntity :
-                    datastore.prepare(testRunQuery).asIterable(FetchOptions.Builder.withLimit(1))) {
-                TestRunEntity testRun = TestRunEntity.fromEntity(testRunEntity);
-                if (testRun == null)
-                    continue;
-                TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRun);
-                testRunObjects.add(metadata.toJson());
-                coveredLines += testRun.coveredLineCount;
-                uncoveredLines += testRun.totalLineCount - testRun.coveredLineCount;
-                passCount += testRun.passCount;
-                failCount += testRun.failCount;
+            if (userTestFilter == null && userDeviceFilter == null) {
+                Query testRunQuery =
+                        new Query(TestRunEntity.KIND)
+                                .setAncestor(key)
+                                .setFilter(testFilter)
+                                .addSort(
+                                        Entity.KEY_RESERVED_PROPERTY,
+                                        Query.SortDirection.DESCENDING);
+                for (Entity testRun :
+                        datastore
+                                .prepare(testRunQuery)
+                                .asIterable(FetchOptions.Builder.withLimit(1))) {
+                    TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
+                    if (testRunEntity == null) {
+                        continue;
+                    }
+                    TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRunEntity);
+                    Query deviceQuery =
+                            new Query(DeviceInfoEntity.KIND).setAncestor(testRun.getKey());
+                    for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
+                        DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
+                        if (deviceEntity == null) continue;
+                        metadata.addDevice(deviceEntity);
+                    }
+                    testRunObjects.add(metadata.toJson());
+                    coveredLines += testRunEntity.coveredLineCount;
+                    uncoveredLines += testRunEntity.totalLineCount - testRunEntity.coveredLineCount;
+                    passCount += testRunEntity.passCount;
+                    failCount += testRunEntity.failCount;
+                }
+            } else {
+                if (userTestFilter != null) {
+                    testFilter = Query.CompositeFilterOperator.and(userTestFilter, testFilter);
+                }
+                List<Key> gets =
+                        FilterUtil.getMatchingKeys(
+                                key,
+                                TestRunEntity.KIND,
+                                testFilter,
+                                userDeviceFilter,
+                                Query.SortDirection.DESCENDING,
+                                1);
+                Map<Key, Entity> entityMap = datastore.get(gets);
+                for (Key entityKey : gets) {
+                    if (!entityMap.containsKey(entityKey)) {
+                        continue;
+                    }
+                    TestRunEntity testRunEntity =
+                            TestRunEntity.fromEntity(entityMap.get(entityKey));
+                    if (testRunEntity == null) {
+                        continue;
+                    }
+                    TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRunEntity);
+                    testRunObjects.add(metadata.toJson());
+                    coveredLines += testRunEntity.coveredLineCount;
+                    uncoveredLines += testRunEntity.totalLineCount - testRunEntity.coveredLineCount;
+                    passCount += testRunEntity.passCount;
+                    failCount += testRunEntity.failCount;
+                }
             }
         }
+
+        FilterUtil.setAttributes(request, parameterMap);
 
         int[] testStats = new int[VtsReportMessage.TestCaseResult.values().length];
         testStats[VtsReportMessage.TestCaseResult.TEST_CASE_RESULT_PASS.getNumber()] = passCount;
@@ -108,6 +184,12 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
         request.setAttribute("coveredLines", new Gson().toJson(coveredLines));
         request.setAttribute("uncoveredLines", new Gson().toJson(uncoveredLines));
         request.setAttribute("testStats", new Gson().toJson(testStats));
+
+        request.setAttribute("unfiltered", unfiltered);
+        request.setAttribute("showPresubmit", showPresubmit);
+        request.setAttribute("showPostsubmit", showPostsubmit);
+        request.setAttribute("branches", new Gson().toJson(DatastoreHelper.getAllBranches()));
+        request.setAttribute("devices", new Gson().toJson(DatastoreHelper.getAllBuildFlavors()));
         dispatcher = request.getRequestDispatcher(COVERAGE_OVERVIEW_JSP);
         try {
             dispatcher.forward(request, response);

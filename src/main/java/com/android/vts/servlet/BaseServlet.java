@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 public abstract class BaseServlet extends HttpServlet {
     protected final Logger logger = Logger.getLogger(getClass().getName());
@@ -37,17 +38,21 @@ public abstract class BaseServlet extends HttpServlet {
     protected static final String CLIENT_ID = System.getProperty("CLIENT_ID");
     protected static final String ANALYTICS_ID = System.getProperty("ANALYTICS_ID");
 
+    protected static final String TREE_DEFAULT_PARAM = "treeDefault";
+
     public enum PageType {
         TOT("ToT", "/"),
         RELEASE("Release", "/show_release"),
         COVERAGE_OVERVIEW("Coverage", "/show_coverage_overview"),
+        PROFILING_LIST("Profiling", "/show_profiling_list"),
         TABLE("", "/show_table"),
         TREE("", "/show_tree"),
         GRAPH("Profiling", "/show_graph"),
         COVERAGE("Coverage", "/show_coverage"),
-        PERFORMANCE("Performance Digest", "/show_performance_digest"),
+        PERFORMANCE_DIGEST("Performance Digest", "/show_performance_digest"),
         PLAN_RELEASE("", "/show_plan_release"),
-        PLAN_RUN("Plan Run", "/show_plan_run");
+        PLAN_RUN("Plan Run", "/show_plan_run"),
+        PROFILING_OVERVIEW("", "/show_profiling_overview");
 
         public final String defaultName;
         public final String defaultUrl;
@@ -97,6 +102,7 @@ public abstract class BaseServlet extends HttpServlet {
         links.add(new Page(PageType.TOT));
         links.add(new Page(PageType.RELEASE));
         links.add(new Page(PageType.COVERAGE_OVERVIEW));
+        links.add(new Page(PageType.PROFILING_LIST));
         navbarLinks = links;
     }
 
@@ -124,9 +130,12 @@ public abstract class BaseServlet extends HttpServlet {
             response.sendRedirect(loginURI);
             return;
         }
-        PageType parentType = getNavParentType();
+
         int activeIndex;
         switch (getNavParentType()) {
+            case PROFILING_LIST:
+                activeIndex = 3;
+                break;
             case COVERAGE_OVERVIEW:
                 activeIndex = 2;
                 break;
@@ -136,6 +145,11 @@ public abstract class BaseServlet extends HttpServlet {
             default:
                 activeIndex = 0;
                 break;
+        }
+        if (request.getParameter(TREE_DEFAULT_PARAM) != null) {
+            HttpSession session = request.getSession(true);
+            boolean treeDefault = request.getParameter(TREE_DEFAULT_PARAM).equals("true");
+            session.setAttribute(TREE_DEFAULT_PARAM, treeDefault);
         }
         request.setAttribute("logoutURL", logoutURI);
         request.setAttribute("email", currentUser.getEmail());

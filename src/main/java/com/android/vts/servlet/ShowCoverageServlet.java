@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 /** Servlet for handling requests to show code coverage. */
 public class ShowCoverageServlet extends BaseServlet {
     private static final String COVERAGE_JSP = "WEB-INF/jsp/show_coverage.jsp";
+    private static final String TREE_JSP = "WEB-INF/jsp/show_tree.jsp";
 
     @Override
     public PageType getNavParentType() {
@@ -71,7 +72,7 @@ public class ShowCoverageServlet extends BaseServlet {
             time = Long.parseLong(timeString);
         } catch (NumberFormatException e) {
             request.setAttribute("testName", test);
-            dispatcher = request.getRequestDispatcher("/show_table.jsp");
+            dispatcher = request.getRequestDispatcher(TREE_JSP);
             return;
         }
 

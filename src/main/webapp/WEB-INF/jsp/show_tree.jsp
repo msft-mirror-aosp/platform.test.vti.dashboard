@@ -63,7 +63,7 @@
               $('#older-button').toggleClass('disabled');
           }
           $('#tableLink').click(function() {
-              window.open('/show_table?testName=${testName}', '_self');
+              window.open('/show_table?testName=${testName}&treeDefault=false', '_self');
           });
           $('#newer-button').click(prev);
           $('#older-button').click(next);
@@ -132,9 +132,10 @@
               colors: colors,
               fontName: 'Roboto',
               fontSize: '14px',
-              legend: 'none',
-              tooltip: {showColorCode: true, ignoreBounds: true},
-              chartArea: {height: '90%'}
+              legend: {position: 'bottom'},
+              tooltip: {showColorCode: true, ignoreBounds: false},
+              chartArea: {height: '80%', width: '90%'},
+              pieHole: 0.4
           };
 
           var chart = new google.visualization.PieChart(document.getElementById('pie-chart-div'));
@@ -148,8 +149,8 @@
         <div class='col s12'>
           <div class='card'>
             <ul class='tabs'>
-              <li class='tab col s6' id='tableLink'><a>Table</a></li>
               <li class='tab col s6'><a class='active'>Tree</a></li>
+              <li class='tab col s6' id='tableLink'><a>Table</a></li>
             </ul>
           </div>
           <div id='filter-bar'></div>

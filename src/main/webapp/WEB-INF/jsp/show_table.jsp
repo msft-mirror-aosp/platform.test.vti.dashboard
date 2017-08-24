@@ -25,6 +25,7 @@
   <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
   <script src='https://www.gstatic.com/external_hosted/moment/min/moment-with-locales.min.js'></script>
   <script src='js/search_header.js'></script>
+  <script src='js/time.js'></script>
   <script type='text/javascript'>
       google.charts.load('current', {'packages':['table', 'corechart']});
       google.charts.setOnLoadCallback(drawGridTable);
@@ -66,7 +67,7 @@
               $('#older-button').toggleClass('disabled');
           }
           $('#treeLink').click(function() {
-              window.open('/show_tree?testName=${testName}', '_self');
+              window.open('/show_tree?testName=${testName}&treeDefault=true', '_self');
           });
           $('#newer-button').click(prev);
           $('#older-button').click(next);
@@ -163,9 +164,10 @@
               colors: colors,
               fontName: 'Roboto',
               fontSize: '14px',
-              legend: 'none',
-              tooltip: {showColorCode: true, ignoreBounds: true},
-              chartArea: {height: '90%'}
+              legend: {position: 'bottom'},
+              tooltip: {showColorCode: true, ignoreBounds: false},
+              chartArea: {height: '80%', width: '90%'},
+              pieHole: 0.4
           };
 
           var chart = new google.visualization.PieChart(document.getElementById('pie-chart-div'));
@@ -194,13 +196,7 @@
           timeGrid = timeGrid.map(function(row) {
               return row.map(function(cell, j) {
                   if (j == 0) return cell;
-                  var time = moment(cell/1000);
-                  // If today, don't display the date
-                  if (time.isSame(moment(), 'd')) {
-                      return time.format('H:mm:ssZZ');
-                  } else {
-                      return time.format('M/D/YY H:mm:ssZZ');
-                  }
+                  return moment().renderTime(cell);
               });
           });
 
@@ -208,7 +204,7 @@
           durationGrid = durationGrid.map(function(row) {
               return row.map(function(cell, j) {
                   if (j == 0) return cell;
-                  return moment.utc(cell/1000).format("HH:mm:ss.SSS");
+                  return moment().renderDuration(cell);
               });
           });
 
@@ -241,8 +237,8 @@
         <div class='col s12'>
           <div class='card'>
             <ul class='tabs'>
-              <li class='tab col s6'><a class='active'>Table</a></li>
               <li class='tab col s6' id='treeLink'><a>Tree</a></li>
+              <li class='tab col s6'><a class='active'>Table</a></li>
             </ul>
           </div>
           <div id='filter-bar'></div>

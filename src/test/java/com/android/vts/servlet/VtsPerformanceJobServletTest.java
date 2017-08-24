@@ -66,8 +66,16 @@ public class VtsPerformanceJobServletTest {
         for (long value : values) {
             valueList.add(value);
         }
-        return new ProfilingPointRunEntity(KeyFactory.createKey(TestEntity.KIND, "test"), "name", 0,
-                regressionMode.getNumber(), labelList, valueList, "", "", null);
+        return new ProfilingPointRunEntity(
+                KeyFactory.createKey(TestEntity.KIND, "test"),
+                "name",
+                0,
+                regressionMode.getNumber(),
+                labelList,
+                valueList,
+                "",
+                "",
+                null);
     }
 
     /** Asserts whether text is the same as the contents in the baseline file specified. */
@@ -186,11 +194,13 @@ public class VtsPerformanceJobServletTest {
     public void testPerformanceSummaryNormal() throws FileNotFoundException, IOException {
         setUp(false);
         String output =
-                VtsPerformanceJobServlet.getPeformanceSummary("test", dailySummaries, legendLabels);
+                VtsPerformanceJobServlet.getPerformanceSummary(
+                        "test", dailySummaries, legendLabels);
         compareToBaseline(output, "performanceSummary1.html");
     }
 
-    /** End-to-end test of performance report when a profiling point was removed in the latest run.
+    /**
+     * End-to-end test of performance report when a profiling point was removed in the latest run.
      */
     @Test
     public void testPerformanceSummaryDroppedProfilingPoint()
@@ -204,7 +214,8 @@ public class VtsPerformanceJobServletTest {
         summary.update(pt);
         yesterday.insertProfilingPointSummary("p3", summary);
         String output =
-                VtsPerformanceJobServlet.getPeformanceSummary("test", dailySummaries, legendLabels);
+                VtsPerformanceJobServlet.getPerformanceSummary(
+                        "test", dailySummaries, legendLabels);
         compareToBaseline(output, "performanceSummary2.html");
     }
 
@@ -221,17 +232,20 @@ public class VtsPerformanceJobServletTest {
         summary.update(pt);
         today.insertProfilingPointSummary("p3", summary);
         String output =
-                VtsPerformanceJobServlet.getPeformanceSummary("test", dailySummaries, legendLabels);
+                VtsPerformanceJobServlet.getPerformanceSummary(
+                        "test", dailySummaries, legendLabels);
         compareToBaseline(output, "performanceSummary3.html");
     }
 
-    /** End-to-end test of performance report labels are grouped (e.g. as if using unlabeled data)
+    /**
+     * End-to-end test of performance report labels are grouped (e.g. as if using unlabeled data)
      */
     @Test
     public void testPerformanceSummaryGroupedNormal() throws FileNotFoundException, IOException {
         setUp(true);
         String output =
-                VtsPerformanceJobServlet.getPeformanceSummary("test", dailySummaries, legendLabels);
+                VtsPerformanceJobServlet.getPerformanceSummary(
+                        "test", dailySummaries, legendLabels);
         compareToBaseline(output, "performanceSummary4.html");
     }
 }

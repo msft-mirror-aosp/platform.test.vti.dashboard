@@ -46,6 +46,16 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet>
 
 <servlet>
+  <servlet-name>show_profiling_list</servlet-name>
+  <servlet-class>com.android.vts.servlet.ShowProfilingListServlet</servlet-class>
+</servlet>
+
+<servlet>
+  <servlet-name>show_profiling_overview</servlet-name>
+  <servlet-class>com.android.vts.servlet.ShowProfilingOverviewServlet</servlet-class>
+</servlet>
+
+<servlet>
   <servlet-name>show_plan_release</servlet-name>
   <servlet-class>com.android.vts.servlet.ShowPlanReleaseServlet</servlet-class>
 </servlet>
@@ -95,6 +105,21 @@ Copyright 2016 Google Inc. All Rights Reserved.
   <servlet-class>com.android.vts.servlet.VtsPerformanceJobServlet</servlet-class>
 </servlet>
 
+<servlet>
+  <servlet-name>vts_profiling_stats_job</servlet-name>
+  <servlet-class>com.android.vts.servlet.VtsProfilingStatsJobServlet</servlet-class>
+</servlet>
+
+<servlet>
+  <servlet-name>vts_coverage_job</servlet-name>
+  <servlet-class>com.android.vts.servlet.VtsCoverageAlertJobServlet</servlet-class>
+</servlet>
+
+<servlet>
+  <servlet-name>vts_inactivity_job</servlet-name>
+  <servlet-class>com.android.vts.servlet.VtsInactivityJobServlet</servlet-class>
+</servlet>
+
 <servlet-mapping>
   <servlet-name>dashboard_main</servlet-name>
   <url-pattern>/</url-pattern>
@@ -123,6 +148,16 @@ Copyright 2016 Google Inc. All Rights Reserved.
 <servlet-mapping>
   <servlet-name>show_graph</servlet-name>
   <url-pattern>/show_graph/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>show_profiling_list</servlet-name>
+  <url-pattern>/show_profiling_list/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>show_profiling_overview</servlet-name>
+  <url-pattern>/show_profiling_overview/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
@@ -167,7 +202,17 @@ Copyright 2016 Google Inc. All Rights Reserved.
 
 <servlet-mapping>
   <servlet-name>vts_alert_job</servlet-name>
-  <url-pattern>/cron/vts_alert_job/*</url-pattern>
+  <url-pattern>/task/vts_alert_job/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>vts_coverage_job</servlet-name>
+  <url-pattern>/task/vts_coverage_job/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>vts_profiling_stats_job</servlet-name>
+  <url-pattern>/task/vts_profiling_stats_job/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
@@ -175,10 +220,16 @@ Copyright 2016 Google Inc. All Rights Reserved.
   <url-pattern>/cron/vts_performance_job/*</url-pattern>
 </servlet-mapping>
 
+<servlet-mapping>
+  <servlet-name>vts_inactivity_job</servlet-name>
+  <url-pattern>/cron/vts_inactivity_job/*</url-pattern>
+</servlet-mapping>
+
 <security-constraint>
   <web-resource-collection>
-    <web-resource-name>cron</web-resource-name>
+    <web-resource-name>tasks</web-resource-name>
     <url-pattern>/cron/*</url-pattern>
+    <url-pattern>/task/*</url-pattern>
   </web-resource-collection>
   <auth-constraint>
     <role-name>admin</role-name>

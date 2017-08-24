@@ -16,6 +16,7 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestRunEntity;
@@ -27,15 +28,13 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Query;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -45,7 +44,6 @@ import javax.servlet.http.HttpServletResponse;
 /** Servlet for handling requests to load individual plan runs. */
 public class ShowPlanRunServlet extends BaseServlet {
     private static final String PLAN_RUN_JSP = "WEB-INF/jsp/show_plan_run.jsp";
-    private static final String PROFILING_DATA_ALERT = "No profiling data was found.";
 
     @Override
     public PageType getNavParentType() {
@@ -56,7 +54,7 @@ public class ShowPlanRunServlet extends BaseServlet {
     public List<Page> getBreadcrumbLinks(HttpServletRequest request) {
         List<Page> links = new ArrayList<>();
         String planName = request.getParameter("plan");
-        links.add(new Page(PageType.PLAN_RELEASE, planName.toUpperCase(), "?plan=" + planName));
+        links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
 
         String time = request.getParameter("time");
         links.add(new Page(PageType.PLAN_RUN, "?plan=" + planName + "&time=" + time));
@@ -66,19 +64,19 @@ public class ShowPlanRunServlet extends BaseServlet {
     @Override
     public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        Long startTime = null; // time in microseconds
+        Long time = null; // time in microseconds
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         RequestDispatcher dispatcher = null;
 
         String plan = request.getParameter("plan");
 
         if (request.getParameter("time") != null) {
-            String time = request.getParameter("time");
+            String timeString = request.getParameter("time");
             try {
-                startTime = Long.parseLong(time);
-                startTime = startTime > 0 ? startTime : null;
+                time = Long.parseLong(timeString);
+                time = time > 0 ? time : null;
             } catch (NumberFormatException e) {
-                startTime = null;
+                time = null;
             }
         }
 
@@ -88,58 +86,70 @@ public class ShowPlanRunServlet extends BaseServlet {
             resultNames.add(r.name());
         }
 
-        List<TestRunMetadata> testRunMetadata = new ArrayList<>();
+        List<JsonObject> passingTestObjects = new ArrayList<>();
+        List<JsonObject> failingTestObjects = new ArrayList<>();
         List<JsonObject> testRunObjects = new ArrayList<>();
 
         Key planKey = KeyFactory.createKey(TestPlanEntity.KIND, plan);
-        Key planRunKey = KeyFactory.createKey(planKey, TestPlanRunEntity.KIND, startTime);
+        Key planRunKey = KeyFactory.createKey(planKey, TestPlanRunEntity.KIND, time);
+        String testBuildId = "";
         int passCount = 0;
         int failCount = 0;
+        long startTime = 0;
+        long endTime = 0;
+        long moduleCount = 0;
         try {
             Entity testPlanRunEntity = datastore.get(planRunKey);
             TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(testPlanRunEntity);
             Map<Key, Entity> testRuns = datastore.get(testPlanRun.testRuns);
+            testBuildId = testPlanRun.testBuildId;
             passCount = (int) testPlanRun.passCount;
             failCount = (int) testPlanRun.failCount;
+            startTime = testPlanRun.startTimestamp;
+            endTime = testPlanRun.endTimestamp;
+            moduleCount = testPlanRun.testRuns.size();
 
             for (Key key : testPlanRun.testRuns) {
-                if (!testRuns.containsKey(key))
-                    continue;
+                if (!testRuns.containsKey(key)) continue;
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRuns.get(key));
-                if (testRunEntity == null)
-                    continue;
+                if (testRunEntity == null) continue;
+                Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND).setAncestor(key);
+                List<DeviceInfoEntity> devices = new ArrayList<>();
+                for (Entity device : datastore.prepare(deviceInfoQuery).asIterable()) {
+                    DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
+                    if (deviceEntity == null) continue;
+                    devices.add(deviceEntity);
+                }
                 TestRunMetadata metadata =
-                        new TestRunMetadata(key.getParent().getName(), testRunEntity);
-                testRunMetadata.add(metadata);
-                testRunObjects.add(metadata.toJson());
+                        new TestRunMetadata(key.getParent().getName(), testRunEntity, devices);
+                if (metadata.testRun.failCount > 0) {
+                    failingTestObjects.add(metadata.toJson());
+                } else {
+                    passingTestObjects.add(metadata.toJson());
+                }
             }
         } catch (EntityNotFoundException e) {
             // Invalid parameters
         }
+        testRunObjects.addAll(failingTestObjects);
+        testRunObjects.addAll(passingTestObjects);
 
         int[] topBuildResultCounts = new int[TestCaseResult.values().length];
-        topBuildResultCounts = new int[TestCaseResult.values().length];
         topBuildResultCounts[TestCaseResult.TEST_CASE_RESULT_PASS.getNumber()] = passCount;
         topBuildResultCounts[TestCaseResult.TEST_CASE_RESULT_FAIL.getNumber()] = failCount;
-
-        Set<String> profilingPoints = new HashSet<>();
-
-        String profilingDataAlert = "";
-        if (profilingPoints.size() == 0) {
-            profilingDataAlert = PROFILING_DATA_ALERT;
-        }
-        List<String> profilingPointNames = new ArrayList<>(profilingPoints);
-        Collections.sort(profilingPointNames);
 
         request.setAttribute("plan", request.getParameter("plan"));
         request.setAttribute("time", request.getParameter("time"));
 
-        request.setAttribute("error", profilingDataAlert);
-
-        request.setAttribute("profilingPointNames", profilingPointNames);
         request.setAttribute("resultNames", resultNames);
         request.setAttribute("resultNamesJson", new Gson().toJson(resultNames));
         request.setAttribute("testRuns", new Gson().toJson(testRunObjects));
+        request.setAttribute("testBuildId", new Gson().toJson(testBuildId));
+        request.setAttribute("startTime", new Gson().toJson(startTime));
+        request.setAttribute("endTime", new Gson().toJson(endTime));
+        request.setAttribute("moduleCount", new Gson().toJson(moduleCount));
+        request.setAttribute("passingTestCaseCount", new Gson().toJson(passCount));
+        request.setAttribute("failingTestCaseCount", new Gson().toJson(failCount));
 
         // data for pie chart
         request.setAttribute("topBuildResultCounts", new Gson().toJson(topBuildResultCounts));

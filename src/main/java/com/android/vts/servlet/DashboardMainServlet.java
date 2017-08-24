@@ -17,6 +17,7 @@
 package com.android.vts.servlet;
 
 import com.android.vts.entity.TestEntity;
+import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.UserFavoriteEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -34,7 +35,7 @@ import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /** Represents the servlet that is invoked on loading the first page of dashboard. */
 public class DashboardMainServlet extends BaseServlet {
@@ -126,9 +128,18 @@ public class DashboardMainServlet extends BaseServlet {
         User currentUser = userService.getCurrentUser();
         RequestDispatcher dispatcher = null;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        HttpSession session = request.getSession(true);
+        PageType referTo = PageType.TREE;
+        if (session.getAttribute("treeDefault") != null) {
+            boolean treeDefault = (boolean) session.getAttribute("treeDefault");
+            if (!treeDefault) {
+                referTo = PageType.TABLE;
+            }
+        }
 
         List<TestDisplay> displayedTests = new ArrayList<>();
-        List<String> allTests = new ArrayList<>();
+        List<String> allTestNames = new ArrayList<>();
+        List<Key> unprocessedTestKeys = new ArrayList<>();
 
         Map<Key, TestDisplay> testMap = new HashMap<>(); // map from table key to TestDisplay
         Map<String, String> subscriptionMap = new HashMap<>();
@@ -140,17 +151,33 @@ public class DashboardMainServlet extends BaseServlet {
         String buttonLink;
         String error = null;
 
-        Query q = new Query(TestEntity.KIND)
-                          .addProjection(new PropertyProjection(TestEntity.PASS_COUNT, Long.class))
-                          .addProjection(new PropertyProjection(TestEntity.FAIL_COUNT, Long.class));
-        for (Entity test : datastore.prepare(q).asIterable()) {
-            TestEntity testEntity = TestEntity.fromEntity(test);
-            if (test != null) {
-                TestDisplay display =
-                        new TestDisplay(test.getKey(), testEntity.passCount, testEntity.failCount);
-                testMap.put(test.getKey(), display);
-                allTests.add(test.getKey().getName());
-            }
+        Query query = new Query(TestEntity.KIND).setKeysOnly();
+        for (Entity test : datastore.prepare(query).asIterable()) {
+            allTestNames.add(test.getKey().getName());
+            unprocessedTestKeys.add(test.getKey());
+        }
+
+        query =
+                new Query(TestStatusEntity.KIND)
+                        .addProjection(
+                                new PropertyProjection(TestStatusEntity.PASS_COUNT, Long.class))
+                        .addProjection(
+                                new PropertyProjection(TestStatusEntity.FAIL_COUNT, Long.class));
+        for (Entity status : datastore.prepare(query).asIterable()) {
+            TestStatusEntity statusEntity = TestStatusEntity.fromEntity(status);
+            if (statusEntity == null) continue;
+            Key testKey = KeyFactory.createKey(TestEntity.KIND, statusEntity.testName);
+            if (!unprocessedTestKeys.contains(testKey)) continue;
+            TestDisplay display =
+                    new TestDisplay(testKey, statusEntity.passCount, statusEntity.failCount);
+            testMap.put(testKey, display);
+            unprocessedTestKeys.remove(testKey);
+        }
+
+        // Process tests without statuses
+        for (Key testKey : unprocessedTestKeys) {
+            TestDisplay display = new TestDisplay(testKey, -1, -1);
+            testMap.put(testKey, display);
         }
 
         if (testMap.size() == 0) {
@@ -167,11 +194,12 @@ public class DashboardMainServlet extends BaseServlet {
             buttonLink = DASHBOARD_FAVORITES_LINK;
         } else {
             if (testMap.size() > 0) {
-                Filter userFilter = new FilterPredicate(
-                        UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
-                q = new Query(UserFavoriteEntity.KIND).setFilter(userFilter);
+                Filter userFilter =
+                        new FilterPredicate(
+                                UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
+                query = new Query(UserFavoriteEntity.KIND).setFilter(userFilter);
 
-                for (Entity favorite : datastore.prepare(q).asIterable()) {
+                for (Entity favorite : datastore.prepare(query).asIterable()) {
                     Key testKey = (Key) favorite.getProperty(UserFavoriteEntity.TEST_KEY);
                     if (!testMap.containsKey(testKey)) {
                         continue;
@@ -186,10 +214,10 @@ public class DashboardMainServlet extends BaseServlet {
             buttonIcon = DOWN_ARROW;
             buttonLink = DASHBOARD_ALL_LINK;
         }
-        Collections.sort(displayedTests);
+        displayedTests.sort(Comparator.naturalOrder());
 
         response.setStatus(HttpServletResponse.SC_OK);
-        request.setAttribute("allTestsJson", new Gson().toJson(allTests));
+        request.setAttribute("allTestsJson", new Gson().toJson(allTestNames));
         request.setAttribute("subscriptionMapJson", new Gson().toJson(subscriptionMap));
         request.setAttribute("testNames", displayedTests);
         request.setAttribute("headerLabel", header);
@@ -198,6 +226,7 @@ public class DashboardMainServlet extends BaseServlet {
         request.setAttribute("buttonIcon", buttonIcon);
         request.setAttribute("buttonLink", buttonLink);
         request.setAttribute("error", error);
+        request.setAttribute("resultsUrl", referTo.defaultUrl);
         dispatcher = request.getRequestDispatcher(DASHBOARD_MAIN_JSP);
         try {
             dispatcher.forward(request, response);

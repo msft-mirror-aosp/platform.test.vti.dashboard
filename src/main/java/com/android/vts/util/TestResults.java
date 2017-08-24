@@ -17,17 +17,21 @@
 package com.android.vts.util;
 
 import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestCaseRunEntity.TestCase;
+import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.proto.VtsReportMessage.TestCaseResult;
 import com.android.vts.util.UrlUtil.LinkDisplay;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Query;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,12 +72,20 @@ public class TestResults {
     private static final String[] DURATION_INFO_NAMES = {"<b>Test Duration</b>"};
 
     // Row labels for the test summary grid.
-    private static final String[] SUMMARY_NAMES = {"Total", "Passing #", "Non-Passing #",
-            "Passing %", "Covered Lines", "Coverage %", "Logs"};
+    private static final String[] SUMMARY_NAMES = {
+        "Total", "Passing #", "Non-Passing #", "Passing %", "Covered Lines", "Coverage %", "Logs"
+    };
 
     // Row labels for the device summary information in the table header.
-    private static final String[] HEADER_NAMES = {"<b>Stats Type \\ Device Build ID</b>", "Branch",
-            "Build Target", "Device", "ABI Target", "VTS Build ID", "Hostname"};
+    private static final String[] HEADER_NAMES = {
+        "<b>Stats Type \\ Device Build ID</b>",
+        "Branch",
+        "Build Target",
+        "Device",
+        "ABI Target",
+        "VTS Build ID",
+        "Hostname"
+    };
 
     /**
      * Create a test results object.
@@ -95,30 +107,10 @@ public class TestResults {
      *
      * @param testRun The Entity containing the test run information.
      * @param testCaseRuns The collection of test case executions within the test run.
-     * @param deviceInfos The collection of device information entities for the test run.
-     * @param profilingPoints The collection of profiling point names for the test run.
      */
-    public void addTestRun(Entity testRun, Iterable<Entity> testCaseRuns,
-            Iterable<Entity> deviceInfos, Iterable<Entity> profilingPoints) {
-        // Process the devices in the test run
-        List<DeviceInfoEntity> devices = new ArrayList<>();
-        for (Entity e : deviceInfos) {
-            DeviceInfoEntity deviceInfoEntity = DeviceInfoEntity.fromEntity(e);
-            if (deviceInfoEntity == null)
-                continue;
-            devices.add(deviceInfoEntity);
-        }
-
-        // Filter out test runs lacking device information
-        if (devices.size() == 0) {
-            logger.log(Level.WARNING, "No device info found for run: " + testRun.getKey());
-            return;
-        }
-        deviceInfoMap.put(testRun.getKey(), devices);
-
+    public void addTestRun(Entity testRun, Iterable<Entity> testCaseRuns) {
         TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
-        if (testRunEntity == null)
-            return;
+        if (testRunEntity == null) return;
         if (testRunEntity.startTimestamp < startTime) {
             startTime = testRunEntity.startTimestamp;
         }
@@ -131,8 +123,7 @@ public class TestResults {
         // Process the test cases in the test run
         for (Entity e : testCaseRuns) {
             TestCaseRunEntity testCaseRunEntity = TestCaseRunEntity.fromEntity(e);
-            if (testCaseRunEntity == null)
-                continue;
+            if (testCaseRunEntity == null) continue;
             testCaseRunMap.get(testRun.getKey()).add(testCaseRunEntity);
             for (TestCase testCase : testCaseRunEntity.testCases) {
                 if (!testCaseNameMap.containsKey(testCase.name)) {
@@ -140,20 +131,12 @@ public class TestResults {
                 }
             }
         }
-
-        // Process the profiling point observations in the test run
-        for (Entity e : profilingPoints) {
-            if (e.getKey().getName() != null) {
-                profilingPointNameSet.add(e.getKey().getName());
-            }
-        }
     }
 
     /** Creates a test case breakdown of the most recent test run. */
     private void generateToTBreakdown() {
         totResultCounts = new int[TestCaseResult.values().length];
-        if (testRuns.size() == 0)
-            return;
+        if (testRuns.size() == 0) return;
 
         TestRunEntity mostRecentRun = testRuns.get(0);
         List<TestCaseRunEntity> testCaseResults = testCaseRunMap.get(mostRecentRun.key);
@@ -179,15 +162,66 @@ public class TestResults {
         return testRuns.size();
     }
 
+    /** Fetch and process profiling point names for the set of test runs. */
+    private void processProfilingPoints() {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Key testKey = KeyFactory.createKey(TestEntity.KIND, this.testName);
+        Query.Filter profilingFilter =
+                FilterUtil.getProfilingTimeFilter(
+                        testKey, TestRunEntity.KIND, this.startTime, this.endTime);
+        Query profilingPointQuery =
+                new Query(ProfilingPointRunEntity.KIND)
+                        .setAncestor(testKey)
+                        .setFilter(profilingFilter)
+                        .setKeysOnly();
+        Iterable<Entity> profilingPoints = datastore.prepare(profilingPointQuery).asIterable();
+        // Process the profiling point observations in the test run
+        for (Entity e : profilingPoints) {
+            if (e.getKey().getName() != null) {
+                profilingPointNameSet.add(e.getKey().getName());
+            }
+        }
+    }
+
+    /** Fetch and process device information for the set of test runs. */
+    private void processDeviceInfos() {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Key testKey = KeyFactory.createKey(TestEntity.KIND, this.testName);
+        Query.Filter deviceFilter =
+                FilterUtil.getDeviceTimeFilter(
+                        testKey, TestRunEntity.KIND, this.startTime, this.endTime);
+        Query deviceQuery =
+                new Query(DeviceInfoEntity.KIND)
+                        .setAncestor(testKey)
+                        .setFilter(deviceFilter)
+                        .setKeysOnly();
+        List<Key> deviceGets = new ArrayList<>();
+        for (Entity device :
+                datastore.prepare(deviceQuery).asIterable(DatastoreHelper.getLargeBatchOptions())) {
+            if (testCaseRunMap.containsKey(device.getParent())) {
+                deviceGets.add(device.getKey());
+            }
+        }
+        Map<Key, Entity> devices = datastore.get(deviceGets);
+        for (Key key : devices.keySet()) {
+            Entity device = devices.get(key);
+            if (!testCaseRunMap.containsKey(device.getParent())) return;
+            DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
+            if (deviceEntity == null) return;
+            if (!deviceInfoMap.containsKey(device.getParent())) {
+                deviceInfoMap.put(device.getParent(), new ArrayList<DeviceInfoEntity>());
+            }
+            deviceInfoMap.get(device.getParent()).add(deviceEntity);
+        }
+    }
+
     /** Post-process the test runs to generate reports of the results. */
     public void processReport() {
-        Comparator<TestRunEntity> comparator = new Comparator<TestRunEntity>() {
-            @Override
-            public int compare(TestRunEntity t1, TestRunEntity t2) {
-                return new Long(t2.startTimestamp).compareTo(t1.startTimestamp);
-            }
-        };
-        Collections.sort(testRuns, comparator);
+        if (getSize() > 0) {
+            processDeviceInfos();
+            processProfilingPoints();
+        }
+        testRuns.sort((t1, t2) -> new Long(t2.startTimestamp).compareTo(t1.startTimestamp));
         generateToTBreakdown();
 
         headerRow = new String[testRuns.size() + 1];
@@ -287,16 +321,17 @@ public class TestResults {
                     String classNames = "test-case-status ";
                     String glyph = "";
                     TestCaseResult testCaseResult = TestCaseResult.valueOf(result);
-                    if (testCaseResult != null)
-                        classNames += testCaseResult.toString();
-                    else
-                        classNames += TestCaseResult.UNKNOWN_RESULT.toString();
+                    if (testCaseResult != null) classNames += testCaseResult.toString();
+                    else classNames += TestCaseResult.UNKNOWN_RESULT.toString();
 
                     if (systraceUrl != null) {
                         classNames += " width-1";
-                        glyph += "<a href=\"" + systraceUrl + "\" "
-                                + "class=\"waves-effect waves-light btn red right inline-btn\">"
-                                + "<i class=\"material-icons inline-icon\">info_outline</i></a>";
+                        glyph +=
+                                "<a href=\""
+                                        + systraceUrl
+                                        + "\" "
+                                        + "class=\"waves-effect waves-light btn red right inline-btn\">"
+                                        + "<i class=\"material-icons inline-icon\">info_outline</i></a>";
                     }
                     resultsGrid[index][col + 1] =
                             "<div class=\"" + classNames + "\">&nbsp;</div>" + glyph;
@@ -317,11 +352,15 @@ public class TestResults {
             try {
                 double coveragePct =
                         Math.round((100 * coveredLineCount / totalLineCount) * 100f) / 100f;
-                coveragePctInfo = Double.toString(coveragePct) + "%"
-                        + "<a href=\"/show_coverage?testName=" + testName + "&startTime="
-                        + testRun.startTimestamp
-                        + "\" class=\"waves-effect waves-light btn red right inline-btn\">"
-                        + "<i class=\"material-icons inline-icon\">menu</i></a>";
+                coveragePctInfo =
+                        Double.toString(coveragePct)
+                                + "%"
+                                + "<a href=\"/show_coverage?testName="
+                                + testName
+                                + "&startTime="
+                                + testRun.startTimestamp
+                                + "\" class=\"waves-effect waves-light btn red right inline-btn\">"
+                                + "<i class=\"material-icons inline-icon\">menu</i></a>";
                 coverageInfo = coveredLineCount + "/" + totalLineCount;
             } catch (ArithmeticException e) {
                 coveragePctInfo = " - ";
@@ -340,28 +379,46 @@ public class TestResults {
                         logger.log(Level.WARNING, "Invalid logging URL : " + rawUrl);
                         continue;
                     }
-                    String[] logInfo = new String[] {
-                            validatedLink.name,
-                            validatedLink.url // TODO: process the name from the URL
-                    };
+                    String[] logInfo =
+                            new String[] {
+                                validatedLink.name,
+                                validatedLink.url // TODO: process the name from the URL
+                            };
                     logEntries.add(logInfo);
                 }
             }
             if (logEntries.size() > 0) {
                 logSummary = Integer.toString(logEntries.size());
-                logSummary += "<i class=\"waves-effect waves-light btn red right inline-btn"
-                        + " info-btn material-icons inline-icon\""
-                        + " data-col=\"" + Integer.toString(col) + "\""
-                        + ">launch</i>";
+                logSummary +=
+                        "<i class=\"waves-effect waves-light btn red right inline-btn"
+                                + " info-btn material-icons inline-icon\""
+                                + " data-col=\""
+                                + Integer.toString(col)
+                                + "\""
+                                + ">launch</i>";
             }
 
             String icon = "<div class='status-icon " + aggregateStatus.toString() + "'>&nbsp</div>";
             String hostname = testRun.hostName;
 
             // Populate the header row
-            headerRow[col + 1] = "<span class='valign-wrapper'><b>" + buildIds + "</b>" + icon
-                    + "</span>" + buildAlias + "<br>" + buildFlavor + "<br>" + productVariant
-                    + "<br>" + abiInfo + "<br>" + vtsBuildId + "<br>" + hostname;
+            headerRow[col + 1] =
+                    "<span class='valign-wrapper'><b>"
+                            + buildIds
+                            + "</b>"
+                            + icon
+                            + "</span>"
+                            + buildAlias
+                            + "<br>"
+                            + buildFlavor
+                            + "<br>"
+                            + productVariant
+                            + "<br>"
+                            + abiInfo
+                            + "<br>"
+                            + vtsBuildId
+                            + "<br>"
+                            + hostname;
 
             // Populate the test summary grid
             summaryGrid[0][col + 1] = Integer.toString(totalCount);

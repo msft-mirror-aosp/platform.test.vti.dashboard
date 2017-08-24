@@ -69,20 +69,35 @@
    */
   function displayTestDetails(container, data, lineHeight) {
     var nCol = data.length;
-    var width = 12 / nCol;
+    var width = 's' + (12 / nCol);
     test = container;
     var maxLines = 0;
-    data.forEach(function (column) {
+    data.forEach(function (column, index) {
       if (column.data == undefined || column.name == undefined) {
         return;
       }
-      var colContainer =
-        $('<div class="col s' + width + ' test-col"></div>');
+      var classes = 'col test-col grey lighten-5 ' + width;
+      if (index != nCol -1) {
+        classes += ' bordered';
+      }
+      if (index == 0) {
+        classes += ' left-most';
+      }
+      if (index == nCol - 1) {
+        classes += ' right-most';
+      }
+      var colContainer = $('<div class="' + classes + '"></div>');
       var col = $('<div class="test-case-container"></div>');
       colContainer.appendTo(container);
       var count = column.data.length;
-      $('<h5>' + getNickname(column.name) + ' (' + count + ')' + '</h5>')
-        .appendTo(colContainer).css('text-transform', 'capitalize');
+      var head = $('<h5 class="test-result-label white"></h5>')
+        .text(getNickname(column.name))
+        .appendTo(colContainer)
+        .css('text-transform', 'capitalize');
+      $('<div class="indicator right center"></div>')
+        .text(count)
+        .addClass(column.name)
+        .appendTo(head);
       col.appendTo(colContainer);
       var list = $('<ul></ul>').appendTo(col);
       column.data.forEach(function (testCase) {
@@ -243,7 +258,7 @@
       expand.text('expand_more');
       expand.appendTo(div);
       var body = $('<div></div>')
-        .addClass('collapsible-body test-results row grey lighten-4')
+        .addClass('collapsible-body test-results row')
         .appendTo(li);
       if (metadata.testDetails != undefined) {
         expand.addClass('rotate');

@@ -20,8 +20,9 @@ import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestCaseRunEntity.TestCase;
 import com.android.vts.entity.TestEntity;
-import com.android.vts.entity.TestEntity.TestCaseReference;
 import com.android.vts.entity.TestRunEntity;
+import com.android.vts.entity.TestStatusEntity;
+import com.android.vts.entity.TestStatusEntity.TestCaseReference;
 import com.android.vts.proto.VtsReportMessage.TestCaseResult;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.EmailHelper;
@@ -32,17 +33,21 @@ import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.DatastoreTimeoutException;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
+import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,11 +64,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.math3.analysis.function.Add;
 
 /** Represents the notifications service which is automatically called on a fixed schedule. */
 public class VtsAlertJobServlet extends HttpServlet {
+    private static final String ALERT_JOB_URL = "/task/vts_alert_job";
     protected final Logger logger = Logger.getLogger(getClass().getName());
+    protected final int MAX_RUN_COUNT = 1000; // maximum number of runs to query for
 
     /**
      * Creates an email footer with the provided link.
@@ -72,61 +78,28 @@ public class VtsAlertJobServlet extends HttpServlet {
      * @return The full HTML email footer.
      */
     private String getFooter(String link) {
-        return "<br><br>For details, visit the"
-                + " <a href='" + link + "'>"
-                + "VTS dashboard.</a>";
-    }
-
-    /**
-     * Compose an email if the test is inactive.
-     *
-     * @param test The TestEntity document storing the test status.
-     * @param link Fully specified link to the test's status page.
-     * @param emails The list of email addresses to send the email.
-     * @param messages The message list in which to insert the inactivity notification email.
-     * @return True if the test is inactive, false otherwise.
-     */
-    private boolean notifyIfInactive(
-            TestEntity test, String link, List<String> emails, List<Message> messages) {
-        long now = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
-        long diff = now - test.timestamp;
-        // Send an email daily to notify that the test hasn't been running.
-        // After 7 full days have passed, notifications will no longer be sent (i.e. the
-        // test is assumed to be deprecated).
-        if (diff > TimeUnit.DAYS.toMicros(1) && diff < TimeUnit.DAYS.toMicros(8)
-                && diff % TimeUnit.DAYS.toMicros(1) < TimeUnit.MINUTES.toMicros(3)) {
-            Date lastUpload = new Date(TimeUnit.MICROSECONDS.toMillis(test.timestamp));
-            String uploadTimeString =
-                    new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(lastUpload);
-            String subject = "Warning! Inactive test: " + test.testName;
-            String body = "Hello,<br><br>Test \"" + test.testName + "\" is inactive. "
-                    + "No new data has been uploaded since " + uploadTimeString + "."
-                    + getFooter(link);
-            try {
-                messages.add(EmailHelper.composeEmail(emails, subject, body));
-                return true;
-            } catch (MessagingException | UnsupportedEncodingException e) {
-                logger.log(Level.WARNING, "Error composing email : ", e);
-            }
-        }
-        return false;
+        return "<br><br>For details, visit the" + " <a href='" + link + "'>" + "VTS dashboard.</a>";
     }
 
     /**
      * Checks whether any new failures have occurred beginning since (and including) startTime.
      *
-     * @param test The TestEntity object for the test.
+     * @param status The TestStatusEntity object for the test.
      * @param link The string URL linking to the test's status table.
-     * @param failedTestCaseMap The map of test case names to TestCase for those failing in the
-     *     last status update.
+     * @param failedTestCaseMap The map of test case names to TestCase for those failing in the last
+     *     status update.
      * @param emailAddresses The list of email addresses to send notifications to.
      * @param messages The email Message queue.
      * @returns latest TestStatusMessage or null if no update is available.
      * @throws IOException
      */
-    public TestEntity getTestStatus(TestEntity test, String link,
-            Map<String, TestCase> failedTestCaseMap, List<String> emailAddresses,
-            List<Message> messages) throws IOException {
+    public TestStatusEntity getTestStatus(
+            TestStatusEntity status,
+            String link,
+            Map<String, TestCase> failedTestCaseMap,
+            List<String> emailAddresses,
+            List<Message> messages)
+            throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         String footer = getFooter(link);
 
@@ -141,20 +114,24 @@ public class VtsAlertJobServlet extends HttpServlet {
         Set<String> skippedTestcaseFailures = new HashSet<>();
         Set<String> transientTestcaseFailures = new HashSet<>();
 
-        String testName = test.testName;
+        String testName = status.testName;
         Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
         Filter testTypeFilter = FilterUtil.getTestTypeFilter(false, true, false);
-        Filter runFilter = FilterUtil.getTimeFilter(
-                testKey, TestRunEntity.KIND, test.timestamp + 1, null, testTypeFilter);
-        Query q = new Query(TestRunEntity.KIND)
-                          .setAncestor(testKey)
-                          .setFilter(runFilter)
-                          .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
+        Filter runFilter =
+                FilterUtil.getTimeFilter(
+                        testKey, TestRunEntity.KIND, status.timestamp + 1, null, testTypeFilter);
+        Query q =
+                new Query(TestRunEntity.KIND)
+                        .setAncestor(testKey)
+                        .setFilter(runFilter)
+                        .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
 
-        for (Entity testRun : datastore.prepare(q).asIterable()) {
+        for (Entity testRun :
+                datastore.prepare(q).asIterable(FetchOptions.Builder.withLimit(MAX_RUN_COUNT))) {
             TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
             if (testRunEntity == null) {
                 logger.log(Level.WARNING, "Invalid test run detected: " + testRun.getKey());
+                continue;
             }
             if (mostRecentRun == null) {
                 mostRecentRun = testRunEntity;
@@ -208,7 +185,6 @@ public class VtsAlertJobServlet extends HttpServlet {
         }
 
         if (mostRecentRun == null) {
-            notifyIfInactive(test, link, emailAddresses, messages);
             return null;
         }
 
@@ -257,16 +233,15 @@ public class VtsAlertJobServlet extends HttpServlet {
 
             // Add new test case failures to top of summary in bold font.
             List<String> sortedNewTestcaseFailures = new ArrayList<>(newTestcaseFailures);
-            Collections.sort(sortedNewTestcaseFailures);
+            sortedNewTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedNewTestcaseFailures) {
-                summary += "- "
-                        + "<b>" + testcaseName + "</b><br>";
+                summary += "- " + "<b>" + testcaseName + "</b><br>";
             }
 
             // Add continued test case failures to summary.
             List<String> sortedContinuedTestcaseFailures =
                     new ArrayList<>(continuedTestcaseFailures);
-            Collections.sort(sortedContinuedTestcaseFailures);
+            sortedContinuedTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedContinuedTestcaseFailures) {
                 summary += "- " + testcaseName + "<br>";
             }
@@ -275,7 +250,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             // Add fixed test cases to summary.
             summary += "<br><br>The following test cases were fixed in the latest test run:<br>";
             List<String> sortedFixedTestcases = new ArrayList<>(fixedTestcases);
-            Collections.sort(sortedFixedTestcases);
+            sortedFixedTestcases.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedFixedTestcases) {
                 summary += "- <i>" + testcaseName + "</i><br>";
             }
@@ -285,7 +260,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             summary += "<br><br>The following transient test case failures occured:<br>";
             List<String> sortedTransientTestcaseFailures =
                     new ArrayList<>(transientTestcaseFailures);
-            Collections.sort(sortedTransientTestcaseFailures);
+            sortedTransientTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedTransientTestcaseFailures) {
                 summary += "- " + testcaseName + "<br>";
             }
@@ -294,68 +269,95 @@ public class VtsAlertJobServlet extends HttpServlet {
             // Add skipped test case failures to summary.
             summary += "<br><br>The following test cases have not been run since failing:<br>";
             List<String> sortedSkippedTestcaseFailures = new ArrayList<>(skippedTestcaseFailures);
-            Collections.sort(sortedSkippedTestcaseFailures);
+            sortedSkippedTestcaseFailures.sort(Comparator.naturalOrder());
             for (String testcaseName : sortedSkippedTestcaseFailures) {
                 summary += "- " + testcaseName + "<br>";
             }
         }
 
+        Date lastUpload = new Date(TimeUnit.MICROSECONDS.toMillis(mostRecentRun.startTimestamp));
+        String uploadDateString = new SimpleDateFormat("MM/dd/yyyy").format(lastUpload);
+        String subject = "VTS Test Alert: " + testName + " @ " + uploadDateString;
         if (newTestcaseFailures.size() > 0) {
-            String subject = "New test failures in " + testName + " @ " + buildId;
-            String body = "Hello,<br><br>Test cases are failing in " + testName
-                    + " for device build ID(s): " + buildId + ".<br><br>" + summary + footer;
+            String body =
+                    "Hello,<br><br>New test case failure(s) in "
+                            + testName
+                            + " for device build ID(s): "
+                            + buildId
+                            + ".<br><br>"
+                            + summary
+                            + footer;
             try {
                 messages.add(EmailHelper.composeEmail(emailAddresses, subject, body));
             } catch (MessagingException | UnsupportedEncodingException e) {
                 logger.log(Level.WARNING, "Error composing email : ", e);
             }
         } else if (continuedTestcaseFailures.size() > 0) {
-            String subject = "Continued test failures in " + testName + " @ " + buildId;
-            String body = "Hello,<br><br>Test cases are failing in " + testName
-                    + " for device build ID(s): " + buildId + ".<br><br>" + summary + footer;
+            String body =
+                    "Hello,<br><br>Continuous test case failure(s) in "
+                            + testName
+                            + " for device build ID(s): "
+                            + buildId
+                            + ".<br><br>"
+                            + summary
+                            + footer;
             try {
                 messages.add(EmailHelper.composeEmail(emailAddresses, subject, body));
             } catch (MessagingException | UnsupportedEncodingException e) {
                 logger.log(Level.WARNING, "Error composing email : ", e);
             }
         } else if (transientTestcaseFailures.size() > 0) {
-            String subject = "Transient test failure in " + testName + " @ " + buildId;
-            String body = "Hello,<br><br>Some test cases failed in " + testName + " but tests all "
-                    + "are passing in the latest device build(s): " + buildId + ".<br><br>"
-                    + summary + footer;
+            String body =
+                    "Hello,<br><br>Transient test case failure(s) in "
+                            + testName
+                            + " but tests all "
+                            + "are passing in the latest device build(s): "
+                            + buildId
+                            + ".<br><br>"
+                            + summary
+                            + footer;
             try {
                 messages.add(EmailHelper.composeEmail(emailAddresses, subject, body));
             } catch (MessagingException | UnsupportedEncodingException e) {
                 logger.log(Level.WARNING, "Error composing email : ", e);
             }
         } else if (fixedTestcases.size() > 0) {
-            String subject = "All test cases passing in " + testName + " @ " + buildId;
-            String body = "Hello,<br><br>All test cases passed in " + testName
-                    + " for device build ID(s): " + buildId + "!<br><br>" + summary + footer;
+            String body =
+                    "Hello,<br><br>All test cases passed in "
+                            + testName
+                            + " for device build ID(s): "
+                            + buildId
+                            + "!<br><br>"
+                            + summary
+                            + footer;
             try {
                 messages.add(EmailHelper.composeEmail(emailAddresses, subject, body));
             } catch (MessagingException | UnsupportedEncodingException e) {
                 logger.log(Level.WARNING, "Error composing email : ", e);
             }
         }
-        return new TestEntity(test.testName, mostRecentRun.startTimestamp, passingTestcaseCount,
-                failingTestCases.size(), failingTestCases);
+        return new TestStatusEntity(
+                status.testName,
+                mostRecentRun.startTimestamp,
+                passingTestcaseCount,
+                failingTestCases.size(),
+                failingTestCases);
     }
 
     /**
      * Process the current test case failures for a test.
      *
-     * @param testEntity The TestEntity object for the test.
+     * @param status The TestStatusEntity object for the test.
      * @returns a map from test case name to the test case run ID for which the test case failed.
      */
-    public static Map<String, TestCase> getCurrentFailures(TestEntity testEntity) {
-        if (testEntity.failingTestCases == null || testEntity.failingTestCases.size() == 0) {
+    public static Map<String, TestCase> getCurrentFailures(TestStatusEntity status) {
+        if (status.failingTestCases == null || status.failingTestCases.size() == 0) {
             return new HashMap<>();
         }
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Map<String, TestCase> failingTestcases = new HashMap<>();
         Set<Key> gets = new HashSet<>();
-        for (TestCaseReference testCaseRef : testEntity.failingTestCases) {
+        for (TestCaseReference testCaseRef : status.failingTestCases) {
             gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseRef.parentId));
         }
         if (gets.size() == 0) {
@@ -363,7 +365,7 @@ public class VtsAlertJobServlet extends HttpServlet {
         }
         Map<Key, Entity> testCaseMap = datastore.get(gets);
 
-        for (TestCaseReference testCaseRef : testEntity.failingTestCases) {
+        for (TestCaseReference testCaseRef : status.failingTestCases) {
             Key key = KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseRef.parentId);
             if (!testCaseMap.containsKey(key)) {
                 continue;
@@ -379,67 +381,94 @@ public class VtsAlertJobServlet extends HttpServlet {
         return failingTestcases;
     }
 
+    /**
+     * Add a task to process test run data
+     *
+     * @param testRunKey The key of the test run whose data process.
+     */
+    public static void addTask(Key testRunKey) {
+        Queue queue = QueueFactory.getDefaultQueue();
+        String keyString = KeyFactory.keyToString(testRunKey);
+        queue.add(
+                TaskOptions.Builder.withUrl(ALERT_JOB_URL)
+                        .param("runKey", keyString)
+                        .method(TaskOptions.Method.POST));
+    }
+
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Query q = new Query(TestEntity.KIND);
-        for (Entity test : datastore.prepare(q).asIterable()) {
-            TestEntity testEntity = TestEntity.fromEntity(test);
-            if (testEntity == null) {
-                logger.log(Level.WARNING, "Corrupted test entity: " + test.getKey().getName());
-                continue;
-            }
-            List<String> emails = EmailHelper.getSubscriberEmails(test.getKey());
+        String runKeyString = request.getParameter("runKey");
 
-            StringBuffer fullUrl = request.getRequestURL();
-            String baseUrl = fullUrl.substring(0, fullUrl.indexOf(request.getRequestURI()));
-            String link = baseUrl + "/show_table?testName=" + testEntity.testName;
+        Key testRunKey;
+        try {
+            testRunKey = KeyFactory.stringToKey(runKeyString);
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.WARNING, "Invalid key specified: " + runKeyString);
+            return;
+        }
+        String testName = testRunKey.getParent().getName();
 
-            List<Message> messageQueue = new ArrayList<>();
-            Map<String, TestCase> failedTestcaseMap = getCurrentFailures(testEntity);
+        TestStatusEntity status = null;
+        Key statusKey = KeyFactory.createKey(TestStatusEntity.KIND, testName);
+        try {
+            status = TestStatusEntity.fromEntity(datastore.get(statusKey));
+        } catch (EntityNotFoundException e) {
+            // no existing status
+        }
+        if (status == null) {
+            status = new TestStatusEntity(testName);
+        }
+        if (status.timestamp >= testRunKey.getId()) {
+            // Another job has already updated the status first
+            return;
+        }
+        List<String> emails = EmailHelper.getSubscriberEmails(testRunKey.getParent());
 
-            TestEntity newTestEntity =
-                    getTestStatus(testEntity, link, failedTestcaseMap, emails, messageQueue);
+        StringBuffer fullUrl = request.getRequestURL();
+        String baseUrl = fullUrl.substring(0, fullUrl.indexOf(request.getRequestURI()));
+        String link =
+                baseUrl + "/show_tree?testName=" + testName + "&endTime=" + testRunKey.getId();
 
-            // Send any inactivity notifications
-            if (newTestEntity == null) {
-                if (messageQueue.size() > 0) {
+        List<Message> messageQueue = new ArrayList<>();
+        Map<String, TestCase> failedTestcaseMap = getCurrentFailures(status);
+
+        TestStatusEntity newStatus =
+                getTestStatus(status, link, failedTestcaseMap, emails, messageQueue);
+        if (newStatus == null) {
+            // No changes to status
+            return;
+        }
+
+        int retries = 0;
+        while (true) {
+            Transaction txn = datastore.beginTransaction();
+            try {
+                try {
+                    status = TestStatusEntity.fromEntity(datastore.get(statusKey));
+                } catch (EntityNotFoundException e) {
+                    // no status left
+                }
+                if (status == null || status.timestamp >= newStatus.timestamp) {
+                    txn.rollback();
+                } else { // This update is most recent.
+                    datastore.put(newStatus.toEntity());
+                    txn.commit();
                     EmailHelper.sendAll(messageQueue);
                 }
-                continue;
-            }
-
-            int retries = 0;
-            while (true) {
-                Transaction txn = datastore.beginTransaction();
-                try {
-                    try {
-                        testEntity = TestEntity.fromEntity(datastore.get(test.getKey()));
-
-                        // Another job updated the test entity
-                        if (testEntity == null || testEntity.timestamp >= newTestEntity.timestamp) {
-                            txn.rollback();
-                        } else { // This update is most recent.
-                            datastore.put(newTestEntity.toEntity());
-                            txn.commit();
-                            EmailHelper.sendAll(messageQueue);
-                        }
-                    } catch (EntityNotFoundException e) {
-                        logger.log(Level.INFO,
-                                "Test disappeared during updated: " + newTestEntity.testName);
-                    }
-                    break;
-                } catch (ConcurrentModificationException | DatastoreFailureException
-                        | DatastoreTimeoutException e) {
-                    logger.log(Level.WARNING, "Retrying alert job insert: " + test.getKey());
-                    if (retries++ >= DatastoreHelper.MAX_WRITE_RETRIES) {
-                        logger.log(Level.SEVERE, "Exceeded alert job retries: " + test.getKey());
-                        throw e;
-                    }
-                } finally {
-                    if (txn.isActive()) {
-                        txn.rollback();
-                    }
+                break;
+            } catch (ConcurrentModificationException
+                    | DatastoreFailureException
+                    | DatastoreTimeoutException e) {
+                logger.log(Level.WARNING, "Retrying alert job insert: " + statusKey);
+                if (retries++ >= DatastoreHelper.MAX_WRITE_RETRIES) {
+                    logger.log(Level.SEVERE, "Exceeded alert job retries: " + statusKey);
+                    throw e;
+                }
+            } finally {
+                if (txn.isActive()) {
+                    txn.rollback();
                 }
             }
         }

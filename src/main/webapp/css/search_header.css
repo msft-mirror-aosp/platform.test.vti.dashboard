@@ -16,8 +16,8 @@
     margin-left: 0;
     margin-right: 0;
 }
-.search-bar .header-wrapper {
-    border-bottom: 1px solid rgb(221, 221, 221);;
+.row.card.search-bar.expanded {
+    border-radius: 0 0 15px 15px;
 }
 .search-bar .section-header {
     color: rgb(97, 97, 97);
@@ -45,6 +45,9 @@
     line-height: 57px;
     color: rgb(97, 97, 97);
 }
+.search-bar .search-wrapper {
+    border-top: 1px solid rgb(221, 221, 221);
+}
 .search-bar .search-wrapper .refresh-wrapper a {
     float: right;
     margin-top: 17px;
@@ -58,23 +61,37 @@
 .search-bar .search-wrapper .run-type-wrapper [type="checkbox"]+label {
     margin-right: 35px;
 }
-.search-bar-menu  .ui-menu {
-    overflow-y: auto;
-    z-index: 100;
-    max-height: 50%;
+.search-bar .search-wrapper .input-field .filter-input+label {
+    text-overflow: ellipsis;
+    overflow-x: hidden;
+    white-space: nowrap;
+    width: calc(100% - 1.5rem);
+    pointer-events: none;
 }
-.search-bar-menu  .ui-menu-item {
+.search-bar .search-wrapper .input-field .filter-input:focus+label.active {
+    background-color: white;
+    z-index: 10000;
+    text-overflow: inherit;
+    overflow-x: visible;
+    width:auto;
+}
+.search-bar-menu.ui-menu {
+    overflow: auto;
+    z-index: 100;
+    max-height: 75%;
+}
+.search-bar-menu .ui-menu-item {
     font-size: 16px;
     padding: 4px 10px;
     transition: background-color .25s;
 }
-.search-bar-menu  .ui-menu-item:hover {
+.search-bar-menu .ui-menu-item:hover {
     background-color: #e0f2f1;
 }
 
 .search-bar-menu .ui-menu-item:active {
     background-color: #b2dfdb;
 }
-.search-bar-menu  .ui-helper-hidden-accessible {
+.ui-helper-hidden-accessible {
     display: none;
 }
