@@ -65,8 +65,10 @@ public class EmailHelper {
         }
         for (Entity favorite : datastore.prepare(favoritesQuery).asIterable()) {
             UserFavoriteEntity favoriteEntity = UserFavoriteEntity.fromEntity(favorite);
-            if (favoriteEntity != null && favoriteEntity.user != null
-                    && favoriteEntity.user.getEmail().endsWith(EMAIL_DOMAIN)) {
+            if (favoriteEntity != null
+                    && favoriteEntity.user != null
+                    && favoriteEntity.user.getEmail().endsWith(EMAIL_DOMAIN)
+                    && !favoriteEntity.muteNotifications) {
                 emailSet.add(favoriteEntity.user.getEmail());
             }
         }
