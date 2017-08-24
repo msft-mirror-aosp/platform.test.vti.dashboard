@@ -27,10 +27,14 @@
     height: 61px;
 }
 
-.btn-flat.clear-button {
+.btn-container > .btn-flat {
     margin-top: 8px;
     user-select: none;
     color: grey;
+}
+
+.btn-container > .btn-flat.inactive {
+    color: lightgray;
 }
 
 .row .col.card.option {
