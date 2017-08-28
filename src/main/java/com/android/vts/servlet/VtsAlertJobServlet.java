@@ -84,6 +84,7 @@ public class VtsAlertJobServlet extends HttpServlet {
     /**
      * Checks whether any new failures have occurred beginning since (and including) startTime.
      *
+     * @param testRunKey The Key object for the most recent test run.
      * @param status The TestStatusEntity object for the test.
      * @param link The string URL linking to the test's status table.
      * @param failedTestCaseMap The map of test case names to TestCase for those failing in the last
@@ -94,6 +95,7 @@ public class VtsAlertJobServlet extends HttpServlet {
      * @throws IOException
      */
     public TestStatusEntity getTestStatus(
+            Key testRunKey,
             TestStatusEntity status,
             String link,
             Map<String, TestCase> failedTestCaseMap,
@@ -117,9 +119,15 @@ public class VtsAlertJobServlet extends HttpServlet {
         String testName = status.testName;
         Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
         Filter testTypeFilter = FilterUtil.getTestTypeFilter(false, true, false);
+        long delta = testRunKey.getId() - status.timestamp;
+        delta = Math.min(delta, TimeUnit.DAYS.toMicros(1));
         Filter runFilter =
                 FilterUtil.getTimeFilter(
-                        testKey, TestRunEntity.KIND, status.timestamp + 1, null, testTypeFilter);
+                        testKey,
+                        TestRunEntity.KIND,
+                        testRunKey.getId() - delta + 1,
+                        testRunKey.getId(),
+                        testTypeFilter);
         Query q =
                 new Query(TestRunEntity.KIND)
                         .setAncestor(testKey)
@@ -435,7 +443,7 @@ public class VtsAlertJobServlet extends HttpServlet {
         Map<String, TestCase> failedTestcaseMap = getCurrentFailures(status);
 
         TestStatusEntity newStatus =
-                getTestStatus(status, link, failedTestcaseMap, emails, messageQueue);
+                getTestStatus(testRunKey, status, link, failedTestcaseMap, emails, messageQueue);
         if (newStatus == null) {
             // No changes to status
             return;
