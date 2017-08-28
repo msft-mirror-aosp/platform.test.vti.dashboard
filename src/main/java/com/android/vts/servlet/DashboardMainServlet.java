@@ -74,6 +74,7 @@ public class DashboardMainServlet extends BaseServlet {
         private final Key testKey;
         private final int passCount;
         private final int failCount;
+        private boolean muteNotifications;
 
         /**
          * Test display constructor.
@@ -86,6 +87,7 @@ public class DashboardMainServlet extends BaseServlet {
             this.testKey = testKey;
             this.passCount = passCount;
             this.failCount = failCount;
+            this.muteNotifications = false;
         }
 
         /**
@@ -113,6 +115,20 @@ public class DashboardMainServlet extends BaseServlet {
          */
         public int getFailCount() {
             return this.failCount;
+        }
+
+        /**
+         * Get the notification mute status.
+         *
+         * @return True if the subscriber has muted notifications, false otherwise.
+         */
+        public boolean getMuteNotifications() {
+            return this.muteNotifications;
+        }
+
+        /** Set the notification mute status. */
+        public void setMuteNotifications(boolean muteNotifications) {
+            this.muteNotifications = muteNotifications;
         }
 
         @Override
@@ -199,14 +215,17 @@ public class DashboardMainServlet extends BaseServlet {
                                 UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
                 query = new Query(UserFavoriteEntity.KIND).setFilter(userFilter);
 
-                for (Entity favorite : datastore.prepare(query).asIterable()) {
-                    Key testKey = (Key) favorite.getProperty(UserFavoriteEntity.TEST_KEY);
+                for (Entity favoriteEntity : datastore.prepare(query).asIterable()) {
+                    UserFavoriteEntity favorite = UserFavoriteEntity.fromEntity(favoriteEntity);
+                    Key testKey = favorite.testKey;
                     if (!testMap.containsKey(testKey)) {
                         continue;
                     }
-                    displayedTests.add(testMap.get(testKey));
+                    TestDisplay display = testMap.get(testKey);
+                    display.setMuteNotifications(favorite.muteNotifications);
+                    displayedTests.add(display);
                     subscriptionMap.put(
-                            testKey.getName(), KeyFactory.keyToString(favorite.getKey()));
+                            testKey.getName(), KeyFactory.keyToString(favoriteEntity.getKey()));
                 }
             }
             header = FAVORITES_HEADER;

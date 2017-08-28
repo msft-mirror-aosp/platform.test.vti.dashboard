@@ -35,7 +35,7 @@
                 return;
             }
             $('#add-button').addClass('disabled');
-            $.post('/api/favorites/' + test).then(function(data) {
+            $.post('/api/favorites', { testName: test}).then(function(data) {
                 if (!data.key) {
                     return;
                 }
@@ -49,18 +49,64 @@
                 var span = $('<span class="entry valign"></span>').text(test);
                 span.appendTo(div);
                 a.appendTo(wrapper);
-                var clear = $('<a class="col s1 btn-flat center"></a>');
-                clear.addClass('clear-button');
+
+                var btnContainer = $('<div class="col s1 center btn-container"></div>');
+                var silence = $('<a class="col s6 btn-flat notification-button active"></a>');
+                silence.append('<i class="material-icons">notifications_active</i>');
+                silence.attr('test', test);
+                silence.attr('title', 'Disable notifications');
+                silence.appendTo(btnContainer);
+                silence.click(toggleNotifications);
+
+                var clear = $('<a class="col s6 btn-flat remove-button"></a>');
                 clear.append('<i class="material-icons">clear</i>');
                 clear.attr('test', test);
-                clear.appendTo(wrapper);
+                clear.attr('title', 'Remove favorite');
+                clear.appendTo(btnContainer);
                 clear.click(removeFavorite);
+
+                btnContainer.appendTo(wrapper);
+
                 wrapper.prependTo('#options').hide()
                                           .slideDown(150);
                 $('#input-box').val(null);
                 Materialize.updateTextFields();
             }).always(function() {
                 $('#add-button').removeClass('disabled');
+            });
+        }
+
+        var toggleNotifications = function() {
+            var self = $(this);
+            if (self.hasClass('disabled')) {
+                return;
+            }
+            self.addClass('disabled');
+            var test = self.attr('test');
+            if (!(test in subscriptionMap)) {
+                return;
+            }
+            var muteStatus = self.hasClass('active');
+            var element = self;
+            $.post('/api/favorites', { userFavoritesKey: subscriptionMap[test], muteNotifications: muteStatus}).then(function(data) {
+                element = self.clone();
+                if (element.hasClass('active')) {
+                    element.find('i').text('notifications_off')
+                    element.removeClass('active');
+                    element.addClass('inactive');
+                    element.attr('title', 'Enable notifications');
+                } else {
+                    element.find('i').text('notifications_active')
+                    element.removeClass('inactive');
+                    element.addClass('active');
+                    element.attr('title', 'Disable notifications');
+                }
+                element.click(toggleNotifications);
+                self.replaceWith(function() {
+                    return element;
+                });
+            }).always(function() {
+                element.removeClass('disabled');
             });
         }
 
@@ -81,7 +127,7 @@
                 self.removeClass('disabled');
             }).then(function() {
                 delete subscriptionMap[test];
-                self.parent().slideUp(150, function() {
+                self.parent().parent().slideUp(150, function() {
                     self.remove();
                 });
             });
@@ -107,7 +153,8 @@
                 }
             });
 
-            $('.clear-button').click(removeFavorite);
+            $('.remove-button').click(removeFavorite);
+            $('.notification-button').click(toggleNotifications);
             $('#add-button').click(addFavorite);
         });
     </script>
@@ -154,9 +201,14 @@
                   </div>
                 </a>
                 <c:if test='${not showAll}'>
-                  <a class='col s1 btn-flat center clear-button' test='${test.name}'>
-                    <i class='material-icons'>clear</i>
-                  </a>
+                  <div class='col s1 center btn-container'>
+                    <a class='col s6 btn-flat notification-button ${test.muteNotifications ? "inactive" : "active"}' test='${test.name}' title='${test.muteNotifications ? "Enable" : "Disable"} notifications'>
+                      <i class='material-icons'>notifications_${test.muteNotifications ? "off" : "active"}</i>
+                    </a>
+                    <a class='col s6 btn-flat remove-button' test='${test.name}' title='Remove favorite'>
+                      <i class='material-icons'>clear</i>
+                    </a>
+                  </div>
                 </c:if>
               </div>
             </c:forEach>
