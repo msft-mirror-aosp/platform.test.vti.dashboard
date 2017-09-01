@@ -70,16 +70,6 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
     }
 
     /**
-     * Creates an email footer with the provided link.
-     *
-     * @param link The (string) link to provide in the footer.
-     * @return The full HTML email footer.
-     */
-    private static String getFooter(String link) {
-        return "<br><br>For details, visit the" + " <a href='" + link + "'>" + "VTS dashboard.</a>";
-    }
-
-    /**
      * Gets a new coverage status and adds notification emails to the messages list.
      *
      * Send an email to notify subscribers in the event that a test goes up or down by more than
@@ -101,7 +91,6 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
             List<Message> messages)
             throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        String footer = getFooter(link);
 
         String testName = status.testName;
 
@@ -133,14 +122,17 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
 
         Set<String> buildIdList = new HashSet<>();
         Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(testRun.getKey());
+        List<DeviceInfoEntity> devices = new ArrayList<>();
         for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
             DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
             if (deviceEntity == null) {
                 continue;
             }
+            devices.add(deviceEntity);
             buildIdList.add(deviceEntity.buildId);
         }
         String deviceBuild = StringUtils.join(buildIdList, ", ");
+        String footer = EmailHelper.getEmailFooter(testRunEntity, devices, link);
 
         String subject = null;
         String body = null;

@@ -27,6 +27,7 @@ import com.android.vts.proto.VtsReportMessage.TestCaseResult;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.EmailHelper;
 import com.android.vts.util.FilterUtil;
+import com.android.vts.util.TimeUtil;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -45,11 +46,9 @@ import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -70,16 +69,6 @@ public class VtsAlertJobServlet extends HttpServlet {
     private static final String ALERT_JOB_URL = "/task/vts_alert_job";
     protected final Logger logger = Logger.getLogger(getClass().getName());
     protected final int MAX_RUN_COUNT = 1000; // maximum number of runs to query for
-
-    /**
-     * Creates an email footer with the provided link.
-     *
-     * @param link The (string) link to provide in the footer.
-     * @return The full HTML email footer.
-     */
-    private String getFooter(String link) {
-        return "<br><br>For details, visit the" + " <a href='" + link + "'>" + "VTS dashboard.</a>";
-    }
 
     /**
      * Checks whether any new failures have occurred beginning since (and including) startTime.
@@ -103,7 +92,6 @@ public class VtsAlertJobServlet extends HttpServlet {
             List<Message> messages)
             throws IOException {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        String footer = getFooter(link);
 
         TestRunEntity mostRecentRun = null;
         Map<String, TestCaseResult> mostRecentTestCaseResults = new HashMap<>();
@@ -226,6 +214,7 @@ public class VtsAlertJobServlet extends HttpServlet {
         }
 
         Set<String> buildIdList = new HashSet<>();
+        List<DeviceInfoEntity> devices = new ArrayList<>();
         Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(mostRecentRun.key);
         for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
             DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
@@ -233,7 +222,9 @@ public class VtsAlertJobServlet extends HttpServlet {
                 continue;
             }
             buildIdList.add(deviceEntity.buildId);
+            devices.add(deviceEntity);
         }
+        String footer = EmailHelper.getEmailFooter(mostRecentRun, devices, link);
         String buildId = StringUtils.join(buildIdList, ",");
         String summary = new String();
         if (newTestcaseFailures.size() + continuedTestcaseFailures.size() > 0) {
@@ -283,8 +274,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             }
         }
 
-        Date lastUpload = new Date(TimeUnit.MICROSECONDS.toMillis(mostRecentRun.startTimestamp));
-        String uploadDateString = new SimpleDateFormat("MM/dd/yyyy").format(lastUpload);
+        String uploadDateString = TimeUtil.getDateString(mostRecentRun.startTimestamp);
         String subject = "VTS Test Alert: " + testName + " @ " + uploadDateString;
         if (newTestcaseFailures.size() > 0) {
             String body =
