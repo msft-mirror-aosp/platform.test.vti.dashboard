@@ -97,27 +97,27 @@ Copyright 2016 Google Inc. All Rights Reserved.
 
 <servlet>
   <servlet-name>vts_alert_job</servlet-name>
-  <servlet-class>com.android.vts.servlet.VtsAlertJobServlet</servlet-class>
+  <servlet-class>com.android.vts.job.VtsAlertJobServlet</servlet-class>
 </servlet>
 
 <servlet>
   <servlet-name>vts_performance_job</servlet-name>
-  <servlet-class>com.android.vts.servlet.VtsPerformanceJobServlet</servlet-class>
+  <servlet-class>com.android.vts.job.VtsPerformanceJobServlet</servlet-class>
 </servlet>
 
 <servlet>
   <servlet-name>vts_profiling_stats_job</servlet-name>
-  <servlet-class>com.android.vts.servlet.VtsProfilingStatsJobServlet</servlet-class>
+  <servlet-class>com.android.vts.job.VtsProfilingStatsJobServlet</servlet-class>
 </servlet>
 
 <servlet>
   <servlet-name>vts_coverage_job</servlet-name>
-  <servlet-class>com.android.vts.servlet.VtsCoverageAlertJobServlet</servlet-class>
+  <servlet-class>com.android.vts.job.VtsCoverageAlertJobServlet</servlet-class>
 </servlet>
 
 <servlet>
   <servlet-name>vts_inactivity_job</servlet-name>
-  <servlet-class>com.android.vts.servlet.VtsInactivityJobServlet</servlet-class>
+  <servlet-class>com.android.vts.job.VtsInactivityJobServlet</servlet-class>
 </servlet>
 
 <servlet-mapping>
