@@ -14,7 +14,7 @@
  * permissions and limitations under the License.
  */
 
-package com.android.vts.servlet;
+package com.android.vts.job;
 
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
