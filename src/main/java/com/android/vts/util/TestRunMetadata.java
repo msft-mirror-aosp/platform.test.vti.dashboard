@@ -87,8 +87,7 @@ public class TestRunMetadata {
                 }
             }
             abiInfoList.add(abi);
-            deviceInfoList.add(
-                    device.branch + "/" + device.buildFlavor + " (" + device.buildId + ")");
+            deviceInfoList.add(device.getFingerprint());
         }
         this.abiInfo = StringUtils.join(abiInfoList, ", ");
         this.deviceInfo = StringUtils.join(deviceInfoList, ", ");

@@ -168,4 +168,12 @@ public class DeviceInfoEntity implements DashboardEntity {
         return new DeviceInfoEntity(parentKey, this.branch, this.product, this.buildFlavor,
                 this.buildId, this.abiBitness, this.abiName);
     }
+
+    /**
+     * Create a string representation of the device build information.
+     * @return A String fingerprint of the format: branch/buildFlavor (build ID)
+     */
+    public String getFingerprint() {
+        return this.branch + "/" + this.buildFlavor + " (" + this.buildId + ")";
+    }
 }
