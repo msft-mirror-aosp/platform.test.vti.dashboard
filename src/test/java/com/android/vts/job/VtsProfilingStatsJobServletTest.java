@@ -27,9 +27,9 @@ import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
-import com.android.vts.job.VtsProfilingStatsJobServlet;
 import com.android.vts.proto.VtsReportMessage;
 import com.android.vts.util.StatSummary;
+import com.android.vts.util.TimeUtil;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -177,14 +177,12 @@ public class VtsProfilingStatsJobServletTest {
         int hour = 14;
         int minute = 30;
         LocalDateTime now = LocalDateTime.of(year, month.getValue(), day, hour, minute);
-        ZonedDateTime zdt = ZonedDateTime.of(now, VtsProfilingStatsJobServlet.PT_ZONE);
+        ZonedDateTime zdt = ZonedDateTime.of(now, TimeUtil.PT_ZONE);
         long time = TimeUnit.SECONDS.toMicros(zdt.toEpochSecond());
         long canonicalTime = VtsProfilingStatsJobServlet.getCanonicalTime(time);
         long canonicalTimeSec = TimeUnit.MICROSECONDS.toSeconds(canonicalTime);
         ZonedDateTime canonical =
-                ZonedDateTime.ofInstant(
-                        Instant.ofEpochSecond(canonicalTimeSec),
-                        VtsProfilingStatsJobServlet.PT_ZONE);
+                ZonedDateTime.ofInstant(Instant.ofEpochSecond(canonicalTimeSec), TimeUtil.PT_ZONE);
         assertEquals(month, canonical.getMonth());
         assertEquals(day, canonical.getDayOfMonth());
         assertEquals(0, canonical.getHour());
@@ -200,14 +198,12 @@ public class VtsProfilingStatsJobServletTest {
         int hour = 0;
         int minute = 0;
         LocalDateTime now = LocalDateTime.of(year, month.getValue(), day, hour, minute);
-        ZonedDateTime zdt = ZonedDateTime.of(now, VtsProfilingStatsJobServlet.PT_ZONE);
+        ZonedDateTime zdt = ZonedDateTime.of(now, TimeUtil.PT_ZONE);
         long time = TimeUnit.SECONDS.toMicros(zdt.toEpochSecond());
         long canonicalTime = VtsProfilingStatsJobServlet.getCanonicalTime(time);
         long canonicalTimeSec = TimeUnit.MICROSECONDS.toSeconds(canonicalTime);
         ZonedDateTime canonical =
-                ZonedDateTime.ofInstant(
-                        Instant.ofEpochSecond(canonicalTimeSec),
-                        VtsProfilingStatsJobServlet.PT_ZONE);
+                ZonedDateTime.ofInstant(Instant.ofEpochSecond(canonicalTimeSec), TimeUtil.PT_ZONE);
         assertEquals(zdt, canonical);
     }
 

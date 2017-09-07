@@ -24,6 +24,7 @@ import com.android.vts.util.PerformanceUtil.TimeInterval;
 import com.android.vts.util.ProfilingPointSummary;
 import com.android.vts.util.StatSummary;
 import com.android.vts.util.TaskQueueHelper;
+import com.android.vts.util.TimeUtil;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -36,9 +37,7 @@ import com.google.appengine.api.taskqueue.TaskOptions;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -231,18 +230,15 @@ public class VtsPerformanceJobServlet extends HttpServlet {
         }
 
         List<TimeInterval> timeIntervals = new ArrayList<>();
-        long nowMilli = System.currentTimeMillis();
-        long nowMicro = TimeUnit.MILLISECONDS.toMicros(nowMilli);
-        String dateString = new SimpleDateFormat("MM-dd-yyyy").format(new Date(nowMilli));
+        long nowMicro = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
+        String dateString = TimeUtil.getDateString(nowMicro);
         TimeInterval today =
                 new TimeInterval(nowMicro - TimeUnit.DAYS.toMicros(1), nowMicro, dateString);
         timeIntervals.add(today);
 
         // Add yesterday as a baseline time interval for analysis
         long oneDayAgo = nowMicro - TimeUnit.DAYS.toMicros(1);
-        String dateStringYesterday =
-                new SimpleDateFormat("MM-dd-yyyy")
-                        .format(new Date(TimeUnit.MICROSECONDS.toMillis(oneDayAgo)));
+        String dateStringYesterday = TimeUtil.getDateString(oneDayAgo);
         TimeInterval yesterday =
                 new TimeInterval(
                         oneDayAgo - TimeUnit.DAYS.toMicros(1), oneDayAgo, dateStringYesterday);
