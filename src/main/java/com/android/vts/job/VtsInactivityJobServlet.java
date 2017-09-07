@@ -22,6 +22,7 @@ import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.util.EmailHelper;
 import com.android.vts.util.FilterUtil;
 import com.android.vts.util.TaskQueueHelper;
+import com.android.vts.util.TimeUtil;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -37,9 +38,7 @@ import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -55,16 +54,6 @@ public class VtsInactivityJobServlet extends HttpServlet {
     private static final String INACTIVITY_ALERT_URL = "/cron/vts_inactivity_job";
     protected static final Logger logger =
             Logger.getLogger(VtsInactivityJobServlet.class.getName());
-
-    /**
-     * Creates an email footer with the provided link.
-     *
-     * @param link The (string) link to provide in the footer.
-     * @return The full HTML email footer.
-     */
-    private static String getFooter(String link) {
-        return "<br><br>For details, visit the" + " <a href='" + link + "'>" + "VTS dashboard.</a>";
-    }
 
     /**
      * Compose an email if the test is inactive.
@@ -88,9 +77,7 @@ public class VtsInactivityJobServlet extends HttpServlet {
         // After 7 full days have passed, notifications will no longer be sent (i.e. the
         // test is assumed to be deprecated).
         if (diff >= TimeUnit.DAYS.toMicros(1) && diff < TimeUnit.DAYS.toMicros(8)) {
-            Date lastUpload = new Date(TimeUnit.MICROSECONDS.toMillis(lastRunTime));
-            String uploadTimeString =
-                    new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(lastUpload);
+            String uploadTimeString = TimeUtil.getDateTimeString(lastRunTime);
             String subject = "Warning! Inactive test: " + test.testName;
             String body =
                     "Hello,<br><br>Test \""
@@ -99,7 +86,7 @@ public class VtsInactivityJobServlet extends HttpServlet {
                             + "No new data has been uploaded since "
                             + uploadTimeString
                             + "."
-                            + getFooter(link);
+                            + EmailHelper.getEmailFooter(null, null, link);
             try {
                 messages.add(EmailHelper.composeEmail(emails, subject, body));
                 return true;
