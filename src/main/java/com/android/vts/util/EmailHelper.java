@@ -13,6 +13,8 @@
  */
 package com.android.vts.util;
 
+import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.TestRunEntity;
 import com.android.vts.entity.UserFavoriteEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -46,6 +48,38 @@ public class EmailHelper {
     protected static final String EMAIL_DOMAIN = System.getProperty("EMAIL_DOMAIN");
     protected static final String SENDER_EMAIL = System.getProperty("SENDER_EMAIL");
     private static final String VTS_EMAIL_NAME = "VTS Alert Bot";
+
+    /**
+     * Create an email footer with the information from the test run.
+     *
+     * @param testRun The TestRunEntity containing test run metadata, or null.
+     * @param devices The list of devices whose fingerprints to include in the email, or null.
+     * @param link A link to the Dashboard page containing more information.
+     * @return The String email footer.
+     */
+    public static String getEmailFooter(
+            TestRunEntity testRun, List<DeviceInfoEntity> devices, String link) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<br><br>");
+        if (devices != null) {
+            for (DeviceInfoEntity device : devices) {
+                sb.append("Device: " + device.getFingerprint() + "<br>");
+            }
+        }
+
+        if (testRun != null) {
+            sb.append("VTS Build ID: " + testRun.testBuildId + "<br>");
+            sb.append("Start Time: " + TimeUtil.getDateTimeString(testRun.startTimestamp));
+            sb.append("<br>End Time: " + TimeUtil.getDateTimeString(testRun.endTimestamp));
+        }
+        sb.append(
+                "<br><br>For details, visit the"
+                        + " <a href='"
+                        + link
+                        + "'>"
+                        + "VTS dashboard.</a>");
+        return sb.toString();
+    }
 
     /**
      * Fetches the list of subscriber email addresses for a test.

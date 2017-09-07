@@ -23,6 +23,7 @@ import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.PerformanceUtil;
 import com.android.vts.util.TaskQueueHelper;
+import com.android.vts.util.TimeUtil;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -38,7 +39,6 @@ import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,7 +66,6 @@ public class VtsProfilingStatsJobServlet extends HttpServlet {
     public static final String PROFILING_STATS_JOB_URL = "/task/vts_profiling_stats_job";
     public static final String PROFILING_POINT_KEY = "profilingPointKey";
     public static final String QUEUE = "profilingStatsQueue";
-    public static final ZoneId PT_ZONE = ZoneId.of("America/Los_Angeles");
 
     /**
      * Round the date down to the start of the day (PST).
@@ -76,7 +75,8 @@ public class VtsProfilingStatsJobServlet extends HttpServlet {
      */
     public static long getCanonicalTime(long time) {
         long timeMillis = TimeUnit.MICROSECONDS.toMillis(time);
-        ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), PT_ZONE);
+        ZonedDateTime zdt =
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), TimeUtil.PT_ZONE);
         return TimeUnit.SECONDS.toMicros(
                 zdt.withHour(0).withMinute(0).withSecond(0).toEpochSecond());
     }
