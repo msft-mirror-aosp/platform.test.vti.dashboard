@@ -96,6 +96,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet>
 
 <servlet>
+  <servlet-name>test_acknowledgments</servlet-name>
+  <servlet-class>com.android.vts.api.TestAcknowledgmentRestServlet</servlet-class>
+</servlet>
+
+<servlet>
   <servlet-name>vts_alert_job</servlet-name>
   <servlet-class>com.android.vts.job.VtsAlertJobServlet</servlet-class>
 </servlet>
@@ -198,6 +203,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 <servlet-mapping>
   <servlet-name>favorites</servlet-name>
   <url-pattern>/api/favorites/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>test_acknowledgments</servlet-name>
+  <url-pattern>/api/test_acknowledgments/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
