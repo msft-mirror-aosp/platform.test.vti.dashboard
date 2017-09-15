@@ -15,7 +15,11 @@
  */
 
 (function($) {
+
+  var _isModalOpen = false;
   var _isReadOnly = true;
+  var _allBranches = [];
+  var _allDevices = [];
 
   var _writableSummary = 'Known test failures are acknowledged below for specific branch and \
     device configurations, and corresponding test breakage alerts will be silenced. Click an \
@@ -79,6 +83,7 @@
   function addChips(allChipsSet, container, chipList, allIndicator) {
     if (chipList && chipList.length > 0) {
       chipList.forEach(function(text) {
+        if (allChipsSet.has(text)) return;
         var chip = $('<span class="chip">' + text + '</span>');
         if (!_isReadOnly) {
           var icon = $('<i class="material-icons">clear</i>').appendTo(chip);
@@ -100,6 +105,7 @@
    * @param allChipsSet (Set) The set of all chip values.
    * @param chipContainer (jQuery object) The object in which to insert new chips from the input.
    * @param allIndicator (jQuery object) The object for "All" indicator adjacent to the chips.
+   * @returns The chip input jQuery object.
    */
   function addChipInput(container, placeholder, allChipsSet, chipContainer, allIndicator) {
     var input = $('<input type="text"></input>');
@@ -130,6 +136,7 @@
     var holder = $('<div class="col s12 input-container"></div>').appendTo(container);
     input.appendTo(holder);
     addButton.appendTo(holder);
+    return input;
   }
 
   /**
@@ -167,7 +174,9 @@
         ack.replaceWith(newAck);
       }
     }).always(function() {
-      modal.closeModal();
+      modal.closeModal({
+        complete: function() { _isModalOpen = false; }
+      });
     });
   }
 
@@ -182,6 +191,10 @@
    * @param note (String) The note in the acknowledgment.
    */
   function showModal(ack, key, test, branches, devices, testCases, note) {
+    if (_isModalOpen) {
+      return;
+    }
+    _isModalOpen = true;
     var wrapper = $('#modal');
     wrapper.empty();
     var content = $('<div class="modal-content"><h4>Test Acknowledgment</h4></div>');
@@ -192,35 +205,52 @@
     var branchContainer = $('<div class="col l4 s12 modal-section"></div>').appendTo(row);
     var branchHeader = $('<h5></h5>').appendTo(branchContainer);
     branchHeader.append('<b>Branches:</b>');
-    var allBranches = $('<span> All</span>').appendTo(branchHeader);
+    var allBranchesLabel = $('<span> All</span>').appendTo(branchHeader);
     var branchChips = $('<div class="col s12 chips branch-chips"></div>').appendTo(branchContainer);
-    addChips(branchSet, branchChips, branches, allBranches);
+    addChips(branchSet, branchChips, branches, allBranchesLabel);
     if (!_isReadOnly) {
-      addChipInput(branchContainer, 'Specify a branch...', branchSet, branchChips, allBranches);
+      var branchInput = addChipInput(
+        branchContainer, 'Specify a branch...', branchSet, branchChips, allBranchesLabel);
+      branchInput.sizedAutocomplete({
+        source: _allBranches,
+        classes: {
+          'ui-autocomplete': 'card autocomplete-dropdown'
+        },
+        parent: branchInput
+      });
     }
 
     var deviceSet = new Set();
     var deviceContainer = $('<div class="col l4 s12 modal-section"></div>').appendTo(row);
     var deviceHeader = $('<h5></h5>').appendTo(deviceContainer);
     deviceHeader.append('<b>Devices:</b>');
-    var allDevices = $('<span> All</span>').appendTo(deviceHeader);
+    var allDevicesLabel = $('<span> All</span>').appendTo(deviceHeader);
     var deviceChips = $('<div class="col s12 chips device-chips"></div>').appendTo(deviceContainer);
-    addChips(deviceSet, deviceChips, devices, allDevices);
+    addChips(deviceSet, deviceChips, devices, allDevicesLabel);
     if (!_isReadOnly) {
-      addChipInput(deviceContainer, 'Specify a device...', deviceSet, deviceChips, allDevices);
+      var deviceInput = addChipInput(
+        deviceContainer, 'Specify a device...', deviceSet, deviceChips, allDevicesLabel);
+      deviceInput.sizedAutocomplete({
+        source: _allDevices,
+        classes: {
+          'ui-autocomplete': 'card autocomplete-dropdown'
+        },
+        parent: deviceInput
+      });
     }
 
     var testCaseSet = new Set();
     var testCaseContainer = $('<div class="col l4 s12 modal-section"></div>').appendTo(row);
     var testCaseHeader = $('<h5></h5>').appendTo(testCaseContainer);
     testCaseHeader.append('<b>Test Cases:</b>');
-    var allTestCases = $('<span> All</span>').appendTo(testCaseHeader);
+    var allTestCasesLabel = $('<span> All</span>').appendTo(testCaseHeader);
     var testCaseChips = $('<div class="col s12 chips test-case-chips"></div>').appendTo(
       testCaseContainer);
-    addChips(testCaseSet, testCaseChips, testCases, allTestCases);
+    addChips(testCaseSet, testCaseChips, testCases, allTestCasesLabel);
+    var testCaseInput = null;
     if (!_isReadOnly) {
-      addChipInput(
-        testCaseContainer, 'Specify a test case...', testCaseSet, testCaseChips, allTestCases);
+      testCaseInput = addChipInput(
+        testCaseContainer, 'Specify a test case...', testCaseSet, testCaseChips, allTestCasesLabel);
     }
 
     row.append('<div class="col s12"><h5><b>Note:</b></h5></div>');
@@ -235,15 +265,39 @@
 
     content.appendTo(wrapper);
     var footer = $('<div class="modal-footer"></div>');
-    footer.append('<a class="modal-action modal-close btn-flat">Close</a></div>');
     if (!_isReadOnly) {
       var save = $('<a class="btn">Save</a></div>').appendTo(footer);
       save.click(function() {
         saveCallback(ack, wrapper, key, test, branchSet, deviceSet, testCaseSet, textArea.val());
       });
     }
+    var close = $('<a class="btn-flat">Close</a></div>').appendTo(footer);
+    close.click(function() {
+      wrapper.closeModal({
+        complete: function() { _isModalOpen = false; }
+      });
+    })
     footer.appendTo(wrapper);
-    wrapper.openModal();
+    if (!_isReadOnly) {
+      $.get('/api/test_run?test=' + test + '&timestamp=latest').done(function(data) {
+        var allTestCases = data.reduce(function(array, column) {
+          return array.concat(column.data);
+        }, []);
+        testCaseInput.sizedAutocomplete({
+          source: allTestCases,
+          classes: {
+            'ui-autocomplete': 'card autocomplete-dropdown'
+          },
+          parent: testCaseInput
+        });
+      }).always(function() {
+        wrapper.openModal({
+          dismissible: false
+        });
+      });
+    } else {
+      wrapper.openModal();
+    }
   }
 
   /**
@@ -307,11 +361,16 @@
   /**
    * Create a test acknowledgments UI.
    * @param allTests (list) The list of all test names.
+   * @param allBranches (list) The list of all branches.
+   * @param allDevices (list) The list of all device names.
    * @param testAcknowledgments (list) JSON-serialized TestAcknowledgmentEntity object list.
    * @param readOnly (boolean) True if the acknowledgments are read-only, false if mutable.
    */
-  $.fn.testAcknowledgments = function(allTests, testAcknowledgments, readOnly) {
+  $.fn.testAcknowledgments = function(
+      allTests, allBranches, allDevices, testAcknowledgments, readOnly) {
     var self = $(this);
+    _allBranches = allBranches;
+    _allDevices = allDevices;
     _isReadOnly = readOnly;
     var searchRow = $('<div class="row search-row"></div>');
     var headerRow = $('<div class="row"></div>');

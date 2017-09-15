@@ -70,6 +70,8 @@ public class ShowTestAcknowledgmentServlet extends BaseServlet {
 
         request.setAttribute("testAcknowledgments", new Gson().toJson(testAcks));
         request.setAttribute("allTests", new Gson().toJson(allTestNames));
+        request.setAttribute("branches", new Gson().toJson(DatastoreHelper.getAllBranches()));
+        request.setAttribute("devices", new Gson().toJson(DatastoreHelper.getAllBuildFlavors()));
         request.setAttribute("readOnly", new Gson().toJson(!UserServiceFactory.getUserService().isUserAdmin()));
 
         RequestDispatcher dispatcher = request.getRequestDispatcher(TEST_ACK_JSP);
