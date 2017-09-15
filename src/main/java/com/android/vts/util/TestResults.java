@@ -73,7 +73,7 @@ public class TestResults {
 
     // Row labels for the test summary grid.
     private static final String[] SUMMARY_NAMES = {
-        "Total", "Passing #", "Non-Passing #", "Passing %", "Covered Lines", "Coverage %", "Logs"
+        "Total", "Passing #", "Non-Passing #", "Passing %", "Covered Lines", "Coverage %", "Links"
     };
 
     // Row labels for the device summary information in the table header.
@@ -368,12 +368,12 @@ public class TestResults {
             }
 
             // Process log information
-            String logSummary = " - ";
-            List<String[]> logEntries = new ArrayList<>();
-            logInfoMap.put(Integer.toString(col), logEntries);
+            String linkSummary = " - ";
+            List<String[]> linkEntries = new ArrayList<>();
+            logInfoMap.put(Integer.toString(col), linkEntries);
 
-            if (testRun.logLinks != null) {
-                for (String rawUrl : testRun.logLinks) {
+            if (testRun.links != null) {
+                for (String rawUrl : testRun.links) {
                     LinkDisplay validatedLink = UrlUtil.processUrl(rawUrl);
                     if (validatedLink == null) {
                         logger.log(Level.WARNING, "Invalid logging URL : " + rawUrl);
@@ -384,12 +384,12 @@ public class TestResults {
                                 validatedLink.name,
                                 validatedLink.url // TODO: process the name from the URL
                             };
-                    logEntries.add(logInfo);
+                    linkEntries.add(logInfo);
                 }
             }
-            if (logEntries.size() > 0) {
-                logSummary = Integer.toString(logEntries.size());
-                logSummary +=
+            if (linkEntries.size() > 0) {
+                linkSummary = Integer.toString(linkEntries.size());
+                linkSummary +=
                         "<i class=\"waves-effect waves-light btn red right inline-btn"
                                 + " info-btn material-icons inline-icon\""
                                 + " data-col=\""
@@ -427,7 +427,7 @@ public class TestResults {
             summaryGrid[3][col + 1] = passInfo;
             summaryGrid[4][col + 1] = coverageInfo;
             summaryGrid[5][col + 1] = coveragePctInfo;
-            summaryGrid[6][col + 1] = logSummary;
+            summaryGrid[6][col + 1] = linkSummary;
 
             // Populate the test time info grid
             timeGrid[0][col + 1] = Long.toString(testRun.startTimestamp);

@@ -128,7 +128,7 @@ public class TestRunEntity implements DashboardEntity {
     public final long coveredLineCount;
     public final long totalLineCount;
     public final List<Long> testCaseIds;
-    public final List<String> logLinks;
+    public final List<String> links;
 
     /**
      * Create a TestRunEntity object describing a test run.
@@ -142,13 +142,13 @@ public class TestRunEntity implements DashboardEntity {
      * @param passCount The number of passing test cases in the run.
      * @param failCount The number of failing test cases in the run.
      * @param testCaseIds A list of key IDs to the TestCaseRunEntity objects for the test run.
-     * @param logLinks A list of links to log files for the test run, or null if there aren't any.
+     * @param links A list of links to resource files for the test run, or null if there aren't any.
      * @param coveredLineCount The number of lines covered by the test run.
      * @param totalLineCount The total number of executable lines by the test in the test run.
      */
     public TestRunEntity(Key parentKey, TestRunType type, long startTimestamp, long endTimestamp,
             String testBuildId, String hostName, long passCount, long failCount,
-            List<Long> testCaseIds, List<String> logLinks, long coveredLineCount,
+            List<Long> testCaseIds, List<String> links, long coveredLineCount,
             long totalLineCount) {
         this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
         this.type = type;
@@ -159,7 +159,7 @@ public class TestRunEntity implements DashboardEntity {
         this.passCount = passCount;
         this.failCount = failCount;
         this.testCaseIds = testCaseIds == null ? new ArrayList<Long>() : testCaseIds;
-        this.logLinks = logLinks == null ? new ArrayList<String>() : logLinks;
+        this.links = links == null ? new ArrayList<String>() : links;
         this.coveredLineCount = coveredLineCount;
         this.totalLineCount = totalLineCount;
         this.hasCoverage = totalLineCount > 0;
@@ -177,13 +177,13 @@ public class TestRunEntity implements DashboardEntity {
      * @param passCount The number of passing test cases in the run.
      * @param failCount The number of failing test cases in the run.
      * @param testCaseIds A list of key IDs to the TestCaseRunEntity objects for the test run.
-     * @param logLinks A list of links to log files for the test run, or null if there aren't any.
+     * @param links A list of links to resource files for the test run, or null if there aren't any.
      */
     public TestRunEntity(Key parentKey, TestRunType type, long startTimestamp, long endTimestamp,
             String testBuildId, String hostName, long passCount, long failCount,
-            List<Long> testCaseIds, List<String> logLinks) {
+            List<Long> testCaseIds, List<String> links) {
         this(parentKey, type, startTimestamp, endTimestamp, testBuildId, hostName, passCount,
-                failCount, testCaseIds, logLinks, 0, 0);
+                failCount, testCaseIds, links, 0, 0);
     }
 
     @Override
@@ -204,8 +204,8 @@ public class TestRunEntity implements DashboardEntity {
             testRunEntity.setProperty(COVERED_LINE_COUNT, this.coveredLineCount);
             testRunEntity.setProperty(TOTAL_LINE_COUNT, this.totalLineCount);
         }
-        if (this.logLinks != null && this.logLinks.size() > 0) {
-            testRunEntity.setUnindexedProperty(LOG_LINKS, this.logLinks);
+        if (this.links != null && this.links.size() > 0) {
+            testRunEntity.setUnindexedProperty(LOG_LINKS, this.links);
         }
         return testRunEntity;
     }
@@ -234,7 +234,7 @@ public class TestRunEntity implements DashboardEntity {
             long passCount = (long) e.getProperty(PASS_COUNT);
             long failCount = (long) e.getProperty(FAIL_COUNT);
             List<Long> testCaseIds = (List<Long>) e.getProperty(TEST_CASE_IDS);
-            List<String> logLinks = null;
+            List<String> links = null;
             long coveredLineCount = 0;
             long totalLineCount = 0;
             if (e.hasProperty(TOTAL_LINE_COUNT) && e.hasProperty(COVERED_LINE_COUNT)) {
@@ -242,10 +242,10 @@ public class TestRunEntity implements DashboardEntity {
                 totalLineCount = (long) e.getProperty(TOTAL_LINE_COUNT);
             }
             if (e.hasProperty(LOG_LINKS)) {
-                logLinks = (List<String>) e.getProperty(LOG_LINKS);
+                links = (List<String>) e.getProperty(LOG_LINKS);
             }
             return new TestRunEntity(e.getKey().getParent(), type, startTimestamp, endTimestamp,
-                    testBuildId, hostName, passCount, failCount, testCaseIds, logLinks,
+                    testBuildId, hostName, passCount, failCount, testCaseIds, links,
                     coveredLineCount, totalLineCount);
         } catch (ClassCastException exception) {
             // Invalid cast
@@ -267,9 +267,9 @@ public class TestRunEntity implements DashboardEntity {
             json.add(COVERED_LINE_COUNT, new JsonPrimitive(this.coveredLineCount));
             json.add(TOTAL_LINE_COUNT, new JsonPrimitive(this.totalLineCount));
         }
-        if (this.logLinks != null && this.logLinks.size() > 0) {
+        if (this.links != null && this.links.size() > 0) {
             List<JsonElement> links = new ArrayList<>();
-            for (String rawUrl : this.logLinks) {
+            for (String rawUrl : this.links) {
                 LinkDisplay validatedLink = UrlUtil.processUrl(rawUrl);
                 if (validatedLink == null) {
                     logger.log(Level.WARNING, "Invalid logging URL : " + rawUrl);
