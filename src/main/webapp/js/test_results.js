@@ -18,13 +18,13 @@
 
   /**
    * Display the log links in a modal window.
-   * @param logList A list of [name, url] tuples representing log links.
+   * @param linkList A list of [name, url] tuples representing log links.
    */
-  function showLogs(container, logList) {
-    if (!logList || logList.length == 0) return;
+  function showLinks(container, linkList) {
+    if (!linkList || linkList.length == 0) return;
 
     var logCollection = $('<ul class="collection"></ul>');
-    var entries = logList.reduce(function(acc, entry) {
+    var entries = linkList.reduce(function(acc, entry) {
       if (!entry || entry.length == 0) return acc;
       var link = '<a href="' + entry[1] + '"';
       link += 'class="collection-item">' + entry[0] + '</li>';
@@ -35,7 +35,7 @@
     if (container.find('#info-modal').length == 0) {
       var modal = $('<div id="info-modal" class="modal"></div>');
       var content = $('<div class="modal-content"></div>');
-      content.append('<h4>Logs</h4>');
+      content.append('<h4>Links</h4>');
       content.append('<div class="info-container"></div>');
       content.appendTo(modal);
       modal.appendTo(container);
@@ -247,9 +247,9 @@
       }
       if (metadata.testRun.logLinks != undefined) {
         createClickableIndicator(
-          div, 'Logs', 'grey lighten-1',
+          div, 'Links', 'grey lighten-1',
           function () {
-            showLogs(popout, metadata.testRun.logLinks);
+            showLinks(popout, metadata.testRun.logLinks);
             return false;
           });
       }

@@ -98,7 +98,7 @@ public class TestCaseRunEntity implements DashboardEntity {
      * Set the systrace url.
      * @param url The systrace url, or null.
      */
-    public void setSystraceUrl(String url) {
+    private void setSystraceUrl(String url) {
         this.systraceUrl = url;
     }
 
