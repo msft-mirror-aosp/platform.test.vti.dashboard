@@ -3473,49 +3473,49 @@ public final class VtsReportMessage {
     com.android.vts.proto.VtsReportMessage.ProfilingReportMessageOrBuilder getProfilingOrBuilder(
         int index);
 
-    // repeated .android.vts.SystraceReportMessage systrace = 42;
+    // repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> 
+    @java.lang.Deprecated java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> 
         getSystraceList();
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index);
+    @java.lang.Deprecated com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index);
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    int getSystraceCount();
+    @java.lang.Deprecated int getSystraceCount();
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
+    @java.lang.Deprecated java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
         getSystraceOrBuilderList();
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
+    @java.lang.Deprecated com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
         int index);
 
     // repeated .android.vts.LogMessage log = 101;
@@ -3933,58 +3933,58 @@ public final class VtsReportMessage {
       return profiling_.get(index);
     }
 
-    // repeated .android.vts.SystraceReportMessage systrace = 42;
+    // repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];
     public static final int SYSTRACE_FIELD_NUMBER = 42;
     private java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> systrace_;
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
+    @java.lang.Deprecated public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
       return systrace_;
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
+    @java.lang.Deprecated public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
         getSystraceOrBuilderList() {
       return systrace_;
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    public int getSystraceCount() {
+    @java.lang.Deprecated public int getSystraceCount() {
       return systrace_.size();
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
+    @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
       return systrace_.get(index);
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
      *
      * <pre>
      * systrace report message per file
      * </pre>
      */
-    public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
+    @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
         int index) {
       return systrace_.get(index);
     }
@@ -5342,7 +5342,7 @@ public final class VtsReportMessage {
         return profilingBuilder_;
       }
 
-      // repeated .android.vts.SystraceReportMessage systrace = 42;
+      // repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];
       private java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> systrace_ =
         java.util.Collections.emptyList();
       private void ensureSystraceIsMutable() {
@@ -5356,13 +5356,13 @@ public final class VtsReportMessage {
           com.android.vts.proto.VtsReportMessage.SystraceReportMessage, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder, com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> systraceBuilder_;
 
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
+      @java.lang.Deprecated public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
         if (systraceBuilder_ == null) {
           return java.util.Collections.unmodifiableList(systrace_);
         } else {
@@ -5370,13 +5370,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public int getSystraceCount() {
+      @java.lang.Deprecated public int getSystraceCount() {
         if (systraceBuilder_ == null) {
           return systrace_.size();
         } else {
@@ -5384,13 +5384,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
         if (systraceBuilder_ == null) {
           return systrace_.get(index);
         } else {
@@ -5398,13 +5398,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder setSystrace(
+      @java.lang.Deprecated public Builder setSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
         if (systraceBuilder_ == null) {
           if (value == null) {
@@ -5419,13 +5419,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder setSystrace(
+      @java.lang.Deprecated public Builder setSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder builderForValue) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -5437,13 +5437,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder addSystrace(com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
+      @java.lang.Deprecated public Builder addSystrace(com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
         if (systraceBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -5457,13 +5457,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder addSystrace(
+      @java.lang.Deprecated public Builder addSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
         if (systraceBuilder_ == null) {
           if (value == null) {
@@ -5478,13 +5478,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder addSystrace(
+      @java.lang.Deprecated public Builder addSystrace(
           com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder builderForValue) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -5496,13 +5496,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder addSystrace(
+      @java.lang.Deprecated public Builder addSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder builderForValue) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -5514,13 +5514,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder addAllSystrace(
+      @java.lang.Deprecated public Builder addAllSystrace(
           java.lang.Iterable<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessage> values) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -5532,13 +5532,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder clearSystrace() {
+      @java.lang.Deprecated public Builder clearSystrace() {
         if (systraceBuilder_ == null) {
           systrace_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000040);
@@ -5549,13 +5549,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public Builder removeSystrace(int index) {
+      @java.lang.Deprecated public Builder removeSystrace(int index) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
           systrace_.remove(index);
@@ -5566,24 +5566,24 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder getSystraceBuilder(
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder getSystraceBuilder(
           int index) {
         return getSystraceFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
           int index) {
         if (systraceBuilder_ == null) {
           return systrace_.get(index);  } else {
@@ -5591,13 +5591,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
+      @java.lang.Deprecated public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
            getSystraceOrBuilderList() {
         if (systraceBuilder_ != null) {
           return systraceBuilder_.getMessageOrBuilderList();
@@ -5606,36 +5606,36 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder() {
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder() {
         return getSystraceFieldBuilder().addBuilder(
             com.android.vts.proto.VtsReportMessage.SystraceReportMessage.getDefaultInstance());
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder(
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder(
           int index) {
         return getSystraceFieldBuilder().addBuilder(
             index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.getDefaultInstance());
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 42;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 42 [deprecated = true];</code>
        *
        * <pre>
        * systrace report message per file
        * </pre>
        */
-      public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder> 
+      @java.lang.Deprecated public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder> 
            getSystraceBuilderList() {
         return getSystraceFieldBuilder().getBuilderList();
       }
@@ -11508,49 +11508,49 @@ public final class VtsReportMessage {
     com.android.vts.proto.VtsReportMessage.ProfilingReportMessageOrBuilder getProfilingOrBuilder(
         int index);
 
-    // repeated .android.vts.SystraceReportMessage systrace = 22;
+    // repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> 
+    @java.lang.Deprecated java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> 
         getSystraceList();
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index);
+    @java.lang.Deprecated com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index);
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    int getSystraceCount();
+    @java.lang.Deprecated int getSystraceCount();
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
+    @java.lang.Deprecated java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
         getSystraceOrBuilderList();
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
+    @java.lang.Deprecated com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
         int index);
 
     // optional int64 start_timestamp = 101;
@@ -11674,6 +11674,51 @@ public final class VtsReportMessage {
      * </pre>
      */
     com.android.vts.proto.VtsReportMessage.LogMessageOrBuilder getLogOrBuilder(
+        int index);
+
+    // repeated .android.vts.UrlResourceMessage link_resource = 1011;
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    java.util.List<com.android.vts.proto.VtsReportMessage.UrlResourceMessage> 
+        getLinkResourceList();
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    com.android.vts.proto.VtsReportMessage.UrlResourceMessage getLinkResource(int index);
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    int getLinkResourceCount();
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    java.util.List<? extends com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder> 
+        getLinkResourceOrBuilderList();
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder getLinkResourceOrBuilder(
         int index);
   }
   /**
@@ -11844,6 +11889,14 @@ public final class VtsReportMessage {
               log_.add(input.readMessage(com.android.vts.proto.VtsReportMessage.LogMessage.PARSER, extensionRegistry));
               break;
             }
+            case 8090: {
+              if (!((mutable_bitField0_ & 0x00004000) == 0x00004000)) {
+                linkResource_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.UrlResourceMessage>();
+                mutable_bitField0_ |= 0x00004000;
+              }
+              linkResource_.add(input.readMessage(com.android.vts.proto.VtsReportMessage.UrlResourceMessage.PARSER, extensionRegistry));
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -11872,6 +11925,9 @@ public final class VtsReportMessage {
         }
         if (((mutable_bitField0_ & 0x00002000) == 0x00002000)) {
           log_ = java.util.Collections.unmodifiableList(log_);
+        }
+        if (((mutable_bitField0_ & 0x00004000) == 0x00004000)) {
+          linkResource_ = java.util.Collections.unmodifiableList(linkResource_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -12248,58 +12304,58 @@ public final class VtsReportMessage {
       return profiling_.get(index);
     }
 
-    // repeated .android.vts.SystraceReportMessage systrace = 22;
+    // repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];
     public static final int SYSTRACE_FIELD_NUMBER = 22;
     private java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> systrace_;
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
+    @java.lang.Deprecated public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
       return systrace_;
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
+    @java.lang.Deprecated public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
         getSystraceOrBuilderList() {
       return systrace_;
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    public int getSystraceCount() {
+    @java.lang.Deprecated public int getSystraceCount() {
       return systrace_.size();
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
+    @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
       return systrace_.get(index);
     }
     /**
-     * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+     * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
      *
      * <pre>
      * Systrace report per file
      * </pre>
      */
-    public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
+    @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
         int index) {
       return systrace_.get(index);
     }
@@ -12461,6 +12517,62 @@ public final class VtsReportMessage {
       return log_.get(index);
     }
 
+    // repeated .android.vts.UrlResourceMessage link_resource = 1011;
+    public static final int LINK_RESOURCE_FIELD_NUMBER = 1011;
+    private java.util.List<com.android.vts.proto.VtsReportMessage.UrlResourceMessage> linkResource_;
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    public java.util.List<com.android.vts.proto.VtsReportMessage.UrlResourceMessage> getLinkResourceList() {
+      return linkResource_;
+    }
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    public java.util.List<? extends com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder> 
+        getLinkResourceOrBuilderList() {
+      return linkResource_;
+    }
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    public int getLinkResourceCount() {
+      return linkResource_.size();
+    }
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    public com.android.vts.proto.VtsReportMessage.UrlResourceMessage getLinkResource(int index) {
+      return linkResource_.get(index);
+    }
+    /**
+     * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+     *
+     * <pre>
+     * URL links for the test run.
+     * </pre>
+     */
+    public com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder getLinkResourceOrBuilder(
+        int index) {
+      return linkResource_.get(index);
+    }
+
     private void initFields() {
       testSuite_ = com.google.protobuf.ByteString.EMPTY;
       test_ = com.google.protobuf.ByteString.EMPTY;
@@ -12476,6 +12588,7 @@ public final class VtsReportMessage {
       endTimestamp_ = 0L;
       coverage_ = java.util.Collections.emptyList();
       log_ = java.util.Collections.emptyList();
+      linkResource_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -12530,6 +12643,9 @@ public final class VtsReportMessage {
       }
       for (int i = 0; i < log_.size(); i++) {
         output.writeMessage(1001, log_.get(i));
+      }
+      for (int i = 0; i < linkResource_.size(); i++) {
+        output.writeMessage(1011, linkResource_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -12600,6 +12716,10 @@ public final class VtsReportMessage {
       for (int i = 0; i < log_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1001, log_.get(i));
+      }
+      for (int i = 0; i < linkResource_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1011, linkResource_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -12721,6 +12841,7 @@ public final class VtsReportMessage {
           getSystraceFieldBuilder();
           getCoverageFieldBuilder();
           getLogFieldBuilder();
+          getLinkResourceFieldBuilder();
         }
       }
       private static Builder create() {
@@ -12788,6 +12909,12 @@ public final class VtsReportMessage {
           bitField0_ = (bitField0_ & ~0x00002000);
         } else {
           logBuilder_.clear();
+        }
+        if (linkResourceBuilder_ == null) {
+          linkResource_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00004000);
+        } else {
+          linkResourceBuilder_.clear();
         }
         return this;
       }
@@ -12911,6 +13038,15 @@ public final class VtsReportMessage {
           result.log_ = log_;
         } else {
           result.log_ = logBuilder_.build();
+        }
+        if (linkResourceBuilder_ == null) {
+          if (((bitField0_ & 0x00004000) == 0x00004000)) {
+            linkResource_ = java.util.Collections.unmodifiableList(linkResource_);
+            bitField0_ = (bitField0_ & ~0x00004000);
+          }
+          result.linkResource_ = linkResource_;
+        } else {
+          result.linkResource_ = linkResourceBuilder_.build();
         }
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -13112,6 +13248,32 @@ public final class VtsReportMessage {
                    getLogFieldBuilder() : null;
             } else {
               logBuilder_.addAllMessages(other.log_);
+            }
+          }
+        }
+        if (linkResourceBuilder_ == null) {
+          if (!other.linkResource_.isEmpty()) {
+            if (linkResource_.isEmpty()) {
+              linkResource_ = other.linkResource_;
+              bitField0_ = (bitField0_ & ~0x00004000);
+            } else {
+              ensureLinkResourceIsMutable();
+              linkResource_.addAll(other.linkResource_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.linkResource_.isEmpty()) {
+            if (linkResourceBuilder_.isEmpty()) {
+              linkResourceBuilder_.dispose();
+              linkResourceBuilder_ = null;
+              linkResource_ = other.linkResource_;
+              bitField0_ = (bitField0_ & ~0x00004000);
+              linkResourceBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getLinkResourceFieldBuilder() : null;
+            } else {
+              linkResourceBuilder_.addAllMessages(other.linkResource_);
             }
           }
         }
@@ -14640,7 +14802,7 @@ public final class VtsReportMessage {
         return profilingBuilder_;
       }
 
-      // repeated .android.vts.SystraceReportMessage systrace = 22;
+      // repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];
       private java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> systrace_ =
         java.util.Collections.emptyList();
       private void ensureSystraceIsMutable() {
@@ -14654,13 +14816,13 @@ public final class VtsReportMessage {
           com.android.vts.proto.VtsReportMessage.SystraceReportMessage, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder, com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> systraceBuilder_;
 
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
+      @java.lang.Deprecated public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage> getSystraceList() {
         if (systraceBuilder_ == null) {
           return java.util.Collections.unmodifiableList(systrace_);
         } else {
@@ -14668,13 +14830,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public int getSystraceCount() {
+      @java.lang.Deprecated public int getSystraceCount() {
         if (systraceBuilder_ == null) {
           return systrace_.size();
         } else {
@@ -14682,13 +14844,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage getSystrace(int index) {
         if (systraceBuilder_ == null) {
           return systrace_.get(index);
         } else {
@@ -14696,13 +14858,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder setSystrace(
+      @java.lang.Deprecated public Builder setSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
         if (systraceBuilder_ == null) {
           if (value == null) {
@@ -14717,13 +14879,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder setSystrace(
+      @java.lang.Deprecated public Builder setSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder builderForValue) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -14735,13 +14897,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder addSystrace(com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
+      @java.lang.Deprecated public Builder addSystrace(com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
         if (systraceBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -14755,13 +14917,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder addSystrace(
+      @java.lang.Deprecated public Builder addSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage value) {
         if (systraceBuilder_ == null) {
           if (value == null) {
@@ -14776,13 +14938,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder addSystrace(
+      @java.lang.Deprecated public Builder addSystrace(
           com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder builderForValue) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -14794,13 +14956,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder addSystrace(
+      @java.lang.Deprecated public Builder addSystrace(
           int index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder builderForValue) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -14812,13 +14974,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder addAllSystrace(
+      @java.lang.Deprecated public Builder addAllSystrace(
           java.lang.Iterable<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessage> values) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
@@ -14830,13 +14992,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder clearSystrace() {
+      @java.lang.Deprecated public Builder clearSystrace() {
         if (systraceBuilder_ == null) {
           systrace_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000200);
@@ -14847,13 +15009,13 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public Builder removeSystrace(int index) {
+      @java.lang.Deprecated public Builder removeSystrace(int index) {
         if (systraceBuilder_ == null) {
           ensureSystraceIsMutable();
           systrace_.remove(index);
@@ -14864,24 +15026,24 @@ public final class VtsReportMessage {
         return this;
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder getSystraceBuilder(
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder getSystraceBuilder(
           int index) {
         return getSystraceFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder getSystraceOrBuilder(
           int index) {
         if (systraceBuilder_ == null) {
           return systrace_.get(index);  } else {
@@ -14889,13 +15051,13 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
+      @java.lang.Deprecated public java.util.List<? extends com.android.vts.proto.VtsReportMessage.SystraceReportMessageOrBuilder> 
            getSystraceOrBuilderList() {
         if (systraceBuilder_ != null) {
           return systraceBuilder_.getMessageOrBuilderList();
@@ -14904,36 +15066,36 @@ public final class VtsReportMessage {
         }
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder() {
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder() {
         return getSystraceFieldBuilder().addBuilder(
             com.android.vts.proto.VtsReportMessage.SystraceReportMessage.getDefaultInstance());
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder(
+      @java.lang.Deprecated public com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder addSystraceBuilder(
           int index) {
         return getSystraceFieldBuilder().addBuilder(
             index, com.android.vts.proto.VtsReportMessage.SystraceReportMessage.getDefaultInstance());
       }
       /**
-       * <code>repeated .android.vts.SystraceReportMessage systrace = 22;</code>
+       * <code>repeated .android.vts.SystraceReportMessage systrace = 22 [deprecated = true];</code>
        *
        * <pre>
        * Systrace report per file
        * </pre>
        */
-      public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder> 
+      @java.lang.Deprecated public java.util.List<com.android.vts.proto.VtsReportMessage.SystraceReportMessage.Builder> 
            getSystraceBuilderList() {
         return getSystraceFieldBuilder().getBuilderList();
       }
@@ -15674,6 +15836,318 @@ public final class VtsReportMessage {
           log_ = null;
         }
         return logBuilder_;
+      }
+
+      // repeated .android.vts.UrlResourceMessage link_resource = 1011;
+      private java.util.List<com.android.vts.proto.VtsReportMessage.UrlResourceMessage> linkResource_ =
+        java.util.Collections.emptyList();
+      private void ensureLinkResourceIsMutable() {
+        if (!((bitField0_ & 0x00004000) == 0x00004000)) {
+          linkResource_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.UrlResourceMessage>(linkResource_);
+          bitField0_ |= 0x00004000;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.android.vts.proto.VtsReportMessage.UrlResourceMessage, com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder, com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder> linkResourceBuilder_;
+
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public java.util.List<com.android.vts.proto.VtsReportMessage.UrlResourceMessage> getLinkResourceList() {
+        if (linkResourceBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(linkResource_);
+        } else {
+          return linkResourceBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public int getLinkResourceCount() {
+        if (linkResourceBuilder_ == null) {
+          return linkResource_.size();
+        } else {
+          return linkResourceBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.UrlResourceMessage getLinkResource(int index) {
+        if (linkResourceBuilder_ == null) {
+          return linkResource_.get(index);
+        } else {
+          return linkResourceBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder setLinkResource(
+          int index, com.android.vts.proto.VtsReportMessage.UrlResourceMessage value) {
+        if (linkResourceBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureLinkResourceIsMutable();
+          linkResource_.set(index, value);
+          onChanged();
+        } else {
+          linkResourceBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder setLinkResource(
+          int index, com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder builderForValue) {
+        if (linkResourceBuilder_ == null) {
+          ensureLinkResourceIsMutable();
+          linkResource_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          linkResourceBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder addLinkResource(com.android.vts.proto.VtsReportMessage.UrlResourceMessage value) {
+        if (linkResourceBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureLinkResourceIsMutable();
+          linkResource_.add(value);
+          onChanged();
+        } else {
+          linkResourceBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder addLinkResource(
+          int index, com.android.vts.proto.VtsReportMessage.UrlResourceMessage value) {
+        if (linkResourceBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureLinkResourceIsMutable();
+          linkResource_.add(index, value);
+          onChanged();
+        } else {
+          linkResourceBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder addLinkResource(
+          com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder builderForValue) {
+        if (linkResourceBuilder_ == null) {
+          ensureLinkResourceIsMutable();
+          linkResource_.add(builderForValue.build());
+          onChanged();
+        } else {
+          linkResourceBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder addLinkResource(
+          int index, com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder builderForValue) {
+        if (linkResourceBuilder_ == null) {
+          ensureLinkResourceIsMutable();
+          linkResource_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          linkResourceBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder addAllLinkResource(
+          java.lang.Iterable<? extends com.android.vts.proto.VtsReportMessage.UrlResourceMessage> values) {
+        if (linkResourceBuilder_ == null) {
+          ensureLinkResourceIsMutable();
+          super.addAll(values, linkResource_);
+          onChanged();
+        } else {
+          linkResourceBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder clearLinkResource() {
+        if (linkResourceBuilder_ == null) {
+          linkResource_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00004000);
+          onChanged();
+        } else {
+          linkResourceBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public Builder removeLinkResource(int index) {
+        if (linkResourceBuilder_ == null) {
+          ensureLinkResourceIsMutable();
+          linkResource_.remove(index);
+          onChanged();
+        } else {
+          linkResourceBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder getLinkResourceBuilder(
+          int index) {
+        return getLinkResourceFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder getLinkResourceOrBuilder(
+          int index) {
+        if (linkResourceBuilder_ == null) {
+          return linkResource_.get(index);  } else {
+          return linkResourceBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public java.util.List<? extends com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder> 
+           getLinkResourceOrBuilderList() {
+        if (linkResourceBuilder_ != null) {
+          return linkResourceBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(linkResource_);
+        }
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder addLinkResourceBuilder() {
+        return getLinkResourceFieldBuilder().addBuilder(
+            com.android.vts.proto.VtsReportMessage.UrlResourceMessage.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder addLinkResourceBuilder(
+          int index) {
+        return getLinkResourceFieldBuilder().addBuilder(
+            index, com.android.vts.proto.VtsReportMessage.UrlResourceMessage.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .android.vts.UrlResourceMessage link_resource = 1011;</code>
+       *
+       * <pre>
+       * URL links for the test run.
+       * </pre>
+       */
+      public java.util.List<com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder> 
+           getLinkResourceBuilderList() {
+        return getLinkResourceFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          com.android.vts.proto.VtsReportMessage.UrlResourceMessage, com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder, com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder> 
+          getLinkResourceFieldBuilder() {
+        if (linkResourceBuilder_ == null) {
+          linkResourceBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              com.android.vts.proto.VtsReportMessage.UrlResourceMessage, com.android.vts.proto.VtsReportMessage.UrlResourceMessage.Builder, com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder>(
+                  linkResource_,
+                  ((bitField0_ & 0x00004000) == 0x00004000),
+                  getParentForChildren(),
+                  isClean());
+          linkResource_ = null;
+        }
+        return linkResourceBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:android.vts.TestReportMessage)
@@ -18445,74 +18919,76 @@ public final class VtsReportMessage {
       "dBuildInfo\022\n\n\002id\030\001 \001(\014\022\014\n\004name\030\013 \001(\014\022\022\n\n" +
       "build_type\030\014 \001(\014\022\016\n\006branch\030\r \001(\014\022\025\n\rbuil" +
       "d_summary\030\025 \001(\014\"\037\n\013VtsHostInfo\022\020\n\010hostna",
-      "me\030\001 \001(\014\"\321\002\n\025TestCaseReportMessage\022\014\n\004na" +
+      "me\030\001 \001(\014\"\325\002\n\025TestCaseReportMessage\022\014\n\004na" +
       "me\030\001 \001(\014\0220\n\013test_result\030\013 \001(\0162\033.android." +
       "vts.TestCaseResult\022\027\n\017start_timestamp\030\025 " +
       "\001(\003\022\025\n\rend_timestamp\030\026 \001(\003\0224\n\010coverage\030\037" +
       " \003(\0132\".android.vts.CoverageReportMessage" +
       "\0226\n\tprofiling\030) \003(\0132#.android.vts.Profil" +
-      "ingReportMessage\0224\n\010systrace\030* \003(\0132\".and" +
-      "roid.vts.SystraceReportMessage\022$\n\003log\030e " +
-      "\003(\0132\027.android.vts.LogMessage\"\240\002\n\026Profili" +
-      "ngReportMessage\022\014\n\004name\030\001 \001(\014\022+\n\004type\030\002 ",
-      "\001(\0162\035.android.vts.VtsProfilingType\022@\n\017re" +
-      "gression_mode\030\003 \001(\0162\'.android.vts.VtsPro" +
-      "filingRegressionMode\022\027\n\017start_timestamp\030" +
-      "\013 \001(\003\022\025\n\rend_timestamp\030\014 \001(\003\022\r\n\005label\030\025 " +
-      "\003(\014\022\r\n\005value\030\026 \003(\003\022\024\n\014x_axis_label\030\037 \001(\014" +
-      "\022\024\n\014y_axis_label\030  \001(\014\022\017\n\007options\030) \003(\014\"" +
-      "H\n\025SystraceReportMessage\022\024\n\014process_name" +
-      "\030\001 \001(\014\022\014\n\004html\030\013 \003(\014\022\013\n\003url\030\025 \003(\014\"\345\001\n\025Co" +
-      "verageReportMessage\022\021\n\tfile_path\030\013 \001(\014\022\024" +
-      "\n\014project_name\030\014 \001(\014\022\020\n\010revision\030\r \001(\014\022\034",
-      "\n\024line_coverage_vector\030\027 \003(\005\022\030\n\020total_li" +
-      "ne_count\030e \001(\005\022\032\n\022covered_line_count\030f \001" +
-      "(\005\022\024\n\010dir_path\030\001 \001(\014B\002\030\001\022\025\n\tfile_name\030\002 " +
-      "\001(\014B\002\030\001\022\020\n\004html\030\003 \001(\014B\002\030\001\"8\n\nLogMessage\022" +
-      "\013\n\003url\030\001 \001(\014\022\014\n\004name\030\002 \001(\014\022\017\n\007content\030\003 " +
-      "\001(\014\"@\n\022UrlResourceMessage\022\013\n\003url\030\001 \001(\014\022\014" +
-      "\n\004name\030\002 \001(\014\022\017\n\007content\030\003 \001(\014\"\316\004\n\021TestRe" +
-      "portMessage\022\026\n\ntest_suite\030\001 \001(\014B\002\030\001\022\014\n\004t" +
-      "est\030\002 \001(\014\022+\n\ttest_type\030\003 \001(\0162\030.android.v" +
-      "ts.VtsTestType\022:\n\013device_info\030\004 \003(\0132%.an",
-      "droid.vts.AndroidDeviceInfoMessage\0221\n\nbu" +
-      "ild_info\030\005 \001(\0132\035.android.vts.AndroidBuil" +
-      "dInfo\022\030\n\020subscriber_email\030\006 \003(\014\022+\n\thost_" +
-      "info\030\007 \001(\0132\030.android.vts.VtsHostInfo\0225\n\t" +
-      "test_case\030\013 \003(\0132\".android.vts.TestCaseRe" +
-      "portMessage\0226\n\tprofiling\030\025 \003(\0132#.android" +
-      ".vts.ProfilingReportMessage\0224\n\010systrace\030" +
-      "\026 \003(\0132\".android.vts.SystraceReportMessag" +
-      "e\022\027\n\017start_timestamp\030e \001(\003\022\025\n\rend_timest" +
-      "amp\030f \001(\003\0224\n\010coverage\030g \003(\0132\".android.vt",
-      "s.CoverageReportMessage\022%\n\003log\030\351\007 \003(\0132\027." +
-      "android.vts.LogMessage\"\247\001\n\025TestPlanRepor" +
-      "tMessage\022\030\n\020test_module_name\030\013 \003(\t\022#\n\033te" +
-      "st_module_start_timestamp\030\014 \003(\003\022\026\n\016test_" +
-      "plan_name\030\025 \001(\t\0227\n\016partner_report\030\037 \003(\0132" +
-      "\037.android.vts.UrlResourceMessage\"\237\001\n\024Das" +
-      "hboardPostMessage\022\024\n\014access_token\030\001 \001(\t\022" +
-      "3\n\013test_report\030\002 \003(\0132\036.android.vts.TestR" +
-      "eportMessage\022<\n\020test_plan_report\030\003 \003(\0132\"" +
-      ".android.vts.TestPlanReportMessage*\263\001\n\016T",
-      "estCaseResult\022\022\n\016UNKNOWN_RESULT\020\000\022\031\n\025TES" +
-      "T_CASE_RESULT_PASS\020\001\022\031\n\025TEST_CASE_RESULT" +
-      "_FAIL\020\002\022\031\n\025TEST_CASE_RESULT_SKIP\020\003\022\036\n\032TE" +
-      "ST_CASE_RESULT_EXCEPTION\020\004\022\034\n\030TEST_CASE_" +
-      "RESULT_TIMEOUT\020\005*\234\001\n\013VtsTestType\022\030\n\024UNKN" +
-      "OWN_VTS_TESTTYPE\020\000\022\036\n\032VTS_HOST_DRIVEN_ST" +
-      "RUCTURAL\020\001\022\033\n\027VTS_HOST_DRIVEN_FUZZING\020\002\022" +
-      "\031\n\025VTS_TARGET_SIDE_GTEST\020\003\022\033\n\027VTS_TARGET" +
-      "_SIDE_FUZZING\020\004*\243\001\n\032VtsProfilingRegressi" +
-      "onMode\022\033\n\027UNKNOWN_REGRESSION_MODE\020\000\022 \n\034V",
-      "TS_REGRESSION_MODE_DISABLED\020\001\022\"\n\036VTS_REG" +
-      "RESSION_MODE_INCREASING\020\002\022\"\n\036VTS_REGRESS" +
-      "ION_MODE_DECREASING\020\003*\244\001\n\020VtsProfilingTy" +
-      "pe\022\036\n\032UNKNOWN_VTS_PROFILING_TYPE\020\000\022 \n\034VT" +
-      "S_PROFILING_TYPE_TIMESTAMP\020\001\022%\n!VTS_PROF" +
-      "ILING_TYPE_LABELED_VECTOR\020\002\022\'\n#VTS_PROFI" +
-      "LING_TYPE_UNLABELED_VECTOR\020\003B+\n\025com.andr" +
-      "oid.vts.protoB\020VtsReportMessageP\000"
+      "ingReportMessage\0228\n\010systrace\030* \003(\0132\".and" +
+      "roid.vts.SystraceReportMessageB\002\030\001\022$\n\003lo" +
+      "g\030e \003(\0132\027.android.vts.LogMessage\"\240\002\n\026Pro" +
+      "filingReportMessage\022\014\n\004name\030\001 \001(\014\022+\n\004typ",
+      "e\030\002 \001(\0162\035.android.vts.VtsProfilingType\022@" +
+      "\n\017regression_mode\030\003 \001(\0162\'.android.vts.Vt" +
+      "sProfilingRegressionMode\022\027\n\017start_timest" +
+      "amp\030\013 \001(\003\022\025\n\rend_timestamp\030\014 \001(\003\022\r\n\005labe" +
+      "l\030\025 \003(\014\022\r\n\005value\030\026 \003(\003\022\024\n\014x_axis_label\030\037" +
+      " \001(\014\022\024\n\014y_axis_label\030  \001(\014\022\017\n\007options\030) " +
+      "\003(\014\"H\n\025SystraceReportMessage\022\024\n\014process_" +
+      "name\030\001 \001(\014\022\014\n\004html\030\013 \003(\014\022\013\n\003url\030\025 \003(\014\"\345\001" +
+      "\n\025CoverageReportMessage\022\021\n\tfile_path\030\013 \001" +
+      "(\014\022\024\n\014project_name\030\014 \001(\014\022\020\n\010revision\030\r \001",
+      "(\014\022\034\n\024line_coverage_vector\030\027 \003(\005\022\030\n\020tota" +
+      "l_line_count\030e \001(\005\022\032\n\022covered_line_count" +
+      "\030f \001(\005\022\024\n\010dir_path\030\001 \001(\014B\002\030\001\022\025\n\tfile_nam" +
+      "e\030\002 \001(\014B\002\030\001\022\020\n\004html\030\003 \001(\014B\002\030\001\"8\n\nLogMess" +
+      "age\022\013\n\003url\030\001 \001(\014\022\014\n\004name\030\002 \001(\014\022\017\n\007conten" +
+      "t\030\003 \001(\014\"@\n\022UrlResourceMessage\022\013\n\003url\030\001 \001" +
+      "(\014\022\014\n\004name\030\002 \001(\014\022\017\n\007content\030\003 \001(\014\"\213\005\n\021Te" +
+      "stReportMessage\022\026\n\ntest_suite\030\001 \001(\014B\002\030\001\022" +
+      "\014\n\004test\030\002 \001(\014\022+\n\ttest_type\030\003 \001(\0162\030.andro" +
+      "id.vts.VtsTestType\022:\n\013device_info\030\004 \003(\0132",
+      "%.android.vts.AndroidDeviceInfoMessage\0221" +
+      "\n\nbuild_info\030\005 \001(\0132\035.android.vts.Android" +
+      "BuildInfo\022\030\n\020subscriber_email\030\006 \003(\014\022+\n\th" +
+      "ost_info\030\007 \001(\0132\030.android.vts.VtsHostInfo" +
+      "\0225\n\ttest_case\030\013 \003(\0132\".android.vts.TestCa" +
+      "seReportMessage\0226\n\tprofiling\030\025 \003(\0132#.and" +
+      "roid.vts.ProfilingReportMessage\0228\n\010systr" +
+      "ace\030\026 \003(\0132\".android.vts.SystraceReportMe" +
+      "ssageB\002\030\001\022\027\n\017start_timestamp\030e \001(\003\022\025\n\ren" +
+      "d_timestamp\030f \001(\003\0224\n\010coverage\030g \003(\0132\".an",
+      "droid.vts.CoverageReportMessage\022%\n\003log\030\351" +
+      "\007 \003(\0132\027.android.vts.LogMessage\0227\n\rlink_r" +
+      "esource\030\363\007 \003(\0132\037.android.vts.UrlResource" +
+      "Message\"\247\001\n\025TestPlanReportMessage\022\030\n\020tes" +
+      "t_module_name\030\013 \003(\t\022#\n\033test_module_start" +
+      "_timestamp\030\014 \003(\003\022\026\n\016test_plan_name\030\025 \001(\t" +
+      "\0227\n\016partner_report\030\037 \003(\0132\037.android.vts.U" +
+      "rlResourceMessage\"\237\001\n\024DashboardPostMessa" +
+      "ge\022\024\n\014access_token\030\001 \001(\t\0223\n\013test_report\030" +
+      "\002 \003(\0132\036.android.vts.TestReportMessage\022<\n",
+      "\020test_plan_report\030\003 \003(\0132\".android.vts.Te" +
+      "stPlanReportMessage*\263\001\n\016TestCaseResult\022\022" +
+      "\n\016UNKNOWN_RESULT\020\000\022\031\n\025TEST_CASE_RESULT_P" +
+      "ASS\020\001\022\031\n\025TEST_CASE_RESULT_FAIL\020\002\022\031\n\025TEST" +
+      "_CASE_RESULT_SKIP\020\003\022\036\n\032TEST_CASE_RESULT_" +
+      "EXCEPTION\020\004\022\034\n\030TEST_CASE_RESULT_TIMEOUT\020" +
+      "\005*\234\001\n\013VtsTestType\022\030\n\024UNKNOWN_VTS_TESTTYP" +
+      "E\020\000\022\036\n\032VTS_HOST_DRIVEN_STRUCTURAL\020\001\022\033\n\027V" +
+      "TS_HOST_DRIVEN_FUZZING\020\002\022\031\n\025VTS_TARGET_S" +
+      "IDE_GTEST\020\003\022\033\n\027VTS_TARGET_SIDE_FUZZING\020\004",
+      "*\243\001\n\032VtsProfilingRegressionMode\022\033\n\027UNKNO" +
+      "WN_REGRESSION_MODE\020\000\022 \n\034VTS_REGRESSION_M" +
+      "ODE_DISABLED\020\001\022\"\n\036VTS_REGRESSION_MODE_IN" +
+      "CREASING\020\002\022\"\n\036VTS_REGRESSION_MODE_DECREA" +
+      "SING\020\003*\244\001\n\020VtsProfilingType\022\036\n\032UNKNOWN_V" +
+      "TS_PROFILING_TYPE\020\000\022 \n\034VTS_PROFILING_TYP" +
+      "E_TIMESTAMP\020\001\022%\n!VTS_PROFILING_TYPE_LABE" +
+      "LED_VECTOR\020\002\022\'\n#VTS_PROFILING_TYPE_UNLAB" +
+      "ELED_VECTOR\020\003B+\n\025com.android.vts.protoB\020" +
+      "VtsReportMessageP\000"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -18578,7 +19054,7 @@ public final class VtsReportMessage {
           internal_static_android_vts_TestReportMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_android_vts_TestReportMessage_descriptor,
-              new java.lang.String[] { "TestSuite", "Test", "TestType", "DeviceInfo", "BuildInfo", "SubscriberEmail", "HostInfo", "TestCase", "Profiling", "Systrace", "StartTimestamp", "EndTimestamp", "Coverage", "Log", });
+              new java.lang.String[] { "TestSuite", "Test", "TestType", "DeviceInfo", "BuildInfo", "SubscriberEmail", "HostInfo", "TestCase", "Profiling", "Systrace", "StartTimestamp", "EndTimestamp", "Coverage", "Log", "LinkResource", });
           internal_static_android_vts_TestPlanReportMessage_descriptor =
             getDescriptor().getMessageTypes().get(10);
           internal_static_android_vts_TestPlanReportMessage_fieldAccessorTable = new
