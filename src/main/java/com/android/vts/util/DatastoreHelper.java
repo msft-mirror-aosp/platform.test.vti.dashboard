@@ -22,6 +22,9 @@ import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.entity.TestRunEntity.TestRunType;
+import com.android.vts.job.VtsAlertJobServlet;
+import com.android.vts.job.VtsCoverageAlertJobServlet;
+import com.android.vts.job.VtsProfilingStatsJobServlet;
 import com.android.vts.proto.VtsReportMessage.AndroidDeviceInfoMessage;
 import com.android.vts.proto.VtsReportMessage.CoverageReportMessage;
 import com.android.vts.proto.VtsReportMessage.LogMessage;
@@ -30,9 +33,7 @@ import com.android.vts.proto.VtsReportMessage.TestCaseReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestCaseResult;
 import com.android.vts.proto.VtsReportMessage.TestPlanReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestReportMessage;
-import com.android.vts.job.VtsAlertJobServlet;
-import com.android.vts.job.VtsCoverageAlertJobServlet;
-import com.android.vts.job.VtsProfilingStatsJobServlet;
+import com.android.vts.proto.VtsReportMessage.UrlResourceMessage;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -216,6 +217,7 @@ public class DatastoreHelper {
 
         List<TestCaseRunEntity> testCases = new ArrayList<>();
         List<Key> profilingPointKeys = new ArrayList<>();
+        List<String> links = new ArrayList<>();
 
         // Process test cases
         for (TestCaseReportMessage testCase : report.getTestCaseList()) {
@@ -227,10 +229,10 @@ public class DatastoreHelper {
             } else if (result != TestCaseResult.TEST_CASE_RESULT_SKIP) {
                 ++failCount;
             }
-            String systraceLink = null;
             if (testCase.getSystraceCount() > 0
                     && testCase.getSystraceList().get(0).getUrlCount() > 0) {
-                systraceLink = testCase.getSystraceList().get(0).getUrl(0).toStringUtf8();
+                String systraceLink = testCase.getSystraceList().get(0).getUrl(0).toStringUtf8();
+                links.add(systraceLink);
             }
             // Process coverage data for test case
             for (CoverageReportMessage coverage : testCase.getCoverageList()) {
@@ -263,7 +265,6 @@ public class DatastoreHelper {
             }
             TestCaseRunEntity testCaseEntity = testCases.get(lastIndex);
             testCaseEntity.addTestCase(testCaseName, result.getNumber());
-            testCaseEntity.setSystraceUrl(systraceLink);
         }
 
         List<Entity> testCasePuts = new ArrayList<>();
@@ -329,11 +330,15 @@ public class DatastoreHelper {
             testEntity.setHasProfilingData(true);
         }
 
-        List<String> logLinks = new ArrayList<>();
         // Process log data
         for (LogMessage log : report.getLogList()) {
             if (!log.hasUrl()) continue;
-            logLinks.add(log.getUrl().toStringUtf8());
+            links.add(log.getUrl().toStringUtf8());
+        }
+        // Process url resource
+        for (UrlResourceMessage resource : report.getLinkResourceList()) {
+            if (!resource.hasUrl()) continue;
+            links.add(resource.getUrl().toStringUtf8());
         }
 
         TestRunEntity testRunEntity =
@@ -347,7 +352,7 @@ public class DatastoreHelper {
                         passCount,
                         failCount,
                         testCaseIds,
-                        logLinks,
+                        links,
                         coveredLineCount,
                         totalLineCount);
         puts.add(testRunEntity.toEntity());
