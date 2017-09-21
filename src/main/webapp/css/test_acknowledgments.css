@@ -118,10 +118,10 @@ div.col.s12.section-header-col p.acknowledgment-info {
 .ui-autocomplete.card.autocomplete-dropdown {
     z-index: 10000000;
     overflow: auto;
-    max-height: 75%;
+    max-height: 250px;
 }
 .ui-autocomplete.card.autocomplete-dropdown .ui-menu-item {
-    font-size: 16px;
+    font-size: 12px;
     padding: 4px 10px;
     transition: background-color .25s;
 }
