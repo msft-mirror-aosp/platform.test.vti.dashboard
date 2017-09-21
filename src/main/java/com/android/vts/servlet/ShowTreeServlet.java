@@ -159,76 +159,46 @@ public class ShowTreeServlet extends BaseServlet {
             dir = SortDirection.ASCENDING;
         }
         Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
-        Map<String, Object> parameterMap = request.getParameterMap();
-        Filter userTestFilter = FilterUtil.getUserTestFilter(parameterMap);
-        Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         Filter typeFilter = FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
         Filter testFilter =
                 FilterUtil.getTimeFilter(
                         testKey, TestRunEntity.KIND, startTime, endTime, typeFilter);
 
+        Map<String, Object> parameterMap = request.getParameterMap();
+        List<Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap, testFilter);
+        Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
+
         List<TestRunMetadata> testRunMetadata = new ArrayList<>();
         Map<Key, TestRunMetadata> metadataMap = new HashMap<>();
         Key minKey = null;
         Key maxKey = null;
-        if (userTestFilter == null && userDeviceFilter == null) {
-            Query testRunQuery =
-                    new Query(TestRunEntity.KIND)
-                            .setAncestor(testKey)
-                            .setFilter(testFilter)
-                            .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
-            for (Entity testRun :
-                    datastore
-                            .prepare(testRunQuery)
-                            .asIterable(
-                                    DatastoreHelper.getLargeBatchOptions()
-                                            .limit(MAX_RESULT_COUNT))) {
-                TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
-                if (testRunEntity == null) {
-                    continue;
-                }
-                if (minKey == null || testRun.getKey().compareTo(minKey) < 0) {
-                    minKey = testRun.getKey();
-                }
-                if (maxKey == null || testRun.getKey().compareTo(maxKey) > 0) {
-                    maxKey = testRun.getKey();
-                }
-                TestRunMetadata metadata = new TestRunMetadata(testName, testRunEntity);
-                testRunMetadata.add(metadata);
-                metadataMap.put(testRun.getKey(), metadata);
+        List<Key> gets =
+                FilterUtil.getMatchingKeys(
+                        testKey,
+                        TestRunEntity.KIND,
+                        userTestFilters,
+                        userDeviceFilter,
+                        dir,
+                        MAX_RESULT_COUNT);
+        Map<Key, Entity> entityMap = datastore.get(gets);
+        for (Key key : gets) {
+            if (!entityMap.containsKey(key)) {
+                continue;
             }
-        } else {
-            if (userTestFilter != null) {
-                testFilter = Query.CompositeFilterOperator.and(userTestFilter, testFilter);
+            TestRunEntity testRunEntity = TestRunEntity.fromEntity(entityMap.get(key));
+            if (testRunEntity == null) {
+                continue;
             }
-            List<Key> gets =
-                    FilterUtil.getMatchingKeys(
-                            testKey,
-                            TestRunEntity.KIND,
-                            testFilter,
-                            userDeviceFilter,
-                            dir,
-                            MAX_RESULT_COUNT);
-            Map<Key, Entity> entityMap = datastore.get(gets);
-            for (Key key : gets) {
-                if (!entityMap.containsKey(key)) {
-                    continue;
-                }
-                TestRunEntity testRunEntity = TestRunEntity.fromEntity(entityMap.get(key));
-                if (testRunEntity == null) {
-                    continue;
-                }
-                if (minKey == null || key.compareTo(minKey) < 0) {
-                    minKey = key;
-                }
-                if (maxKey == null || key.compareTo(maxKey) > 0) {
-                    maxKey = key;
-                }
-                TestRunMetadata metadata = new TestRunMetadata(testName, testRunEntity);
-                testRunMetadata.add(metadata);
-                metadataMap.put(key, metadata);
+            if (minKey == null || key.compareTo(minKey) < 0) {
+                minKey = key;
             }
+            if (maxKey == null || key.compareTo(maxKey) > 0) {
+                maxKey = key;
+            }
+            TestRunMetadata metadata = new TestRunMetadata(testName, testRunEntity);
+            testRunMetadata.add(metadata);
+            metadataMap.put(key, metadata);
         }
 
         List<String> profilingPointNames = new ArrayList<>();
