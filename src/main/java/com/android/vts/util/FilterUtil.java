@@ -19,6 +19,7 @@ import com.android.vts.entity.TestRunEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
@@ -26,6 +27,7 @@ import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -37,11 +39,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 /** FilterUtil, a helper class for parsing and matching search queries to data. */
 public class FilterUtil {
     protected static final Logger logger = Logger.getLogger(FilterUtil.class.getName());
+    private static final String INEQUALITY_REGEX = "(<=|>=|<|>|=)";
+
     /** Key class to represent a filter token. */
     public enum FilterKey {
         DEVICE_BUILD_ID("deviceBuildId", DeviceInfoEntity.BUILD_ID, true),
@@ -107,12 +113,56 @@ public class FilterUtil {
             this.isDevice = isDevice;
         }
 
-        public Filter getFilterForString(String matchString) {
+        /**
+         * Return a filter predicate for string equality.
+         *
+         * @param matchString The string to match.
+         * @return A filter predicate enforcing equality on the property.
+         */
+        public FilterPredicate getFilterForString(String matchString) {
             return new FilterPredicate(this.property, FilterOperator.EQUAL, matchString);
         }
 
-        public Filter getFilterForNumber(long matchNumber) {
-            return new FilterPredicate(this.property, FilterOperator.EQUAL, matchNumber);
+        /**
+         * Return a filter predicate for number inequality or equality.
+         *
+         * @param matchNumber A string, either a number or an inequality symbol followed by a
+         *     number.
+         * @return A filter predicate enforcing equality on the property, or null if invalid.
+         */
+        public FilterPredicate getFilterForNumber(String matchNumber) {
+            String numberString = matchNumber.trim();
+            Pattern p = Pattern.compile(INEQUALITY_REGEX);
+            Matcher m = p.matcher(numberString);
+
+            // Default operator is equality.
+            FilterOperator op = FilterOperator.EQUAL;
+
+            // Determine if there is an inequality operator.
+            if (m.find() && m.start() == 0 && m.end() != numberString.length()) {
+                String opString = m.group();
+
+                // Inequality operator can be <=, <, >, >=, or =.
+                if (opString.equals("<=")) {
+                    op = FilterOperator.LESS_THAN_OR_EQUAL;
+                } else if (opString.equals("<")) {
+                    op = FilterOperator.LESS_THAN;
+                } else if (opString.equals(">")) {
+                    op = FilterOperator.GREATER_THAN;
+                } else if (opString.equals(">=")) {
+                    op = FilterOperator.GREATER_THAN_OR_EQUAL;
+                } else if (!opString.equals("=")) {  // unrecognized inequality.
+                    return null;
+                }
+                numberString = matchNumber.substring(m.end()).trim();
+            }
+            try {
+                long number = Long.parseLong(numberString);
+                return new FilterPredicate(this.property, op, number);
+            } catch (NumberFormatException e) {
+                // invalid number
+                return null;
+            }
         }
 
         /**
@@ -162,43 +212,47 @@ public class FilterUtil {
     }
 
     /**
-     * Get a filter on test runs from a user search query.
+     * Get a list of test filters given the user parameters and an initial filter.
      *
      * @param parameterMap The key-value map of url parameters.
-     * @return A filter with the values from the user search parameters.
+     * @param existingFilter The existing (inequality or equality) filter on test runs to apply, or
+     *     null.
+     * @return A list of filters, each having at most one inequality filter.
      */
-    public static Filter getUserTestFilter(Map<String, Object> parameterMap) {
-        Filter testFilter = null;
+    public static List<Filter> getUserTestFilters(
+            Map<String, Object> parameterMap, Filter existingFilter) {
+        Filter equalityFilter = existingFilter;
+        List<Filter> inequalityFilters = new ArrayList<>();
         for (String key : parameterMap.keySet()) {
             if (!FilterKey.isTestKey(key)) continue;
             String stringValue = getFirstParameter(parameterMap, key);
             if (stringValue == null) continue;
             FilterKey filterKey = FilterKey.parse(key);
-            Filter f = null;
+            FilterPredicate f = null;
             switch (filterKey) {
                 case NONPASSING:
                 case PASSING:
-                    try {
-                        Long value = Long.parseLong(stringValue);
-                        f = filterKey.getFilterForNumber(value);
-                    } catch (NumberFormatException e) {
-                        // invalid number
-                    }
+                    f = filterKey.getFilterForNumber(stringValue);
                     break;
                 case HOSTNAME:
                 case VTS_BUILD_ID:
                     f = filterKey.getFilterForString(stringValue.toLowerCase());
                     break;
                 default:
-                    break;
+                    continue;
             }
-            if (testFilter == null) {
-                testFilter = f;
-            } else if (f != null) {
-                testFilter = CompositeFilterOperator.and(testFilter, f);
+            if (f == null) {
+                continue;
+            } else if (!f.getOperator().equals(FilterOperator.EQUAL)) {
+                inequalityFilters.add(f);
+            } else if (equalityFilter == null) {
+                equalityFilter = f;
+            } else {
+                equalityFilter = CompositeFilterOperator.and(equalityFilter, f);
             }
         }
-        return testFilter;
+        if (equalityFilter != null) inequalityFilters.add(0, equalityFilter);
+        return inequalityFilters;
     }
 
     /**
@@ -376,7 +430,7 @@ public class FilterUtil {
      *
      * @param ancestorKey The ancestor key to use in the query.
      * @param kind The entity kind to use in the test query.
-     * @param testFilter The filter to apply to the test runs.
+     * @param testFilters The filter list to apply to test runs (each having <=1 inequality filter).
      * @param deviceFilter The filter to apply to associated devices.
      * @param dir The sort direction of the returned list.
      * @param maxSize The maximum number of entities to return.
@@ -385,23 +439,48 @@ public class FilterUtil {
     public static List<Key> getMatchingKeys(
             Key ancestorKey,
             String kind,
-            Filter testFilter,
+            List<Filter> testFilters,
             Filter deviceFilter,
             Query.SortDirection dir,
             int maxSize) {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Set<Key> matchingTestKeys = new HashSet<>();
-        Query testQuery =
-                new Query(kind).setAncestor(ancestorKey).setFilter(testFilter).setKeysOnly();
-        for (Entity testRunKey :
-                datastore.prepare(testQuery).asIterable(DatastoreHelper.getLargeBatchOptions())) {
-            matchingTestKeys.add(testRunKey.getKey());
+        Set<Key> matchingTestKeys = null;
+        Key minKey = null;
+        Key maxKey = null;
+        for (Filter testFilter : testFilters) {
+            Query testQuery =
+                    new Query(kind).setAncestor(ancestorKey).setFilter(testFilter).setKeysOnly();
+            Set<Key> filterMatches = new HashSet<>();
+            FetchOptions ops = DatastoreHelper.getLargeBatchOptions();
+            if (deviceFilter == null && testFilters.size() == 1) {
+                ops.limit(maxSize);
+            }
+            for (Entity testRunKey : datastore.prepare(testQuery).asIterable(ops)) {
+                filterMatches.add(testRunKey.getKey());
+                if (maxKey == null || testRunKey.getKey().compareTo(maxKey) > 0)
+                    maxKey = testRunKey.getKey();
+                if (minKey == null || testRunKey.getKey().compareTo(minKey) < 0)
+                    minKey = testRunKey.getKey();
+            }
+            if (matchingTestKeys == null) {
+                matchingTestKeys = filterMatches;
+            } else {
+                matchingTestKeys = Sets.intersection(matchingTestKeys, filterMatches);
+            }
         }
 
         Set<Key> allMatchingKeys;
         if (deviceFilter == null) {
             allMatchingKeys = matchingTestKeys;
         } else {
+            deviceFilter =
+                    CompositeFilterOperator.and(
+                            deviceFilter,
+                            getDeviceTimeFilter(
+                                    minKey.getParent(),
+                                    minKey.getKind(),
+                                    minKey.getId(),
+                                    maxKey.getId()));
             allMatchingKeys = new HashSet<>();
             Query deviceQuery =
                     new Query(DeviceInfoEntity.KIND)
