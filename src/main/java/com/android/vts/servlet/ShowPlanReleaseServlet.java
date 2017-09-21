@@ -144,73 +144,39 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 FilterUtil.getTimeFilter(
                         testPlanKey, TestPlanRunEntity.KIND, startTime, endTime, typeFilter);
         Map<String, Object> parameterMap = request.getParameterMap();
-        Filter userTestFilter = FilterUtil.getUserTestFilter(parameterMap);
+        List<Filter> userTestFilters =
+                FilterUtil.getUserTestFilters(parameterMap, testPlanRunFilter);
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         List<TestPlanRunMetadata> testPlanRuns = new ArrayList<>();
         Map<Key, TestPlanRunMetadata> testPlanMap = new HashMap<>();
         Key minKey = null;
         Key maxKey = null;
-        if (userTestFilter == null && userDeviceFilter == null) {
-            Query testPlanRunQuery =
-                    new Query(TestPlanRunEntity.KIND)
-                            .setAncestor(testPlanKey)
-                            .setFilter(testPlanRunFilter)
-                            .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
-            for (Entity testPlanRunEntity :
-                    datastore
-                            .prepare(testPlanRunQuery)
-                            .asIterable(
-                                    DatastoreHelper.getLargeBatchOptions()
-                                            .limit(MAX_RUNS_PER_PAGE))) {
-                TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(testPlanRunEntity);
-                if (testPlanRun == null) {
-                    logger.log(
-                            Level.WARNING, "Invalid test plan run: " + testPlanRunEntity.getKey());
-                    continue;
-                }
-                Key runKey = testPlanRunEntity.getKey();
-                TestPlanRunMetadata metadata = new TestPlanRunMetadata(testPlanRun);
-                testPlanRuns.add(metadata);
-                testPlanMap.put(runKey, metadata);
-                if (minKey == null || runKey.compareTo(minKey) < 0) {
-                    minKey = runKey;
-                }
-                if (maxKey == null || runKey.compareTo(maxKey) > 0) {
-                    maxKey = runKey;
-                }
+        List<Key> gets =
+                FilterUtil.getMatchingKeys(
+                        testPlanKey,
+                        TestPlanRunEntity.KIND,
+                        userTestFilters,
+                        userDeviceFilter,
+                        dir,
+                        MAX_RUNS_PER_PAGE);
+        Map<Key, Entity> entityMap = datastore.get(gets);
+        for (Key key : gets) {
+            if (!entityMap.containsKey(key)) {
+                continue;
             }
-        } else {
-            if (userTestFilter != null) {
-                testPlanRunFilter =
-                        Query.CompositeFilterOperator.and(userTestFilter, testPlanRunFilter);
+            TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(entityMap.get(key));
+            if (testPlanRun == null) {
+                continue;
             }
-            List<Key> gets =
-                    FilterUtil.getMatchingKeys(
-                            testPlanKey,
-                            TestPlanRunEntity.KIND,
-                            testPlanRunFilter,
-                            userDeviceFilter,
-                            dir,
-                            MAX_RUNS_PER_PAGE);
-            Map<Key, Entity> entityMap = datastore.get(gets);
-            for (Key key : gets) {
-                if (!entityMap.containsKey(key)) {
-                    continue;
-                }
-                TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(entityMap.get(key));
-                if (testPlanRun == null) {
-                    continue;
-                }
-                TestPlanRunMetadata metadata = new TestPlanRunMetadata(testPlanRun);
-                testPlanRuns.add(metadata);
-                testPlanMap.put(key, metadata);
-                if (minKey == null || key.compareTo(minKey) < 0) {
-                    minKey = key;
-                }
-                if (maxKey == null || key.compareTo(maxKey) > 0) {
-                    maxKey = key;
-                }
+            TestPlanRunMetadata metadata = new TestPlanRunMetadata(testPlanRun);
+            testPlanRuns.add(metadata);
+            testPlanMap.put(key, metadata);
+            if (minKey == null || key.compareTo(minKey) < 0) {
+                minKey = key;
+            }
+            if (maxKey == null || key.compareTo(maxKey) > 0) {
+                maxKey = key;
             }
         }
         if (minKey != null && maxKey != null) {

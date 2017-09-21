@@ -26,11 +26,8 @@ import com.android.vts.util.TestResults;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.gson.Gson;
@@ -152,45 +149,30 @@ public class ShowTableServlet extends BaseServlet {
             dir = SortDirection.ASCENDING;
         }
         Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
-        Map<String, Object> parameterMap = request.getParameterMap();
-        Filter userTestFilter = FilterUtil.getUserTestFilter(parameterMap);
-        Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         Filter typeFilter = FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
         Filter testFilter =
                 FilterUtil.getTimeFilter(
                         testKey, TestRunEntity.KIND, startTime, endTime, typeFilter);
-        if (userTestFilter == null && userDeviceFilter == null) {
-            Query testRunQuery =
-                    new Query(TestRunEntity.KIND)
-                            .setAncestor(testKey)
-                            .setFilter(testFilter)
-                            .addSort(Entity.KEY_RESERVED_PROPERTY, dir);
-            for (Entity testRun :
-                    datastore
-                            .prepare(testRunQuery)
-                            .asIterable(FetchOptions.Builder.withLimit(MAX_BUILD_IDS_PER_PAGE))) {
-                processTestRun(testResults, testRun);
+
+        Map<String, Object> parameterMap = request.getParameterMap();
+        List<Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap, testFilter);
+        Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
+
+        List<Key> gets =
+                FilterUtil.getMatchingKeys(
+                        testKey,
+                        TestRunEntity.KIND,
+                        userTestFilters,
+                        userDeviceFilter,
+                        dir,
+                        MAX_BUILD_IDS_PER_PAGE);
+        Map<Key, Entity> entityMap = datastore.get(gets);
+        for (Key key : gets) {
+            if (!entityMap.containsKey(key)) {
+                continue;
             }
-        } else {
-            if (userTestFilter != null) {
-                testFilter = CompositeFilterOperator.and(userTestFilter, testFilter);
-            }
-            List<Key> gets =
-                    FilterUtil.getMatchingKeys(
-                            testKey,
-                            TestRunEntity.KIND,
-                            testFilter,
-                            userDeviceFilter,
-                            dir,
-                            MAX_BUILD_IDS_PER_PAGE);
-            Map<Key, Entity> entityMap = datastore.get(gets);
-            for (Key key : gets) {
-                if (!entityMap.containsKey(key)) {
-                    continue;
-                }
-                processTestRun(testResults, entityMap.get(key));
-            }
+            processTestRun(testResults, entityMap.get(key));
         }
         testResults.processReport();
 

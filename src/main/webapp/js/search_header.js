@@ -15,6 +15,8 @@
  */
 
 (function ($) {
+  var _inequalityRegex = '(^)(<|>|<=|>=|=)?[ ]*?[0-9]+$';
+  var _inequalityHint = 'e.g. 5, >0, <=10';
 
   function _validate(input, valueSet) {
     var value = input.val();
@@ -38,6 +40,12 @@
     var label = $('<label></label>').text(displayName).appendTo(div);
     if (value) {
       input.attr('value', value);
+      label.addClass('active');
+    }
+    if (config.options.validate == 'inequality') {
+      input.addClass('validate');
+      input.attr('pattern', _inequalityRegex);
+      input.attr('placeholder', _inequalityHint);
       label.addClass('active');
     }
     input.focusout(function() {

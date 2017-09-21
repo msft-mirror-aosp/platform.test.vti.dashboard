@@ -16,7 +16,6 @@
 
 package com.android.vts.servlet;
 
-import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.proto.VtsReportMessage;
@@ -26,7 +25,6 @@ import com.android.vts.util.TestRunMetadata;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Query;
 import com.google.gson.Gson;
@@ -87,10 +85,6 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
             resultNames.add(r.name());
         }
 
-        Map<String, Object> parameterMap = request.getParameterMap();
-        Query.Filter userTestFilter = FilterUtil.getUserTestFilter(parameterMap);
-        Query.Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
-
         List<JsonObject> testRunObjects = new ArrayList<>();
 
         Query.Filter testFilter =
@@ -98,76 +92,43 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
                         TestRunEntity.HAS_COVERAGE, Query.FilterOperator.EQUAL, true);
         Query.Filter timeFilter =
                 FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
+
         if (timeFilter != null) {
             testFilter = Query.CompositeFilterOperator.and(testFilter, timeFilter);
         }
-        if (userTestFilter != null) {
-            testFilter = Query.CompositeFilterOperator.and(testFilter, userTestFilter);
-        }
+        Map<String, Object> parameterMap = request.getParameterMap();
+        List<Query.Filter> userTestFilters =
+                FilterUtil.getUserTestFilters(parameterMap, testFilter);
+        Query.Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
+
         int coveredLines = 0;
         int uncoveredLines = 0;
         int passCount = 0;
         int failCount = 0;
         for (Key key : allTests) {
-            if (userTestFilter == null && userDeviceFilter == null) {
-                Query testRunQuery =
-                        new Query(TestRunEntity.KIND)
-                                .setAncestor(key)
-                                .setFilter(testFilter)
-                                .addSort(
-                                        Entity.KEY_RESERVED_PROPERTY,
-                                        Query.SortDirection.DESCENDING);
-                for (Entity testRun :
-                        datastore
-                                .prepare(testRunQuery)
-                                .asIterable(FetchOptions.Builder.withLimit(1))) {
-                    TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
-                    if (testRunEntity == null) {
-                        continue;
-                    }
-                    TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRunEntity);
-                    Query deviceQuery =
-                            new Query(DeviceInfoEntity.KIND).setAncestor(testRun.getKey());
-                    for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
-                        DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
-                        if (deviceEntity == null) continue;
-                        metadata.addDevice(deviceEntity);
-                    }
-                    testRunObjects.add(metadata.toJson());
-                    coveredLines += testRunEntity.coveredLineCount;
-                    uncoveredLines += testRunEntity.totalLineCount - testRunEntity.coveredLineCount;
-                    passCount += testRunEntity.passCount;
-                    failCount += testRunEntity.failCount;
+            List<Key> gets =
+                    FilterUtil.getMatchingKeys(
+                            key,
+                            TestRunEntity.KIND,
+                            userTestFilters,
+                            userDeviceFilter,
+                            Query.SortDirection.DESCENDING,
+                            1);
+            Map<Key, Entity> entityMap = datastore.get(gets);
+            for (Key entityKey : gets) {
+                if (!entityMap.containsKey(entityKey)) {
+                    continue;
                 }
-            } else {
-                if (userTestFilter != null) {
-                    testFilter = Query.CompositeFilterOperator.and(userTestFilter, testFilter);
+                TestRunEntity testRunEntity = TestRunEntity.fromEntity(entityMap.get(entityKey));
+                if (testRunEntity == null) {
+                    continue;
                 }
-                List<Key> gets =
-                        FilterUtil.getMatchingKeys(
-                                key,
-                                TestRunEntity.KIND,
-                                testFilter,
-                                userDeviceFilter,
-                                Query.SortDirection.DESCENDING,
-                                1);
-                Map<Key, Entity> entityMap = datastore.get(gets);
-                for (Key entityKey : gets) {
-                    if (!entityMap.containsKey(entityKey)) {
-                        continue;
-                    }
-                    TestRunEntity testRunEntity =
-                            TestRunEntity.fromEntity(entityMap.get(entityKey));
-                    if (testRunEntity == null) {
-                        continue;
-                    }
-                    TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRunEntity);
-                    testRunObjects.add(metadata.toJson());
-                    coveredLines += testRunEntity.coveredLineCount;
-                    uncoveredLines += testRunEntity.totalLineCount - testRunEntity.coveredLineCount;
-                    passCount += testRunEntity.passCount;
-                    failCount += testRunEntity.failCount;
-                }
+                TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRunEntity);
+                testRunObjects.add(metadata.toJson());
+                coveredLines += testRunEntity.coveredLineCount;
+                uncoveredLines += testRunEntity.totalLineCount - testRunEntity.coveredLineCount;
+                passCount += testRunEntity.passCount;
+                failCount += testRunEntity.failCount;
             }
         }
 
