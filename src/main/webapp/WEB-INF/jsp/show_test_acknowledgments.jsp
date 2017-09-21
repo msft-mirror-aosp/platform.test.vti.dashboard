@@ -22,9 +22,9 @@
   <%@ include file='header.jsp' %>
   <script src='js/test_acknowledgments.js'></script>
   <script>
-    var testAcknowledgments = ${testAcknowledgments};
     $(document).ready(function() {
-      var acks = $('#acknowledgments').testAcknowledgments(${allTests}, testAcknowledgments, ${readOnly});
+      var acks = $('#acknowledgments').testAcknowledgments(
+        ${allTests}, ${branches}, ${devices}, ${testAcknowledgments}, ${readOnly});
     });
   </script>
   <body>
