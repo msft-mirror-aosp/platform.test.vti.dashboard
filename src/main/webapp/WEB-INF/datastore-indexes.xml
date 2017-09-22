@@ -28,6 +28,14 @@
     <property name="__key__" direction="desc"/>
   </datastore-index>
 
+  <datastore-index kind="TestPlanRun" ancestor="true" source="manual">
+    <property name="passCount" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="TestPlanRun" ancestor="true" source="manual">
+    <property name="failCount" direction="asc"/>
+  </datastore-index>
+
   <datastore-index kind="TestStatus" ancestor="false" source="manual">
     <property name="failCount" direction="asc"/>
     <property name="passCount" direction="asc"/>
@@ -50,6 +58,14 @@
   <datastore-index kind="TestRun" ancestor="true" source="manual">
     <property name="hasCoverage" direction="asc"/>
     <property name="__key__" direction="desc"/>
+  </datastore-index>
+
+  <datastore-index kind="TestRun" ancestor="true" source="manual">
+    <property name="passCount" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="TestRun" ancestor="true" source="manual">
+    <property name="failCount" direction="asc"/>
   </datastore-index>
 
   <datastore-index kind="TestRun" ancestor="false" source="manual">
