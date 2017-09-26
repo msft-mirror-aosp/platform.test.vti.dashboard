@@ -151,7 +151,7 @@ public class FilterUtil {
                     op = FilterOperator.GREATER_THAN;
                 } else if (opString.equals(">=")) {
                     op = FilterOperator.GREATER_THAN_OR_EQUAL;
-                } else if (!opString.equals("=")) {  // unrecognized inequality.
+                } else if (!opString.equals("=")) { // unrecognized inequality.
                     return null;
                 }
                 numberString = matchNumber.substring(m.end()).trim();
@@ -212,47 +212,32 @@ public class FilterUtil {
     }
 
     /**
-     * Get a list of test filters given the user parameters and an initial filter.
+     * Get a list of test filters given the user parameters.
      *
      * @param parameterMap The key-value map of url parameters.
-     * @param existingFilter The existing (inequality or equality) filter on test runs to apply, or
-     *     null.
      * @return A list of filters, each having at most one inequality filter.
      */
-    public static List<Filter> getUserTestFilters(
-            Map<String, Object> parameterMap, Filter existingFilter) {
-        Filter equalityFilter = existingFilter;
-        List<Filter> inequalityFilters = new ArrayList<>();
+    public static List<Filter> getUserTestFilters(Map<String, Object> parameterMap) {
+        List<Filter> userFilters = new ArrayList<>();
         for (String key : parameterMap.keySet()) {
             if (!FilterKey.isTestKey(key)) continue;
             String stringValue = getFirstParameter(parameterMap, key);
             if (stringValue == null) continue;
             FilterKey filterKey = FilterKey.parse(key);
-            FilterPredicate f = null;
             switch (filterKey) {
                 case NONPASSING:
                 case PASSING:
-                    f = filterKey.getFilterForNumber(stringValue);
+                    userFilters.add(filterKey.getFilterForNumber(stringValue));
                     break;
                 case HOSTNAME:
                 case VTS_BUILD_ID:
-                    f = filterKey.getFilterForString(stringValue.toLowerCase());
+                    userFilters.add(filterKey.getFilterForString(stringValue.toLowerCase()));
                     break;
                 default:
                     continue;
             }
-            if (f == null) {
-                continue;
-            } else if (!f.getOperator().equals(FilterOperator.EQUAL)) {
-                inequalityFilters.add(f);
-            } else if (equalityFilter == null) {
-                equalityFilter = f;
-            } else {
-                equalityFilter = CompositeFilterOperator.and(equalityFilter, f);
-            }
         }
-        if (equalityFilter != null) inequalityFilters.add(0, equalityFilter);
-        return inequalityFilters;
+        return userFilters;
     }
 
     /**
