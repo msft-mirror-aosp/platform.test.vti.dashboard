@@ -156,7 +156,8 @@ public class ShowTableServlet extends BaseServlet {
                         testKey, TestRunEntity.KIND, startTime, endTime, typeFilter);
 
         Map<String, Object> parameterMap = request.getParameterMap();
-        List<Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap, testFilter);
+        List<Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap);
+        userTestFilters.add(0, testFilter);
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
         List<Key> gets =
