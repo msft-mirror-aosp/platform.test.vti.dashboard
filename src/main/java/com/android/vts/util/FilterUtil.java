@@ -454,6 +454,7 @@ public class FilterUtil {
             FetchOptions ops = DatastoreHelper.getLargeBatchOptions();
             if (deviceFilter == null && testFilters.size() == 1) {
                 ops.limit(maxSize);
+                testQuery.addSort(Entity.KEY_RESERVED_PROPERTY, dir);
             }
             for (Entity testRunKey : datastore.prepare(testQuery).asIterable(ops)) {
                 filterMatches.add(testRunKey.getKey());
