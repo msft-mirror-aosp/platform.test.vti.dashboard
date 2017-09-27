@@ -18,6 +18,7 @@
 
   var _isModalOpen = false;
   var _isReadOnly = true;
+  var _allTestsSet = new Set();
   var _allBranches = [];
   var _allDevices = [];
 
@@ -381,6 +382,7 @@
   $.fn.testAcknowledgments = function(
       allTests, allBranches, allDevices, testAcknowledgments, readOnly) {
     var self = $(this);
+    _allTestsSet = new Set(allTests);
     _allBranches = allBranches;
     _allDevices = allDevices;
     _isReadOnly = readOnly;
@@ -407,6 +409,7 @@
       btn.appendTo(btnWrapper);
       btnWrapper.appendTo(searchRow);
       btn.click(function() {
+        if (!_allTestsSet.has(input.val())) return;
         var ack = createAcknowledgment(undefined, input.val());
         ack.hide().prependTo(acks);
         showModal(ack, undefined, input.val());
