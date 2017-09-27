@@ -151,6 +151,18 @@
    * @param note (String) The note in the acknowledgment.
    */
   function saveCallback(ack, modal, key, test, branchSet, deviceSet, testCaseSet, note) {
+    var allEmpty = true;
+    var firstUnemptyInput = null;
+    var vals = modal.find('.modal-section>.input-container>input').each(function(_, input) {
+      if (!!$(input).val()) {
+        allEmpty = false;
+        if (!firstUnemptyInput) firstUnemptyInput = $(input);
+      }
+    });
+    if (!allEmpty) {
+      firstUnemptyInput.focus();
+      return false;
+    }
     var branches = Array.from(branchSet);
     branches.sort();
     var devices = Array.from(deviceSet);
