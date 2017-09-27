@@ -18,17 +18,33 @@
 <%@ taglib prefix='c' uri='http://java.sun.com/jsp/jstl/core'%>
 
 <html>
+  <link rel='stylesheet' href='/css/show_test_acknowledgments.css'>
   <link rel='stylesheet' href='/css/test_acknowledgments.css'>
   <%@ include file='header.jsp' %>
   <script src='js/test_acknowledgments.js'></script>
   <script>
     $(document).ready(function() {
+      $('#favoritesLink').click(function() {
+        window.open('/', '_self');
+      });
+      $('#allLink').click(function() {
+        window.open('/?showAll=true', '_self');
+      });
       var acks = $('#acknowledgments').testAcknowledgments(
         ${allTests}, ${branches}, ${devices}, ${testAcknowledgments}, ${readOnly});
     });
   </script>
   <body>
     <div class='container wide'>
+      <div class='row home-tabs-row'>
+        <div class='col s12'>
+          <ul class='tabs'>
+            <li class='tab col s4' id='favoritesLink'><a>Favorites</a></li>
+            <li class='tab col s4' id='allLink'><a>All Tests</a></li>
+            <li class='tab col s4'><a class='active'>Test Acknowledgements</a></li>
+          </ul>
+        </div>
+      </div>
       <div class='row' id='acknowledgments'></div>
     </div>
     <%@ include file='footer.jsp' %>
