@@ -49,15 +49,7 @@ import javax.servlet.http.HttpSession;
 /** Represents the servlet that is invoked on loading the first page of dashboard. */
 public class DashboardMainServlet extends BaseServlet {
     private static final String DASHBOARD_MAIN_JSP = "WEB-INF/jsp/dashboard_main.jsp";
-    private static final String DASHBOARD_ALL_LINK = "/?showAll=true";
-    private static final String DASHBOARD_FAVORITES_LINK = "/";
-    private static final String ALL_HEADER = "All Tests";
-    private static final String FAVORITES_HEADER = "Favorites";
     private static final String NO_TESTS_ERROR = "No test results available.";
-    private static final String FAVORITES_BUTTON = "Show Favorites";
-    private static final String ALL_BUTTON = "Show All";
-    private static final String UP_ARROW = "keyboard_arrow_up";
-    private static final String DOWN_ARROW = "keyboard_arrow_down";
 
     @Override
     public PageType getNavParentType() {
@@ -161,10 +153,6 @@ public class DashboardMainServlet extends BaseServlet {
         Map<String, String> subscriptionMap = new HashMap<>();
 
         boolean showAll = request.getParameter("showAll") != null;
-        String header;
-        String buttonLabel;
-        String buttonIcon;
-        String buttonLink;
         String error = null;
 
         Query query = new Query(TestEntity.KIND).setKeysOnly();
@@ -204,10 +192,6 @@ public class DashboardMainServlet extends BaseServlet {
             for (Key testKey : testMap.keySet()) {
                 displayedTests.add(testMap.get(testKey));
             }
-            header = ALL_HEADER;
-            buttonLabel = FAVORITES_BUTTON;
-            buttonIcon = UP_ARROW;
-            buttonLink = DASHBOARD_FAVORITES_LINK;
         } else {
             if (testMap.size() > 0) {
                 Filter userFilter =
@@ -228,10 +212,6 @@ public class DashboardMainServlet extends BaseServlet {
                             testKey.getName(), KeyFactory.keyToString(favoriteEntity.getKey()));
                 }
             }
-            header = FAVORITES_HEADER;
-            buttonLabel = ALL_BUTTON;
-            buttonIcon = DOWN_ARROW;
-            buttonLink = DASHBOARD_ALL_LINK;
         }
         displayedTests.sort(Comparator.naturalOrder());
 
@@ -239,11 +219,7 @@ public class DashboardMainServlet extends BaseServlet {
         request.setAttribute("allTestsJson", new Gson().toJson(allTestNames));
         request.setAttribute("subscriptionMapJson", new Gson().toJson(subscriptionMap));
         request.setAttribute("testNames", displayedTests);
-        request.setAttribute("headerLabel", header);
         request.setAttribute("showAll", showAll);
-        request.setAttribute("buttonLabel", buttonLabel);
-        request.setAttribute("buttonIcon", buttonIcon);
-        request.setAttribute("buttonLink", buttonLink);
         request.setAttribute("error", error);
         request.setAttribute("resultsUrl", referTo.defaultUrl);
         dispatcher = request.getRequestDispatcher(DASHBOARD_MAIN_JSP);

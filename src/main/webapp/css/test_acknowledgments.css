@@ -33,7 +33,12 @@ div.col.s12.section-header-col p.acknowledgment-info {
     pointer-events: none;
 }
 .search-row .col.s1 .btn.btn-floating {
-    margin-top: 18px;
+    margin-top: 22px;
+}
+.acknowledgments {
+    width: 100%;
+    margin-top: 25px;
+    display: inline-block;
 }
 .ack-entry .col.card {
     margin: 5px 0;
