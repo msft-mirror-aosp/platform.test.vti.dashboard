@@ -12,15 +12,20 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 */
-.plan-run-metadata {
+.release-entry {
+    border-radius: 5px 5px 10px 10px;
+    margin: 0 0 0.65rem 0;
+}
+.release-entry .plan-run-metadata {
+    text-overflow: ellipsis;
+    overflow-x: hidden;
+    white-space: nowrap;
     display: inline-block;
     font-size: 13px;
     color: black;
     line-height: 16px;
-    padding: 10px;
-}
-.release-entry {
-    border-radius: 5px 5px 10px 10px;
+    padding: 7px;
+    width: 100%;
 }
 .counter {
     color: white;
