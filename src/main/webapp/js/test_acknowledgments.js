@@ -372,9 +372,9 @@
     _allBranches = allBranches;
     _allDevices = allDevices;
     _isReadOnly = readOnly;
-    var searchRow = $('<div class="row search-row"></div>');
-    var headerRow = $('<div class="row"></div>');
-    var acks = $('<div></div>');
+    var searchRow = $('<div class="search-row"></div>');
+    var headerRow = $('<div></div>');
+    var acks = $('<div class="acknowledgments"></div>');
 
     if (!_isReadOnly) {
       var inputWrapper = $('<div class="input-field col s8"></div>');
@@ -403,8 +403,6 @@
     }
 
     var headerCol = $('<div class="col s12 section-header-col"></div>').appendTo(headerRow);
-    headerCol.append(
-      '<h4 class="section-header">Test Acknowledgments</h4>');
     if (_isReadOnly) {
       headerCol.append('<p class="acknowledgment-info">' + _readOnlySummary + '</p>');
     } else {

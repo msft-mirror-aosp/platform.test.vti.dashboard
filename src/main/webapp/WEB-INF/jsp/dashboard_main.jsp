@@ -156,9 +156,19 @@
             $('.remove-button').click(removeFavorite);
             $('.notification-button').click(toggleNotifications);
             $('#add-button').click(addFavorite);
+
+            $('#favoritesLink').click(function() {
+                window.open('/', '_self');
+            });
+            $('#allLink').click(function() {
+                window.open('/?showAll=true', '_self');
+            });
+            $('#acksLink').click(function() {
+                window.open('/show_test_acknowledgments', '_self');
+            });
         });
     </script>
-    <div class='container'>
+    <div class='container wide'>
       <c:choose>
         <c:when test='${not empty error}'>
           <div id='error-container' class='row card'>
@@ -168,6 +178,15 @@
           </div>
         </c:when>
         <c:otherwise>
+          <div class='row home-tabs-row'>
+            <div class='col s12'>
+              <ul class='tabs'>
+                <li class='tab col s4' id='favoritesLink'><a class='${showAll ? "inactive" : "active"}'>Favorites</a></li>
+                <li class='tab col s4' id='allLink'><a class='${showAll ? "active" : "inactive"}'>All Tests</a></li>
+                <li class='tab col s4' id='acksLink'><a>Test Acknowledgements</a></li>
+              </ul>
+            </div>
+          </div>
           <c:set var='width' value='${showAll ? 12 : 11}' />
           <c:if test='${not showAll}'>
             <div class='row'>
@@ -180,11 +199,6 @@
               </div>
             </div>
           </c:if>
-          <div class='row'>
-            <div class='col s12'>
-              <h4 id='section-header'>${headerLabel}</h4>
-            </div>
-          </div>
           <div class='row' id='options'>
             <c:forEach items='${testNames}' var='test'>
               <div>
@@ -216,13 +230,6 @@
         </c:otherwise>
       </c:choose>
     </div>
-    <c:if test='${empty error}'>
-      <div class='center'>
-        <a href='${buttonLink}' id='show-button' class='btn waves-effect red'>${buttonLabel}
-          <i id='show-button-arrow' class='material-icons right'>${buttonIcon}</i>
-        </a>
-      </div>
-    </c:if>
     <%@ include file='footer.jsp' %>
   </body>
 </html>
