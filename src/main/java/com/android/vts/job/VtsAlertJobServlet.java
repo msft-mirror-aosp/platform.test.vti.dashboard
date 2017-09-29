@@ -17,9 +17,9 @@
 package com.android.vts.job;
 
 import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.TestAcknowledgmentEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestCaseRunEntity.TestCase;
-import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.TestStatusEntity.TestCaseReference;
@@ -67,14 +67,157 @@ import org.apache.commons.lang.StringUtils;
 /** Represents the notifications service which is automatically called on a fixed schedule. */
 public class VtsAlertJobServlet extends HttpServlet {
     private static final String ALERT_JOB_URL = "/task/vts_alert_job";
-    protected final Logger logger = Logger.getLogger(getClass().getName());
-    protected final int MAX_RUN_COUNT = 1000; // maximum number of runs to query for
+    protected static final Logger logger = Logger.getLogger(VtsAlertJobServlet.class.getName());
+    protected static final int MAX_RUN_COUNT = 1000; // maximum number of runs to query for
+
+    /**
+     * Process the current test case failures for a test.
+     *
+     * @param status The TestStatusEntity object for the test.
+     * @returns a map from test case name to the test case run ID for which the test case failed.
+     */
+    private static Map<String, TestCase> getCurrentFailures(TestStatusEntity status) {
+        if (status.failingTestCases == null || status.failingTestCases.size() == 0) {
+            return new HashMap<>();
+        }
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Map<String, TestCase> failingTestcases = new HashMap<>();
+        Set<Key> gets = new HashSet<>();
+        for (TestCaseReference testCaseRef : status.failingTestCases) {
+            gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseRef.parentId));
+        }
+        if (gets.size() == 0) {
+            return failingTestcases;
+        }
+        Map<Key, Entity> testCaseMap = datastore.get(gets);
+
+        for (TestCaseReference testCaseRef : status.failingTestCases) {
+            Key key = KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseRef.parentId);
+            if (!testCaseMap.containsKey(key)) {
+                continue;
+            }
+            Entity testCaseRun = testCaseMap.get(key);
+            TestCaseRunEntity testCaseRunEntity = TestCaseRunEntity.fromEntity(testCaseRun);
+            if (testCaseRunEntity.testCases.size() <= testCaseRef.offset) {
+                continue;
+            }
+            TestCase testCase = testCaseRunEntity.testCases.get(testCaseRef.offset);
+            failingTestcases.put(testCase.name, testCase);
+        }
+        return failingTestcases;
+    }
+
+    /**
+     * Get the test acknowledgments for a test key.
+     *
+     * @param testKey The key to the test whose acknowledgments to fetch.
+     * @return A list of test acknowledgments.
+     */
+    private static List<TestAcknowledgmentEntity> getTestCaseAcknowledgments(Key testKey) {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+        List<TestAcknowledgmentEntity> acks = new ArrayList<>();
+        Filter testFilter =
+                new Query.FilterPredicate(
+                    TestAcknowledgmentEntity.TEST_KEY, Query.FilterOperator.EQUAL, testKey);
+        Query q = new Query(TestAcknowledgmentEntity.KIND).setFilter(testFilter);
+
+        for (Entity ackEntity : datastore.prepare(q).asIterable()) {
+            TestAcknowledgmentEntity ack = TestAcknowledgmentEntity.fromEntity(ackEntity);
+            if (ack == null) continue;
+            acks.add(ack);
+        }
+        return acks;
+    }
+
+    /**
+     * Get the test runs for the test in the specified time window.
+     *
+     * If the start and end time delta is greater than one day, the query will be truncated.
+     *
+     * @param testKey The key to the test whose runs to query.
+     * @param startTime The start time for the query.
+     * @param endTime The end time for the query.
+     * @return A list of test runs in the specified time window.
+     */
+    private static List<TestRunEntity> getTestRuns(Key testKey, long startTime, long endTime) {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Filter testTypeFilter = FilterUtil.getTestTypeFilter(false, true, false);
+        long delta = endTime - startTime;
+        delta = Math.min(delta, TimeUnit.DAYS.toMicros(1));
+        Filter runFilter =
+                FilterUtil.getTimeFilter(
+                        testKey, TestRunEntity.KIND, endTime - delta + 1, endTime, testTypeFilter);
+
+        Query q =
+                new Query(TestRunEntity.KIND)
+                        .setAncestor(testKey)
+                        .setFilter(runFilter)
+                        .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
+
+        List<TestRunEntity> testRuns = new ArrayList<>();
+        for (Entity testRunEntity :
+                datastore.prepare(q).asIterable(FetchOptions.Builder.withLimit(MAX_RUN_COUNT))) {
+            TestRunEntity testRun = TestRunEntity.fromEntity(testRunEntity);
+            if (testRun == null) continue;
+            testRuns.add(testRun);
+        }
+        return testRuns;
+    }
+
+    /**
+     * Separate the test cases which are acknowledged by the provided acknowledgments.
+     *
+     * @param testCases The list of test case names.
+     * @param devices The list of devices for a test run.
+     * @param acks The list of acknowledgments for the test.
+     * @return A list of acknowledged test case names that have been removed from the input test
+     *     cases.
+     */
+    public static Set<String> separateAcknowledged(
+            Set<String> testCases,
+            List<DeviceInfoEntity> devices,
+            List<TestAcknowledgmentEntity> acks) {
+        Set<String> acknowledged = new HashSet<>();
+        for (TestAcknowledgmentEntity ack : acks) {
+            boolean allDevices = ack.devices == null || ack.devices.size() == 0;
+            boolean allBranches = ack.branches == null || ack.branches.size() == 0;
+            boolean isRelevant = allDevices && allBranches;
+
+            // Determine if the acknowledgment is relevant to the devices.
+            if (!isRelevant) {
+                for (DeviceInfoEntity device : devices) {
+                    boolean deviceAcknowledged =
+                            allDevices || ack.devices.contains(device.buildFlavor);
+                    boolean branchAcknowledged =
+                            allBranches || ack.branches.contains(device.branch);
+                    if (deviceAcknowledged && branchAcknowledged) isRelevant = true;
+                }
+            }
+
+            if (isRelevant) {
+                // Separate the test cases
+                boolean allTestCases = ack.testCaseNames == null || ack.testCaseNames.size() == 0;
+                if (allTestCases) {
+                    acknowledged.addAll(testCases);
+                    testCases.removeAll(acknowledged);
+                } else {
+                    for (String testCase : ack.testCaseNames) {
+                        if (testCases.contains(testCase)) {
+                            acknowledged.add(testCase);
+                            testCases.remove(testCase);
+                        }
+                    }
+                }
+            }
+        }
+        return acknowledged;
+    }
 
     /**
      * Checks whether any new failures have occurred beginning since (and including) startTime.
      *
-     * @param testRunKey The Key object for the most recent test run.
-     * @param status The TestStatusEntity object for the test.
+     * @param testRuns The list of test runs for which to update the status.
      * @param link The string URL linking to the test's status table.
      * @param failedTestCaseMap The map of test case names to TestCase for those failing in the last
      *     status update.
@@ -84,13 +227,14 @@ public class VtsAlertJobServlet extends HttpServlet {
      * @throws IOException
      */
     public TestStatusEntity getTestStatus(
-            Key testRunKey,
-            TestStatusEntity status,
+            List<TestRunEntity> testRuns,
             String link,
             Map<String, TestCase> failedTestCaseMap,
+            List<TestAcknowledgmentEntity> testAcks,
             List<String> emailAddresses,
             List<Message> messages)
             throws IOException {
+        if (testRuns.size() == 0) return null;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
         TestRunEntity mostRecentRun = null;
@@ -104,36 +248,12 @@ public class VtsAlertJobServlet extends HttpServlet {
         Set<String> skippedTestcaseFailures = new HashSet<>();
         Set<String> transientTestcaseFailures = new HashSet<>();
 
-        String testName = status.testName;
-        Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
-        Filter testTypeFilter = FilterUtil.getTestTypeFilter(false, true, false);
-        long delta = testRunKey.getId() - status.timestamp;
-        delta = Math.min(delta, TimeUnit.DAYS.toMicros(1));
-        Filter runFilter =
-                FilterUtil.getTimeFilter(
-                        testKey,
-                        TestRunEntity.KIND,
-                        testRunKey.getId() - delta + 1,
-                        testRunKey.getId(),
-                        testTypeFilter);
-        Query q =
-                new Query(TestRunEntity.KIND)
-                        .setAncestor(testKey)
-                        .setFilter(runFilter)
-                        .addSort(Entity.KEY_RESERVED_PROPERTY, SortDirection.DESCENDING);
-
-        for (Entity testRun :
-                datastore.prepare(q).asIterable(FetchOptions.Builder.withLimit(MAX_RUN_COUNT))) {
-            TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
-            if (testRunEntity == null) {
-                logger.log(Level.WARNING, "Invalid test run detected: " + testRun.getKey());
-                continue;
-            }
+        for (TestRunEntity testRun : testRuns) {
             if (mostRecentRun == null) {
-                mostRecentRun = testRunEntity;
+                mostRecentRun = testRun;
             }
             List<Key> testCaseKeys = new ArrayList<>();
-            for (long testCaseId : testRunEntity.testCaseIds) {
+            for (long testCaseId : testRun.testCaseIds) {
                 testCaseKeys.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
             }
             Map<Key, Entity> entityMap = datastore.get(testCaseKeys);
@@ -152,7 +272,7 @@ public class VtsAlertJobServlet extends HttpServlet {
                     String testCaseName = testCase.name;
                     TestCaseResult result = TestCaseResult.valueOf(testCase.result);
 
-                    if (mostRecentRun == testRunEntity) {
+                    if (mostRecentRun == testRun) {
                         mostRecentTestCaseResults.put(testCaseName, result);
                     } else {
                         if (!mostRecentTestCaseResults.containsKey(testCaseName)) {
@@ -180,9 +300,19 @@ public class VtsAlertJobServlet extends HttpServlet {
             }
         }
 
-        if (mostRecentRun == null) {
-            return null;
+        Set<String> buildIdList = new HashSet<>();
+        List<DeviceInfoEntity> devices = new ArrayList<>();
+        Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(mostRecentRun.key);
+        for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
+            DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
+            if (deviceEntity == null) {
+                continue;
+            }
+            buildIdList.add(deviceEntity.buildId);
+            devices.add(deviceEntity);
         }
+        String footer = EmailHelper.getEmailFooter(mostRecentRun, devices, link);
+        String buildId = StringUtils.join(buildIdList, ",");
 
         for (String testCaseName : mostRecentTestCaseResults.keySet()) {
             TestCaseResult mostRecentResult = mostRecentTestCaseResults.get(testCaseName);
@@ -190,6 +320,7 @@ public class VtsAlertJobServlet extends HttpServlet {
             if (mostRecentResult == TestCaseResult.TEST_CASE_RESULT_SKIP) {
                 // persist previous status
                 if (previouslyFailed) {
+                    skippedTestcaseFailures.add(testCaseName);
                     failingTestCases.add(
                             new TestCaseReference(failedTestCaseMap.get(testCaseName)));
                 } else {
@@ -213,19 +344,13 @@ public class VtsAlertJobServlet extends HttpServlet {
             }
         }
 
-        Set<String> buildIdList = new HashSet<>();
-        List<DeviceInfoEntity> devices = new ArrayList<>();
-        Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(mostRecentRun.key);
-        for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
-            DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
-            if (deviceEntity == null) {
-                continue;
-            }
-            buildIdList.add(deviceEntity.buildId);
-            devices.add(deviceEntity);
-        }
-        String footer = EmailHelper.getEmailFooter(mostRecentRun, devices, link);
-        String buildId = StringUtils.join(buildIdList, ",");
+        Set<String> acknowledgedFailures =
+                separateAcknowledged(newTestcaseFailures, devices, testAcks);
+        acknowledgedFailures.addAll(
+                separateAcknowledged(transientTestcaseFailures, devices, testAcks));
+        acknowledgedFailures.addAll(
+                separateAcknowledged(continuedTestcaseFailures, devices, testAcks));
+
         String summary = new String();
         if (newTestcaseFailures.size() + continuedTestcaseFailures.size() > 0) {
             summary += "The following test cases failed in the latest test run:<br>";
@@ -273,7 +398,20 @@ public class VtsAlertJobServlet extends HttpServlet {
                 summary += "- " + testcaseName + "<br>";
             }
         }
+        if (acknowledgedFailures.size() > 0) {
+            // Add acknowledged test case failures to summary.
+            List<String> sortedAcknowledgedFailures = new ArrayList<>(acknowledgedFailures);
+            sortedAcknowledgedFailures.sort(Comparator.naturalOrder());
+            if (acknowledgedFailures.size() > 0) {
+                summary +=
+                        "<br><br>The following acknowledged test case failures continued to fail:<br>";
+                for (String testcaseName : sortedAcknowledgedFailures) {
+                    summary += "- " + testcaseName + "<br>";
+                }
+            }
+        }
 
+        String testName = mostRecentRun.key.getParent().getName();
         String uploadDateString = TimeUtil.getDateString(mostRecentRun.startTimestamp);
         String subject = "VTS Test Alert: " + testName + " @ " + uploadDateString;
         if (newTestcaseFailures.size() > 0) {
@@ -335,48 +473,11 @@ public class VtsAlertJobServlet extends HttpServlet {
             }
         }
         return new TestStatusEntity(
-                status.testName,
+                testName,
                 mostRecentRun.startTimestamp,
                 passingTestcaseCount,
                 failingTestCases.size(),
                 failingTestCases);
-    }
-
-    /**
-     * Process the current test case failures for a test.
-     *
-     * @param status The TestStatusEntity object for the test.
-     * @returns a map from test case name to the test case run ID for which the test case failed.
-     */
-    public static Map<String, TestCase> getCurrentFailures(TestStatusEntity status) {
-        if (status.failingTestCases == null || status.failingTestCases.size() == 0) {
-            return new HashMap<>();
-        }
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Map<String, TestCase> failingTestcases = new HashMap<>();
-        Set<Key> gets = new HashSet<>();
-        for (TestCaseReference testCaseRef : status.failingTestCases) {
-            gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseRef.parentId));
-        }
-        if (gets.size() == 0) {
-            return failingTestcases;
-        }
-        Map<Key, Entity> testCaseMap = datastore.get(gets);
-
-        for (TestCaseReference testCaseRef : status.failingTestCases) {
-            Key key = KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseRef.parentId);
-            if (!testCaseMap.containsKey(key)) {
-                continue;
-            }
-            Entity testCaseRun = testCaseMap.get(key);
-            TestCaseRunEntity testCaseRunEntity = TestCaseRunEntity.fromEntity(testCaseRun);
-            if (testCaseRunEntity.testCases.size() <= testCaseRef.offset) {
-                continue;
-            }
-            TestCase testCase = testCaseRunEntity.testCases.get(testCaseRef.offset);
-            failingTestcases.put(testCase.name, testCase);
-        }
-        return failingTestcases;
     }
 
     /**
@@ -431,9 +532,14 @@ public class VtsAlertJobServlet extends HttpServlet {
 
         List<Message> messageQueue = new ArrayList<>();
         Map<String, TestCase> failedTestcaseMap = getCurrentFailures(status);
+        List<TestAcknowledgmentEntity> testAcks =
+                getTestCaseAcknowledgments(testRunKey.getParent());
+        List<TestRunEntity> testRuns =
+                getTestRuns(testRunKey.getParent(), status.timestamp, testRunKey.getId());
+        if (testRuns.size() == 0) return;
 
         TestStatusEntity newStatus =
-                getTestStatus(testRunKey, status, link, failedTestcaseMap, emails, messageQueue);
+                getTestStatus(testRuns, link, failedTestcaseMap, testAcks, emails, messageQueue);
         if (newStatus == null) {
             // No changes to status
             return;
