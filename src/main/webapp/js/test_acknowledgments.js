@@ -18,6 +18,7 @@
 
   var _isModalOpen = false;
   var _isReadOnly = true;
+  var _allTestsSet = new Set();
   var _allBranches = [];
   var _allDevices = [];
 
@@ -151,6 +152,18 @@
    * @param note (String) The note in the acknowledgment.
    */
   function saveCallback(ack, modal, key, test, branchSet, deviceSet, testCaseSet, note) {
+    var allEmpty = true;
+    var firstUnemptyInput = null;
+    var vals = modal.find('.modal-section>.input-container>input').each(function(_, input) {
+      if (!!$(input).val()) {
+        allEmpty = false;
+        if (!firstUnemptyInput) firstUnemptyInput = $(input);
+      }
+    });
+    if (!allEmpty) {
+      firstUnemptyInput.focus();
+      return false;
+    }
     var branches = Array.from(branchSet);
     branches.sort();
     var devices = Array.from(deviceSet);
@@ -369,6 +382,7 @@
   $.fn.testAcknowledgments = function(
       allTests, allBranches, allDevices, testAcknowledgments, readOnly) {
     var self = $(this);
+    _allTestsSet = new Set(allTests);
     _allBranches = allBranches;
     _allDevices = allDevices;
     _isReadOnly = readOnly;
@@ -395,6 +409,7 @@
       btn.appendTo(btnWrapper);
       btnWrapper.appendTo(searchRow);
       btn.click(function() {
+        if (!_allTestsSet.has(input.val())) return;
         var ack = createAcknowledgment(undefined, input.val());
         ack.hide().prependTo(acks);
         showModal(ack, undefined, input.val());

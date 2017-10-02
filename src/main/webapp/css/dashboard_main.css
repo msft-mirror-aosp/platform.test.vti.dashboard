@@ -16,6 +16,11 @@
     margin-bottom: 50px;
 }
 
+.row.home-tabs-row li.col.tab {
+    cursor: pointer;
+    user-select: none;
+}
+
 #add-button-wrapper {
     margin-top: 10px;
     height: 61px;
