@@ -72,6 +72,10 @@ div.col.s12.section-header-col p.acknowledgment-info {
 .acknowledgments-modal.modal {
     width: 80%;
 }
+.acknowledgments-modal.modal h4, .acknowledgments-modal.modal h5 {
+    user-select: none;
+    cursor: default;
+}
 .acknowledgments-modal.modal .modal-content .row .modal-section > .col {
     padding: 0;
 }
