@@ -15,3 +15,7 @@
 .row.home-tabs-row {
     margin-bottom: 50px;
 }
+.row.home-tabs-row li.col.tab {
+    cursor: pointer;
+    user-select: none;
+}
