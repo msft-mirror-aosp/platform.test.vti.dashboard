@@ -172,7 +172,11 @@ public class VtsPerformanceJobServlet extends HttpServlet {
                 tableHTML += "<td style='" + INNER_CELL_STYLE + "'>";
                 tableHTML += FORMATTER.format(stats.getMean()) + "</td>";
                 tableHTML += "<td style='" + OUTER_CELL_STYLE + "'>";
-                tableHTML += FORMATTER.format(stats.getStd()) + "</td>";
+                if (stats.getCount() < 2) {
+                    tableHTML += " - </td>";
+                } else {
+                    tableHTML += FORMATTER.format(stats.getStd()) + "</td>";
+                }
                 for (int i = 1; i < perfSummaries.size(); i++) {
                     PerformanceSummary oldPerfSummary = perfSummaries.get(i);
                     if (oldPerfSummary.hasProfilingPoint(profilingPoint)) {
