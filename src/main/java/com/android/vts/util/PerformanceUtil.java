@@ -13,25 +13,19 @@
  */
 package com.android.vts.util;
 
-import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.ProfilingPointEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
-import com.android.vts.entity.TestEntity;
-import com.android.vts.entity.TestRunEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.Filter;
-import com.google.appengine.api.datastore.Query.FilterOperator;
-import com.google.appengine.api.datastore.Query.FilterPredicate;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,27 +46,6 @@ public class PerformanceUtil {
     static {
         FORMATTER = new DecimalFormat("#.##");
         FORMATTER.setRoundingMode(RoundingMode.HALF_UP);
-    }
-
-    public static class TimeInterval {
-        public final long start;
-        public final long end;
-        public final String label;
-
-        public TimeInterval(long start, long end, String label) {
-            this.start = start;
-            this.end = end;
-            this.label = label;
-        }
-
-        public TimeInterval(long start, long end) {
-            this(
-                    start,
-                    end,
-                    "<span class='date-label'>"
-                            + Long.toString(TimeUnit.MICROSECONDS.toMillis(end))
-                            + "</span>");
-        }
     }
 
     /**
@@ -159,6 +132,94 @@ public class PerformanceUtil {
     }
 
     /**
+     * Updates a PerformanceSummary object with data in the specified window.
+     *
+     * @param testName The name of the table whose profiling vectors to retrieve.
+     * @param startTime The (inclusive) start time in microseconds to scan from.
+     * @param endTime The (inclusive) end time in microseconds at which to stop scanning.
+     * @param selectedDevice The name of the device whose data to query for, or null for unfiltered.
+     * @param summaries The list of PerformanceSummary objects to populate with data.
+     * @throws IOException
+     */
+    public static void updatePerformanceSummary(
+            String testName,
+            long startTime,
+            long endTime,
+            String selectedDevice,
+            List<PerformanceSummary> summaries) {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Query profilingPointQuery =
+                new Query(ProfilingPointEntity.KIND)
+                        .setFilter(
+                                new Query.FilterPredicate(
+                                        ProfilingPointEntity.TEST_NAME,
+                                        Query.FilterOperator.EQUAL,
+                                        testName));
+
+        List<ProfilingPointEntity> profilingPoints = new ArrayList<>();
+        for (Entity e :
+                datastore
+                        .prepare(profilingPointQuery)
+                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
+            ProfilingPointEntity pp = ProfilingPointEntity.fromEntity(e);
+            if (pp == null) continue;
+            profilingPoints.add(pp);
+        }
+
+        Query.Filter startFilter =
+                new Query.FilterPredicate(
+                        ProfilingPointSummaryEntity.START_TIME,
+                        Query.FilterOperator.GREATER_THAN_OR_EQUAL,
+                        startTime);
+        Query.Filter endFilter =
+                new Query.FilterPredicate(
+                        ProfilingPointSummaryEntity.START_TIME,
+                        Query.FilterOperator.LESS_THAN_OR_EQUAL,
+                        endTime);
+        Query.Filter timeFilter = Query.CompositeFilterOperator.and(startFilter, endFilter);
+
+        Query.Filter deviceFilter;
+        if (selectedDevice != null) {
+            deviceFilter = FilterUtil.FilterKey.TARGET.getFilterForString(selectedDevice);
+        } else {
+            deviceFilter =
+                    FilterUtil.FilterKey.TARGET.getFilterForString(ProfilingPointSummaryEntity.ALL);
+        }
+        deviceFilter =
+                Query.CompositeFilterOperator.and(
+                        deviceFilter,
+                        FilterUtil.FilterKey.BRANCH.getFilterForString(
+                                ProfilingPointSummaryEntity.ALL));
+        Query.Filter filter = Query.CompositeFilterOperator.and(timeFilter, deviceFilter);
+
+        Map<ProfilingPointEntity, Iterable<Entity>> asyncEntities = new HashMap<>();
+        for (ProfilingPointEntity pp : profilingPoints) {
+            Query profilingQuery =
+                    new Query(ProfilingPointSummaryEntity.KIND)
+                            .setAncestor(pp.key)
+                            .setFilter(filter);
+            asyncEntities.put(
+                    pp,
+                    datastore
+                            .prepare(profilingQuery)
+                            .asIterable(DatastoreHelper.getLargeBatchOptions()));
+        }
+
+        for (ProfilingPointEntity pp : asyncEntities.keySet()) {
+            for (Entity ppSummaryEntity : asyncEntities.get(pp)) {
+                ProfilingPointSummaryEntity ppSummary =
+                        ProfilingPointSummaryEntity.fromEntity(ppSummaryEntity);
+                if (ppSummary == null) continue;
+                for (PerformanceSummary perfSummary : summaries) {
+                    if (perfSummary.contains(ppSummary.startTime)) {
+                        perfSummary.addData(pp, ppSummaryEntity);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Compares a test StatSummary to a baseline StatSummary using average-case performance.
      *
      * @param baseline The StatSummary object containing initial values to compare against
@@ -197,108 +258,6 @@ public class PerformanceUtil {
         row += "<td class='" + outerClasses + "' style='" + outerStyles + "'>";
         row += FORMATTER.format(baseline.getStd()) + "</td>";
         return row;
-    }
-
-    /**
-     * Updates a PerformanceSummary object with data in the specified window.
-     *
-     * @param testName The name of the table whose profiling vectors to retrieve.
-     * @param startTime The (inclusive) start time in microseconds to scan from.
-     * @param endTime The (inclusive) end time in microseconds at which to stop scanning.
-     * @param selectedDevice The name of the device whose data to query for, or null for unfiltered.
-     * @param perfSummary The PerformanceSummary object to update with data.
-     * @throws IOException
-     */
-    public static void updatePerformanceSummary(
-            String testName,
-            long startTime,
-            long endTime,
-            String selectedDevice,
-            PerformanceSummary perfSummary)
-            throws IOException {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Key testKey = KeyFactory.createKey(TestEntity.KIND, testName);
-        Filter testTypeFilter = FilterUtil.getTestTypeFilter(false, true, false);
-        Filter runFilter =
-                FilterUtil.getTimeFilter(
-                        testKey, TestRunEntity.KIND, startTime, endTime, testTypeFilter);
-
-        Query testRunQuery =
-                new Query(TestRunEntity.KIND)
-                        .setAncestor(testKey)
-                        .setFilter(runFilter)
-                        .setKeysOnly();
-
-        Set<Key> testRunKeys = new HashSet<>();
-        for (Entity e :
-                datastore
-                        .prepare(testRunQuery)
-                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
-            testRunKeys.add(e.getKey());
-        }
-
-        if (selectedDevice != null) {
-            Filter deviceFilter =
-                    FilterUtil.getDeviceTimeFilter(testKey, TestRunEntity.KIND, startTime, endTime);
-            deviceFilter =
-                    Query.CompositeFilterOperator.and(
-                            deviceFilter,
-                            new FilterPredicate(
-                                    DeviceInfoEntity.PRODUCT,
-                                    FilterOperator.EQUAL,
-                                    selectedDevice));
-            Query deviceQuery =
-                    new Query(DeviceInfoEntity.KIND)
-                            .setAncestor(testKey)
-                            .setFilter(deviceFilter)
-                            .setKeysOnly();
-            Set<Key> matchingTestRunKeys = new HashSet<>();
-            for (Entity e :
-                    datastore
-                            .prepare(deviceQuery)
-                            .asIterable(DatastoreHelper.getLargeBatchOptions())) {
-                if (testRunKeys.contains(e.getKey().getParent())) {
-                    matchingTestRunKeys.add(e.getKey().getParent());
-                }
-            }
-            testRunKeys = matchingTestRunKeys;
-        }
-
-        Filter profilingFilter =
-                FilterUtil.getProfilingTimeFilter(testKey, TestRunEntity.KIND, startTime, endTime);
-        Query profilingQuery =
-                new Query(ProfilingPointRunEntity.KIND)
-                        .setAncestor(testKey)
-                        .setFilter(profilingFilter)
-                        .setKeysOnly();
-
-        List<Key> profilingKeys = new ArrayList<>();
-        for (Entity e :
-                datastore
-                        .prepare(profilingQuery)
-                        .asIterable(DatastoreHelper.getLargeBatchOptions())) {
-            if (testRunKeys.contains(e.getKey().getParent())) {
-                profilingKeys.add(e.getKey());
-            }
-        }
-
-        List<Key> gets = new ArrayList<>();
-        for (Key key : profilingKeys) {
-            gets.add(key);
-            if (gets.size() == MAX_BATCH_SIZE) {
-                Map<Key, Entity> profilingPoints = datastore.get(gets);
-                for (Key key2 : profilingPoints.keySet()) {
-                    perfSummary.addData(profilingPoints.get(key2));
-                }
-                gets = new ArrayList<>();
-            }
-        }
-        if (gets.size() > 0) {
-            Map<Key, Entity> profilingPoints = datastore.get(gets);
-            for (Key key2 : profilingPoints.keySet()) {
-                perfSummary.addData(profilingPoints.get(key2));
-            }
-        }
     }
 
     /**

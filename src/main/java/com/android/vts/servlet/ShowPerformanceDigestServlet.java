@@ -19,17 +19,13 @@ package com.android.vts.servlet;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.PerformanceSummary;
 import com.android.vts.util.PerformanceUtil;
-import com.android.vts.util.PerformanceUtil.TimeInterval;
 import com.android.vts.util.ProfilingPointSummary;
 import com.android.vts.util.StatSummary;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.servlet.RequestDispatcher;
@@ -40,10 +36,6 @@ import javax.servlet.http.HttpServletResponse;
 /** Servlet for producing tabular performance summaries. */
 public class ShowPerformanceDigestServlet extends BaseServlet {
     private static final String PERF_DIGEST_JSP = "WEB-INF/jsp/show_performance_digest.jsp";
-    private static final String HIDL_HAL_OPTION = "hidl_hal_mode";
-    private static final String[] splitKeysArray = new String[] {HIDL_HAL_OPTION};
-    private static final Set<String> splitKeySet =
-            new HashSet<String>(Arrays.asList(splitKeysArray));
 
     private static final String MEAN = "Mean";
     private static final String MIN = "Min";
@@ -57,9 +49,7 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
 
     private static final DecimalFormat FORMATTER;
 
-    /**
-     * Initialize the decimal formatter.
-     */
+    /** Initialize the decimal formatter. */
     static {
         FORMATTER = new DecimalFormat("#.##");
         FORMATTER.setRoundingMode(RoundingMode.HALF_UP);
@@ -81,14 +71,11 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
 
     /**
      * Generates an HTML summary of the performance changes for the profiling results in the
-     * specified
-     * table.
+     * specified table.
      *
      * <p>Retrieves the past 24 hours of profiling data and compares it to the 24 hours that
-     * preceded
-     * it. Creates a table representation of the mean and standard deviation for each profiling
-     * point.
-     * When performance degrades, the cell is shaded red.
+     * preceded it. Creates a table representation of the mean and standard deviation for each
+     * profiling point. When performance degrades, the cell is shaded red.
      *
      * @param profilingPoint The name of the profiling point to summarize.
      * @param testSummary The ProfilingPointSummary object to compare against.
@@ -98,8 +85,10 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
      * @returns An HTML string for a table comparing the profiling point results across time
      *     intervals.
      */
-    public static String getPeformanceSummary(String profilingPoint,
-            ProfilingPointSummary testSummary, List<PerformanceSummary> perfSummaries,
+    public static String getPerformanceSummary(
+            String profilingPoint,
+            ProfilingPointSummary testSummary,
+            List<PerformanceSummary> perfSummaries,
             String sectionLabels) {
         String tableHTML = "<table>";
 
@@ -149,10 +138,13 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
             tableHTML += FORMATTER.format(stats.getStd()) + "</td>";
             for (PerformanceSummary prevPerformance : perfSummaries) {
                 if (prevPerformance.hasProfilingPoint(profilingPoint)) {
-                    StatSummary baseline = prevPerformance.getProfilingPointSummary(profilingPoint)
-                                                   .getStatSummary(label);
-                    tableHTML += PerformanceUtil.getAvgCasePerformanceComparisonHTML(
-                            baseline, stats, "cell inner-cell", "cell outer-cell", "", "");
+                    StatSummary baseline =
+                            prevPerformance
+                                    .getProfilingPointSummary(profilingPoint)
+                                    .getStatSummary(label);
+                    tableHTML +=
+                            PerformanceUtil.getAvgCasePerformanceComparisonHTML(
+                                    baseline, stats, "cell inner-cell", "cell outer-cell", "", "");
                 } else {
                     tableHTML += "<td></td><td></td><td></td><td></td>";
                 }
@@ -183,14 +175,16 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
         }
 
         // Add today to the list of time intervals to analyze
-        List<TimeInterval> timeIntervals = new ArrayList<>();
-        TimeInterval today = new TimeInterval(startTime - TimeUnit.DAYS.toMicros(1), startTime);
-        timeIntervals.add(today);
+        List<PerformanceSummary> summaries = new ArrayList<>();
+        PerformanceSummary today =
+                new PerformanceSummary(startTime - TimeUnit.DAYS.toMicros(1), startTime);
+        summaries.add(today);
 
         // Add yesterday as a baseline time interval for analysis
         long oneDayAgo = startTime - TimeUnit.DAYS.toMicros(1);
-        TimeInterval yesterday = new TimeInterval(oneDayAgo - TimeUnit.DAYS.toMicros(1), oneDayAgo);
-        timeIntervals.add(yesterday);
+        PerformanceSummary yesterday =
+                new PerformanceSummary(oneDayAgo - TimeUnit.DAYS.toMicros(1), oneDayAgo);
+        summaries.add(yesterday);
 
         // Add last week as a baseline time interval for analysis
         long oneWeek = TimeUnit.DAYS.toMicros(7);
@@ -199,42 +193,42 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
         String label =
                 spanString + TimeUnit.MICROSECONDS.toMillis(oneWeekAgo - oneWeek) + "</span>";
         label += " - " + spanString + TimeUnit.MICROSECONDS.toMillis(oneWeekAgo) + "</span>";
-        TimeInterval lastWeek = new TimeInterval(oneWeekAgo - oneWeek, oneWeekAgo, label);
-        timeIntervals.add(lastWeek);
+        PerformanceSummary lastWeek =
+                new PerformanceSummary(oneWeekAgo - oneWeek, oneWeekAgo, label);
+        summaries.add(lastWeek);
+        PerformanceUtil.updatePerformanceSummary(
+                testName, oneWeekAgo - oneWeek, startTime, selectedDevice, summaries);
 
-        List<PerformanceSummary> perfSummaries = new ArrayList<>();
-
+        int colCount = 0;
         String sectionLabels = "";
-        int i = 0;
-        for (TimeInterval interval : timeIntervals) {
-            PerformanceSummary perfSummary = new PerformanceSummary(splitKeySet);
-            PerformanceUtil.updatePerformanceSummary(
-                    testName, interval.start, interval.end, selectedDevice, perfSummary);
-            if (perfSummary.size() == 0) {
-                continue;
-            }
-            perfSummaries.add(perfSummary);
-            String content = interval.label;
+        List<PerformanceSummary> nonEmptySummaries = new ArrayList<>();
+        for (PerformanceSummary perfSummary : summaries) {
+            if (perfSummary.size() == 0) continue;
+
+            nonEmptySummaries.add(perfSummary);
+            String content = perfSummary.label;
             sectionLabels += "<th class='section-label grey lighten-2 center' ";
-            if (i++ == 0)
-                sectionLabels += "colspan='3'";
-            else
-                sectionLabels += "colspan='4'";
+            if (colCount++ == 0) sectionLabels += "colspan='3'";
+            else sectionLabels += "colspan='4'";
             sectionLabels += ">" + content + "</th>";
         }
 
         List<String> tables = new ArrayList<>();
         List<String> tableTitles = new ArrayList<>();
         List<String> tableSubtitles = new ArrayList<>();
-        if (perfSummaries.size() != 0) {
-            PerformanceSummary todayPerformance = perfSummaries.remove(0);
+        if (nonEmptySummaries.size() != 0) {
+            PerformanceSummary todayPerformance = nonEmptySummaries.remove(0);
             String[] profilingNames = todayPerformance.getProfilingPointNames();
 
             for (String profilingPointName : profilingNames) {
                 ProfilingPointSummary baselinePerformance =
                         todayPerformance.getProfilingPointSummary(profilingPointName);
-                String table = getPeformanceSummary(
-                        profilingPointName, baselinePerformance, perfSummaries, sectionLabels);
+                String table =
+                        getPerformanceSummary(
+                                profilingPointName,
+                                baselinePerformance,
+                                nonEmptySummaries,
+                                sectionLabels);
                 if (table != null) {
                     tables.add(table);
                     tableTitles.add(profilingPointName);
@@ -256,7 +250,7 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
         request.setAttribute("tableSubtitles", tableSubtitles);
         request.setAttribute("startTime", Long.toString(startTime));
         request.setAttribute("selectedDevice", selectedDevice);
-        request.setAttribute("devices", DatastoreHelper.getAllProducts());
+        request.setAttribute("devices", DatastoreHelper.getAllBuildFlavors());
 
         dispatcher = request.getRequestDispatcher(PERF_DIGEST_JSP);
         try {
