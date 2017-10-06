@@ -52,8 +52,7 @@ public class StatSummaryTest {
         Random rand = new Random();
         for (int i = 0; i < n; i++) {
             double value = rand.nextInt(1000);
-            if (value < min)
-                min = value;
+            if (value < min) min = value;
             test.updateStats(value);
         }
         assertEquals(n, test.getCount(), threshold);
@@ -68,8 +67,7 @@ public class StatSummaryTest {
         Random rand = new Random();
         for (int i = 0; i < n; i++) {
             double value = rand.nextInt(1000);
-            if (value > max)
-                max = value;
+            if (value > max) max = value;
             test.updateStats(value);
         }
         assertEquals(max, test.getMax(), threshold);
@@ -94,5 +92,32 @@ public class StatSummaryTest {
         }
         double std = Math.sqrt(sumSq / (n - 1));
         assertEquals(std, test.getStd(), threshold);
+    }
+
+    /** Test computation of standard deviation. */
+    @Test
+    public void testMerge() {
+        StatSummary test2 =
+                new StatSummary("label", VtsProfilingRegressionMode.VTS_REGRESSION_MODE_DECREASING);
+        StatSummary all =
+                new StatSummary("label", VtsProfilingRegressionMode.VTS_REGRESSION_MODE_DECREASING);
+        int n1 = 1000;
+        int n2 = 2000;
+        Random rand = new Random();
+        for (int i = 0; i < n1; i++) {
+            int value = rand.nextInt(1000);
+            test.updateStats(value);
+            all.updateStats(value);
+        }
+        for (int i = 0; i < n2; i++) {
+            int value = rand.nextInt(1000);
+            test2.updateStats(value);
+            all.updateStats(value);
+        }
+
+        test.merge(test2);
+        assertEquals(all.getCount(), test.getCount());
+        assertEquals(all.getStd(), test.getStd(), threshold);
+        assertEquals(all.getMean(), test.getMean(), threshold);
     }
 }
