@@ -86,6 +86,20 @@ public class StatSummary {
     }
 
     /**
+     * Combine the mean and variance with another StatSummary.
+     *
+     * @param stat The StatSummary to combine with.
+     */
+    public void merge(StatSummary stat) {
+        double delta = stat.getMean() - mean;
+        int newN = n + stat.getCount();
+        sumSq = sumSq + stat.getSumSq() + delta / newN * delta * n * stat.getCount();
+        double recipN = 1.0 / newN;
+        mean = n * recipN * mean + stat.getCount() * recipN * stat.getMean();
+        n = newN;
+    }
+
+    /**
      * Gets the best case of the stream.
      *
      * @return The min or max.

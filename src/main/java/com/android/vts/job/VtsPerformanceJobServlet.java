@@ -20,11 +20,9 @@ import com.android.vts.entity.TestEntity;
 import com.android.vts.util.EmailHelper;
 import com.android.vts.util.PerformanceSummary;
 import com.android.vts.util.PerformanceUtil;
-import com.android.vts.util.PerformanceUtil.TimeInterval;
 import com.android.vts.util.ProfilingPointSummary;
 import com.android.vts.util.StatSummary;
 import com.android.vts.util.TaskQueueHelper;
-import com.android.vts.util.TimeUtil;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -233,41 +231,43 @@ public class VtsPerformanceJobServlet extends HttpServlet {
             return;
         }
 
-        List<TimeInterval> timeIntervals = new ArrayList<>();
         long nowMicro = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
-        String dateString = TimeUtil.getDateString(nowMicro);
-        TimeInterval today =
-                new TimeInterval(nowMicro - TimeUnit.DAYS.toMicros(1), nowMicro, dateString);
-        timeIntervals.add(today);
+
+        // Add today to the list of time intervals to analyze
+        List<PerformanceSummary> summaries = new ArrayList<>();
+        PerformanceSummary today =
+                new PerformanceSummary(nowMicro - TimeUnit.DAYS.toMicros(1), nowMicro);
+        summaries.add(today);
 
         // Add yesterday as a baseline time interval for analysis
         long oneDayAgo = nowMicro - TimeUnit.DAYS.toMicros(1);
-        String dateStringYesterday = TimeUtil.getDateString(oneDayAgo);
-        TimeInterval yesterday =
-                new TimeInterval(
-                        oneDayAgo - TimeUnit.DAYS.toMicros(1), oneDayAgo, dateStringYesterday);
-        timeIntervals.add(yesterday);
+        PerformanceSummary yesterday =
+                new PerformanceSummary(oneDayAgo - TimeUnit.DAYS.toMicros(1), oneDayAgo);
+        summaries.add(yesterday);
 
         // Add last week as a baseline time interval for analysis
         long oneWeek = TimeUnit.DAYS.toMicros(7);
         long oneWeekAgo = nowMicro - oneWeek;
-        TimeInterval lastWeek = new TimeInterval(oneWeekAgo - oneWeek, oneWeekAgo, LAST_WEEK);
-        timeIntervals.add(lastWeek);
 
-        List<PerformanceSummary> perfSummaries = new ArrayList<>();
+        String spanString = "<span class='date-label'>";
+        String label =
+                spanString + TimeUnit.MICROSECONDS.toMillis(oneWeekAgo - oneWeek) + "</span>";
+        label += " - " + spanString + TimeUnit.MICROSECONDS.toMillis(oneWeekAgo) + "</span>";
+        PerformanceSummary lastWeek =
+                new PerformanceSummary(oneWeekAgo - oneWeek, oneWeekAgo, label);
+        summaries.add(lastWeek);
+        PerformanceUtil.updatePerformanceSummary(
+                testKey.getName(), oneWeekAgo - oneWeek, nowMicro, null, summaries);
+
+        List<PerformanceSummary> nonEmptySummaries = new ArrayList<>();
         List<String> labels = new ArrayList<>();
         labels.add("");
-        for (TimeInterval interval : timeIntervals) {
-            PerformanceSummary perfSummary = new PerformanceSummary();
-            PerformanceUtil.updatePerformanceSummary(
-                    testKey.getName(), interval.start, interval.end, null, perfSummary);
-            if (perfSummary.size() == 0) {
-                continue;
-            }
-            perfSummaries.add(perfSummary);
-            labels.add(interval.label);
+        for (PerformanceSummary perfSummary : summaries) {
+            if (perfSummary.size() == 0) continue;
+            nonEmptySummaries.add(perfSummary);
+            labels.add(perfSummary.label);
         }
-        String body = getPerformanceSummary(testKey.getName(), perfSummaries, labels);
+        String body = getPerformanceSummary(testKey.getName(), nonEmptySummaries, labels);
         if (body == null || body.equals("")) {
             return;
         }

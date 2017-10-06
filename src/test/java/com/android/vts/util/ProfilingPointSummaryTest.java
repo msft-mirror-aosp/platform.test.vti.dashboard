@@ -18,15 +18,15 @@ package com.android.vts.util;
 
 import static org.junit.Assert.*;
 
-import com.android.vts.entity.ProfilingPointRunEntity;
-import com.android.vts.entity.TestEntity;
+import com.android.vts.entity.ProfilingPointEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode;
-import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,30 +39,41 @@ public class ProfilingPointSummaryTest {
     private static ProfilingPointSummary summary;
 
     /**
-     * Helper method for creating ProfilingPointRunEntity objects.
+     * Helper method for creating ProfilingPointSummaryEntity objects.
      *
      * @param labels The list of data labels.
      * @param values The list of data values. Must be equal in size to the labels list.
      * @param regressionMode The regression mode.
-     * @return A ProfilingPointRunEntity with specified arguments.
+     * @return A ProfilingPointSummaryEntity with specified data.
      */
-    private static ProfilingPointRunEntity createProfilingReport(
+    private static ProfilingPointSummaryEntity createProfilingReport(
             String[] labels, long[] values, VtsProfilingRegressionMode regressionMode) {
         List<String> labelList = Arrays.asList(labels);
-        List<Long> valueList = new ArrayList<>();
-        for (long value : values) {
-            valueList.add(value);
+        StatSummary globalStats = new StatSummary("global", regressionMode);
+        Map<String, StatSummary> labelStats = new HashMap<>();
+        for (int i = 0; i < labels.length; ++i) {
+            StatSummary stat = new StatSummary(labels[i], regressionMode);
+            stat.updateStats(values[i]);
+            labelStats.put(labels[i], stat);
+            globalStats.updateStats(values[i]);
         }
-        return new ProfilingPointRunEntity(KeyFactory.createKey(TestEntity.KIND, "test"), "name", 0,
-                regressionMode.getNumber(), labelList, valueList, "x", "y", null);
+        return new ProfilingPointSummaryEntity(
+                ProfilingPointEntity.createKey("test", "pp"),
+                globalStats,
+                labelList,
+                labelStats,
+                "branch",
+                "build",
+                null,
+                0);
     }
 
     @Before
     public void setUp() {
         helper.setUp();
-        summary = new ProfilingPointSummary();
         VtsProfilingRegressionMode mode = VtsProfilingRegressionMode.VTS_REGRESSION_MODE_INCREASING;
-        ProfilingPointRunEntity pt = createProfilingReport(labels, values, mode);
+        summary = new ProfilingPointSummary("x", "y", mode);
+        ProfilingPointSummaryEntity pt = createProfilingReport(labels, values, mode);
         summary.update(pt);
     }
 
@@ -106,7 +117,7 @@ public class ProfilingPointSummaryTest {
     @Test
     public void testIterator() {
         VtsProfilingRegressionMode mode = VtsProfilingRegressionMode.VTS_REGRESSION_MODE_INCREASING;
-        ProfilingPointRunEntity pt = createProfilingReport(labels, values, mode);
+        ProfilingPointSummaryEntity pt = createProfilingReport(labels, values, mode);
         summary.update(pt);
 
         int i = 0;
@@ -118,9 +129,9 @@ public class ProfilingPointSummaryTest {
     /** Test that the updateLabel method updates the StatSummary for just the label provided. */
     @Test
     public void testUpdateLabelGrouped() {
-        summary = new ProfilingPointSummary();
         VtsProfilingRegressionMode mode = VtsProfilingRegressionMode.VTS_REGRESSION_MODE_INCREASING;
-        ProfilingPointRunEntity pt = createProfilingReport(labels, values, mode);
+        summary = new ProfilingPointSummary("x", "y", mode);
+        ProfilingPointSummaryEntity pt = createProfilingReport(labels, values, mode);
         summary.updateLabel(pt, labels[0]);
 
         // Ensure the label specified is present and has been updated for each data point.
