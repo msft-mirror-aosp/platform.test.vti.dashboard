@@ -456,7 +456,7 @@ public class FilterUtil {
         }
 
         Set<Key> allMatchingKeys;
-        if (deviceFilter == null) {
+        if (deviceFilter == null || matchingTestKeys.size() == 0) {
             allMatchingKeys = matchingTestKeys;
         } else {
             deviceFilter =
