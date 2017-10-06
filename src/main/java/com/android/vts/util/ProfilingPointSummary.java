@@ -16,7 +16,7 @@
 
 package com.android.vts.util;
 
-import com.android.vts.entity.ProfilingPointRunEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,10 +34,14 @@ public class ProfilingPointSummary implements Iterable<StatSummary> {
     public String yLabel;
 
     /** Initializes the summary with empty arrays. */
-    public ProfilingPointSummary() {
+    public ProfilingPointSummary(
+            String xLabel, String yLabel, VtsProfilingRegressionMode regressionMode) {
         statSummaries = new ArrayList<>();
         labelIndices = new HashMap<>();
         labels = new ArrayList<>();
+        this.regressionMode = regressionMode;
+        this.xLabel = xLabel;
+        this.yLabel = yLabel;
     }
 
     /**
@@ -57,8 +61,7 @@ public class ProfilingPointSummary implements Iterable<StatSummary> {
      * @return The StatSummary object if it exists, or null otherwise.
      */
     public StatSummary getStatSummary(String label) {
-        if (!hasLabel(label))
-            return null;
+        if (!hasLabel(label)) return null;
         return statSummaries.get(labelIndices.get(label));
     }
 
@@ -74,49 +77,50 @@ public class ProfilingPointSummary implements Iterable<StatSummary> {
     /**
      * Updates the profiling summary with the data from a new profiling report.
      *
-     * @param profilingRun The profiling point run entity object containing profiling data.
+     * @param ppSummary The profiling point run entity object containing profiling data.
      */
-    public void update(ProfilingPointRunEntity profilingRun) {
-        for (int i = 0; i < profilingRun.labels.size(); i++) {
-            String label = profilingRun.labels.get(i);
+    public void update(ProfilingPointSummaryEntity ppSummary) {
+        for (String label : ppSummary.labels) {
+            if (!ppSummary.labelStats.containsKey(label)) continue;
             if (!labelIndices.containsKey(label)) {
-                StatSummary summary = new StatSummary(label, profilingRun.regressionMode);
                 labelIndices.put(label, statSummaries.size());
-                statSummaries.add(summary);
+                labels.add(label);
+                statSummaries.add(ppSummary.labelStats.get(label));
+            } else {
+                StatSummary summary = getStatSummary(label);
+                summary.merge(ppSummary.labelStats.get(label));
             }
-            StatSummary summary = getStatSummary(label);
-            summary.updateStats(profilingRun.values.get(i));
         }
-        this.regressionMode = profilingRun.regressionMode;
-        this.labels = profilingRun.labels;
-        this.xLabel = profilingRun.xLabel;
-        this.yLabel = profilingRun.yLabel;
     }
 
     /**
      * Updates the profiling summary at a label with the data from a new profiling report.
      *
-     * Updates the summary specified by the label with all values provided in the report. If
+     * <p>Updates the summary specified by the label with all values provided in the report. If
      * labels are provided in the report, they will be ignored -- all values are updated only to the
      * provided label.
      *
-     * @param profilingEntity The ProfilingPointRunEntity object containing profiling data.
+     * @param ppSummary The ProfilingPointSummaryEntity object containing profiling data.
      * @param label The String label for which all values in the report will be updated.
      */
-    public void updateLabel(ProfilingPointRunEntity profilingEntity, String label) {
+    public void updateLabel(ProfilingPointSummaryEntity ppSummary, String label) {
         if (!labelIndices.containsKey(label)) {
-            StatSummary summary = new StatSummary(label, profilingEntity.regressionMode);
             labelIndices.put(label, labels.size());
             labels.add(label);
-            statSummaries.add(summary);
+            StatSummary stat =
+                    new StatSummary(
+                            label,
+                            ppSummary.globalStats.getMin(),
+                            ppSummary.globalStats.getMax(),
+                            ppSummary.globalStats.getMean(),
+                            ppSummary.globalStats.getSumSq(),
+                            ppSummary.globalStats.getCount(),
+                            ppSummary.globalStats.getRegressionMode());
+            statSummaries.add(stat);
+        } else {
+            StatSummary summary = getStatSummary(label);
+            summary.merge(ppSummary.globalStats);
         }
-        StatSummary summary = getStatSummary(label);
-        for (long value : profilingEntity.values) {
-            summary.updateStats(value);
-        }
-        this.regressionMode = profilingEntity.regressionMode;
-        this.xLabel = profilingEntity.xLabel;
-        this.yLabel = profilingEntity.yLabel;
     }
 
     /**
@@ -125,26 +129,27 @@ public class ProfilingPointSummary implements Iterable<StatSummary> {
      */
     @Override
     public Iterator<StatSummary> iterator() {
-        Iterator<StatSummary> it = new Iterator<StatSummary>() {
-            private int currentIndex = 0;
+        Iterator<StatSummary> it =
+                new Iterator<StatSummary>() {
+                    private int currentIndex = 0;
 
-            @Override
-            public boolean hasNext() {
-                return labels != null && currentIndex < labels.size();
-            }
+                    @Override
+                    public boolean hasNext() {
+                        return labels != null && currentIndex < labels.size();
+                    }
 
-            @Override
-            public StatSummary next() {
-                String label = labels.get(currentIndex++);
-                return statSummaries.get(labelIndices.get(label));
-            }
+                    @Override
+                    public StatSummary next() {
+                        String label = labels.get(currentIndex++);
+                        return statSummaries.get(labelIndices.get(label));
+                    }
 
-            @Override
-            public void remove() {
-                // Not supported
-                throw new UnsupportedOperationException();
-            }
-        };
+                    @Override
+                    public void remove() {
+                        // Not supported
+                        throw new UnsupportedOperationException();
+                    }
+                };
         return it;
     }
 }
