@@ -13,39 +13,50 @@
  */
 package com.android.vts.util;
 
-import com.android.vts.entity.ProfilingPointRunEntity;
-import com.android.vts.proto.VtsReportMessage.VtsProfilingRegressionMode;
+import com.android.vts.entity.ProfilingPointEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.google.appengine.api.datastore.Entity;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /** PerformanceSummary, an object summarizing performance across profiling points for a test run. */
 public class PerformanceSummary {
     protected static Logger logger = Logger.getLogger(PerformanceSummary.class.getName());
     private Map<String, ProfilingPointSummary> summaryMap;
-    private Set<String> optionSplitKeys;
+
+    public final long startTime;
+    public final long endTime;
+    public final String label;
 
     /** Creates a performance summary object. */
-    public PerformanceSummary() {
+    public PerformanceSummary(long startTime, long endTime, String label) {
         this.summaryMap = new HashMap<>();
-        this.optionSplitKeys = new HashSet<>();
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.label = label;
+    }
+
+    /** Creates a performance summary object. */
+    public PerformanceSummary(long startTime, long endTime) {
+        this(
+                startTime,
+                endTime,
+                "<span class='date-label'>"
+                        + Long.toString(TimeUnit.MICROSECONDS.toMillis(endTime))
+                        + "</span>");
     }
 
     /**
-     * Creates a performance summary object with the specified device name filter. If the specified
-     * name is null, then use no filter.
+     * Determine if the performance summary contains the provided time.
      *
-     * @param optionSplitKeys A set of option keys to split on (i.e. profiling data with different
-     *     values corresponding to the option key will be analyzed as different profiling points).
+     * @param time The time (unix timestamp, microseconds) to check.
+     * @return True if the time is within the performance summary window, false otherwise.
      */
-    public PerformanceSummary(Set<String> optionSplitKeys) {
-        this();
-        this.optionSplitKeys = optionSplitKeys;
+    public boolean contains(long time) {
+        return time >= startTime && time <= endTime;
     }
 
     /**
@@ -53,36 +64,37 @@ public class PerformanceSummary {
      *
      * @param profilingRun The Entity object whose data to add.
      */
-    public void addData(Entity profilingRun) {
-        ProfilingPointRunEntity pt = ProfilingPointRunEntity.fromEntity(profilingRun);
-        if (pt == null)
-            return;
-        if (pt.regressionMode == VtsProfilingRegressionMode.VTS_REGRESSION_MODE_DISABLED) {
-            return;
-        }
+    public void addData(ProfilingPointEntity profilingPoint, Entity profilingRun) {
+        ProfilingPointSummaryEntity ppSummary =
+                ProfilingPointSummaryEntity.fromEntity(profilingRun);
+        if (ppSummary == null) return;
 
-        String name = pt.name;
-        String optionSuffix = PerformanceUtil.getOptionAlias(pt, optionSplitKeys);
-
-        if (pt.labels != null) {
-            if (pt.labels.size() != pt.values.size()) {
-                logger.log(Level.WARNING, "Labels and values are different sizes.");
-                return;
-            }
-            if (!optionSuffix.equals("")) {
-                name += " (" + optionSuffix + ")";
+        String name = profilingPoint.profilingPointName;
+        if (ppSummary.labels != null && ppSummary.labels.size() > 0) {
+            if (!ppSummary.series.equals("")) {
+                name += " (" + ppSummary.series + ")";
             }
             if (!summaryMap.containsKey(name)) {
-                summaryMap.put(name, new ProfilingPointSummary());
+                summaryMap.put(
+                        name,
+                        new ProfilingPointSummary(
+                                profilingPoint.xLabel,
+                                profilingPoint.yLabel,
+                                profilingPoint.regressionMode));
             }
-            summaryMap.get(name).update(pt);
+            summaryMap.get(name).update(ppSummary);
         } else {
             // Use the option suffix as the table name.
             // Group all profiling points together into one table
-            if (!summaryMap.containsKey(optionSuffix)) {
-                summaryMap.put(optionSuffix, new ProfilingPointSummary());
+            if (!summaryMap.containsKey(ppSummary.series)) {
+                summaryMap.put(
+                        ppSummary.series,
+                        new ProfilingPointSummary(
+                                profilingPoint.xLabel,
+                                profilingPoint.yLabel,
+                                profilingPoint.regressionMode));
             }
-            summaryMap.get(optionSuffix).updateLabel(pt, pt.name);
+            summaryMap.get(ppSummary.series).updateLabel(ppSummary, name);
         }
     }
 

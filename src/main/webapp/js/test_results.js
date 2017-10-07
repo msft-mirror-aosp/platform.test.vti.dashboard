@@ -203,11 +203,15 @@
           $('<span class="test-run-label"></span>').text(test).appendTo(span);
           span.append('<br>');
       }
-      $('<b></b>').text(metadata.deviceInfo).appendTo(span);
-      span.append('<br>');
-      $('<b></b>').text('ABI: ')
-            .appendTo(span)
-      span.append(metadata.abiInfo).append('<br>');
+      if (metadata.deviceInfo) {
+          $('<b></b>').text(metadata.deviceInfo).appendTo(span);
+          span.append('<br>');
+      }
+      if (metadata.abiInfo) {
+          $('<b></b>').text('ABI: ')
+                .appendTo(span)
+          span.append(metadata.abiInfo).append('<br>');
+      }
       $('<b></b>').text('VTS Build: ')
             .appendTo(span)
       span.append(metadata.testRun.testBuildId).append('<br>');
