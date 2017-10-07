@@ -135,7 +135,11 @@ public class ShowPerformanceDigestServlet extends BaseServlet {
             tableHTML += "<td class='cell inner-cell'>";
             tableHTML += FORMATTER.format(stats.getMean()) + "</td>";
             tableHTML += "<td class='cell outer-cell'>";
-            tableHTML += FORMATTER.format(stats.getStd()) + "</td>";
+            if (stats.getCount() < 2) {
+                tableHTML += " - </td>";
+            } else {
+                tableHTML += FORMATTER.format(stats.getStd()) + "</td>";
+            }
             for (PerformanceSummary prevPerformance : perfSummaries) {
                 if (prevPerformance.hasProfilingPoint(profilingPoint)) {
                     StatSummary baseline =
