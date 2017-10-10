@@ -13,6 +13,8 @@
  */
 package com.android.vts.util;
 
+import com.android.vts.entity.BranchEntity;
+import com.android.vts.entity.BuildTargetEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
@@ -43,7 +45,6 @@ import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.PropertyProjection;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
@@ -113,53 +114,18 @@ public class DatastoreHelper {
     }
 
     /**
-     * Determines if any entities match the provided query.
-     *
-     * @param query The query to test.
-     * @return true if entities match the query.
-     */
-    public static boolean hasEntities(Query query) {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        FetchOptions limitOne = FetchOptions.Builder.withLimit(1);
-        return datastore.prepare(query).countEntities(limitOne) > 0;
-    }
-
-    /**
-     * Get all of the target product names.
-     *
-     * @return a list of all device product names.
-     */
-    public static List<String> getAllProducts() {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Query query =
-                new Query(DeviceInfoEntity.KIND)
-                        .addProjection(
-                                new PropertyProjection(DeviceInfoEntity.PRODUCT, String.class))
-                        .setDistinct(true);
-        List<String> devices = new ArrayList<>();
-        for (Entity e : datastore.prepare(query).asIterable()) {
-            devices.add((String) e.getProperty(DeviceInfoEntity.PRODUCT));
-        }
-        return devices;
-    }
-
-    /**
      * Get all of the devices branches.
      *
      * @return a list of all branches.
      */
     public static List<String> getAllBranches() {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Query query =
-                new Query(DeviceInfoEntity.KIND)
-                        .addProjection(
-                                new PropertyProjection(DeviceInfoEntity.BRANCH, String.class))
-                        .setDistinct(true);
-        List<String> devices = new ArrayList<>();
-        for (Entity e : datastore.prepare(query).asIterable()) {
-            devices.add((String) e.getProperty(DeviceInfoEntity.BRANCH));
+        Query query = new Query(BranchEntity.KIND).setKeysOnly();
+        List<String> branches = new ArrayList<>();
+        for (Entity e : datastore.prepare(query).asIterable(getLargeBatchOptions())) {
+            branches.add(e.getKey().getName());
         }
-        return devices;
+        return branches;
     }
 
     /**
@@ -169,14 +135,10 @@ public class DatastoreHelper {
      */
     public static List<String> getAllBuildFlavors() {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Query query =
-                new Query(DeviceInfoEntity.KIND)
-                        .addProjection(
-                                new PropertyProjection(DeviceInfoEntity.BUILD_FLAVOR, String.class))
-                        .setDistinct(true);
+        Query query = new Query(BuildTargetEntity.KIND).setKeysOnly();
         List<String> devices = new ArrayList<>();
-        for (Entity e : datastore.prepare(query).asIterable()) {
-            devices.add((String) e.getProperty(DeviceInfoEntity.BUILD_FLAVOR));
+        for (Entity e : datastore.prepare(query).asIterable(getLargeBatchOptions())) {
+            devices.add(e.getKey().getName());
         }
         return devices;
     }
@@ -215,6 +177,9 @@ public class DatastoreHelper {
         long coveredLineCount = 0;
         long totalLineCount = 0;
 
+        Set<Key> buildTargetKeys = new HashSet<>();
+        Set<Key> branchKeys = new HashSet<>();
+        List<Entity> buildPuts = new ArrayList<>();
         List<TestCaseRunEntity> testCases = new ArrayList<>();
         List<Key> profilingPointKeys = new ArrayList<>();
         List<String> links = new ArrayList<>();
@@ -267,6 +232,8 @@ public class DatastoreHelper {
             testCaseEntity.addTestCase(testCaseName, result.getNumber());
         }
 
+        datastore.put(buildPuts);
+
         List<Entity> testCasePuts = new ArrayList<>();
         for (TestCaseRunEntity testCaseEntity : testCases) {
             testCasePuts.add(testCaseEntity.toEntity());
@@ -296,6 +263,14 @@ public class DatastoreHelper {
                 testRunType = TestRunType.OTHER;
             }
             puts.add(deviceInfoEntity.toEntity());
+            BuildTargetEntity target = new BuildTargetEntity(deviceInfoEntity.buildFlavor);
+            if (buildTargetKeys.add(target.key)) {
+                buildPuts.add(target.toEntity());
+            }
+            BranchEntity branch = new BranchEntity(deviceInfoEntity.branch);
+            if (branchKeys.add(branch.key)) {
+                buildPuts.add(branch.toEntity());
+            }
         }
 
         // Overall run type should be determined by the device builds unless test build is OTHER
