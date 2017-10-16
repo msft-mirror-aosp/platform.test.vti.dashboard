@@ -144,7 +144,7 @@ public class ShowGraphServlet extends BaseServlet {
         Long startTime = endTime - TimeUnit.DAYS.toMicros(1);
 
         // Set of device names
-        List<String> devices = DatastoreHelper.getAllProducts();
+        List<String> devices = DatastoreHelper.getAllBuildFlavors();
         if (!devices.contains(selectedDevice)) selectedDevice = null;
 
         Map<String, Graph> graphMap = new HashMap<>();
@@ -182,7 +182,7 @@ public class ShowGraphServlet extends BaseServlet {
                     Query.CompositeFilterOperator.and(
                             deviceFilter,
                             new Query.FilterPredicate(
-                                    DeviceInfoEntity.PRODUCT,
+                                    DeviceInfoEntity.BUILD_FLAVOR,
                                     Query.FilterOperator.EQUAL,
                                     selectedDevice));
         }
