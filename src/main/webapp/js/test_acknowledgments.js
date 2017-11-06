@@ -187,9 +187,10 @@
         ack.replaceWith(newAck);
       }
     }).always(function() {
-      modal.closeModal({
+      modal.modal({
         complete: function() { _isModalOpen = false; }
       });
+      modal.modal('close');
     });
   }
 
@@ -210,6 +211,7 @@
     _isModalOpen = true;
     var wrapper = $('#modal');
     wrapper.empty();
+    wrapper.modal();
     var content = $('<div class="modal-content"><h4>Test Acknowledgment</h4></div>');
     var row = $('<div class="row"></div>').appendTo(content);
     row.append('<div class="col s12"><h5><b>Test: </b>' + test + '</h5></div>');
@@ -286,9 +288,10 @@
     }
     var close = $('<a class="btn-flat">Close</a></div>').appendTo(footer);
     close.click(function() {
-      wrapper.closeModal({
+      wrapper.modal({
         complete: function() { _isModalOpen = false; }
       });
+      wrapper.modal('close');
     })
     footer.appendTo(wrapper);
     if (!_isReadOnly) {
@@ -304,12 +307,10 @@
           parent: testCaseInput
         });
       }).always(function() {
-        wrapper.openModal({
-          dismissible: false
-        });
+        wrapper.modal('open');
       });
     } else {
-      wrapper.openModal();
+      wrapper.modal('open');
     }
   }
 
