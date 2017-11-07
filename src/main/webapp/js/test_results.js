@@ -33,17 +33,23 @@
     logCollection.html(entries);
 
     if (container.find('#info-modal').length == 0) {
-      var modal = $('<div id="info-modal" class="modal"></div>');
+      var modal = $('<div id="info-modal" class="modal modal-fixed-footer"></div>');
       var content = $('<div class="modal-content"></div>');
       content.append('<h4>Links</h4>');
       content.append('<div class="info-container"></div>');
       content.appendTo(modal);
+      var footer = $('<div class="modal-footer"></div>');
+      footer.append('<a class="btn-flat modal-close">Close</a></div>');
+      footer.appendTo(modal);
       modal.appendTo(container);
     }
     var infoContainer = $('#info-modal>.modal-content>.info-container');
     infoContainer.empty();
     logCollection.appendTo(infoContainer);
-    $('#info-modal').openModal();
+    $('#info-modal').modal({
+      dismissible: true
+    });
+    $('#info-modal').modal('open');
   }
 
   /**
