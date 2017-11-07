@@ -99,7 +99,9 @@
           var infoContainer = $('#info-modal>.modal-content>.info-container');
           infoContainer.empty();
           logList.appendTo(infoContainer);
-          $('#info-modal').openModal();
+          var modal = $('#info-modal');
+          modal.modal();
+          modal.modal('open');
       }
 
       // refresh the page to see the selected test types (pre-/post-submit)
