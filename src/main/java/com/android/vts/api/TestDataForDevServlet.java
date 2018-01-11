@@ -23,6 +23,8 @@ import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestEntity;
+import com.android.vts.entity.TestPlanEntity;
+import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.entity.TestRunEntity.TestRunType;
 import com.android.vts.entity.TestStatusEntity;
@@ -35,6 +37,7 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -47,7 +50,10 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServlet;
@@ -154,13 +160,18 @@ public class TestDataForDevServlet extends HttpServlet {
     }
 
     private class TestPlanReportDataObject {
-        private List<BranchEntity> branchEntities;
-        private List<BuildTargetEntity> buildTargetEntities;
-        private List<CoverageEntity> coverageEntities;
+        private List<TestPlan> testPlanList;
+
+        private class TestPlan {
+
+            private String testPlanName;
+            private List<String> testModules;
+            private List<Long> testTimes;
+        }
 
         @Override
         public String toString() {
-            return "(" + branchEntities + ")";
+            return "(" + testPlanList + ")";
         }
     }
 
@@ -294,6 +305,89 @@ public class TestDataForDevServlet extends HttpServlet {
             } else {
                 TestPlanReportDataObject tprdObj =
                     gson.fromJson(postJsonReader, TestPlanReportDataObject.class);
+                tprdObj.testPlanList.forEach(testPlan -> {
+                    Entity testPlanEntity = new TestPlanEntity(testPlan.testPlanName).toEntity();
+                    List<Key> testRunKeys = new ArrayList<>();
+                    for (int idx = 0; idx < testPlan.testModules.size(); idx++) {
+                        String test = testPlan.testModules.get(idx);
+                        long time = testPlan.testTimes.get(idx);
+                        Key parentKey = KeyFactory.createKey(TestEntity.KIND, test);
+                        Key testRunKey = KeyFactory.createKey(parentKey, TestRunEntity.KIND, time);
+                        testRunKeys.add(testRunKey);
+                    }
+                    Map<Key, Entity> testRuns = datastore.get(testRunKeys);
+                    long passCount = 0;
+                    long failCount = 0;
+                    long startTimestamp = -1;
+                    long endTimestamp = -1;
+                    String testBuildId = null;
+                    TestRunType type = null;
+                    Set<DeviceInfoEntity> devices = new HashSet<>();
+                    for (Key testRunKey : testRuns.keySet()) {
+                        TestRunEntity testRun = TestRunEntity.fromEntity(testRuns.get(testRunKey));
+                        if (testRun == null) {
+                            continue; // not a valid test run
+                        }
+                        passCount += testRun.passCount;
+                        failCount += testRun.failCount;
+                        if (startTimestamp < 0 || testRunKey.getId() < startTimestamp) {
+                            startTimestamp = testRunKey.getId();
+                        }
+                        if (endTimestamp < 0 || testRun.endTimestamp > endTimestamp) {
+                            endTimestamp = testRun.endTimestamp;
+                        }
+                        if (type == null) {
+                            type = testRun.type;
+                        } else if (type != testRun.type) {
+                            type = TestRunType.OTHER;
+                        }
+                        testBuildId = testRun.testBuildId;
+                        Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND).setAncestor(testRunKey);
+                        for (Entity deviceInfoEntity : datastore.prepare(deviceInfoQuery).asIterable()) {
+                            DeviceInfoEntity device = DeviceInfoEntity.fromEntity(deviceInfoEntity);
+                            if (device == null) {
+                                continue; // invalid entity
+                            }
+                            devices.add(device);
+                        }
+                    }
+                    if (startTimestamp < 0 || testBuildId == null || type == null) {
+                        logger.log(Level.WARNING, "Couldn't infer test run information from runs.");
+                        return;
+                    }
+                    TestPlanRunEntity testPlanRun =
+                        new TestPlanRunEntity(testPlanEntity.getKey(), testPlan.testPlanName,
+                            type, startTimestamp, endTimestamp, testBuildId, passCount, failCount,
+                            testRunKeys);
+
+                    // Create the device infos.
+                    for (DeviceInfoEntity device : devices) {
+                        datastore.put(device.copyWithParent(testPlanRun.key).toEntity());
+                    }
+                    datastore.put(testPlanRun.toEntity());
+
+                    Transaction txn = datastore.beginTransaction();
+                    try {
+                        // Check if test already exists in the database
+                        try {
+                            datastore.get(testPlanEntity.getKey());
+                        } catch (EntityNotFoundException e) {
+                            datastore.put(testPlanEntity);
+                        }
+                        txn.commit();
+                    } catch (ConcurrentModificationException | DatastoreFailureException
+                        | DatastoreTimeoutException e) {
+                        logger.log(Level.WARNING,
+                            "Retrying test plan insert: " + testPlanEntity.getKey());
+                    } finally {
+                        if (txn.isActive()) {
+                            logger.log(
+                                Level.WARNING,
+                                "Transaction rollback forced for plan run: " + testPlanRun.key);
+                            txn.rollback();
+                        }
+                    }
+                });
             }
         } else {
             logger.log(Level.WARNING, "URL path parameter is omitted!");
