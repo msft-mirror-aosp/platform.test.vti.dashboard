@@ -5,8 +5,8 @@
         {
           "testName": "BionicUnitTests",
           "type": 1,
-          "startTimestamp":1496812169433653,
-          "endTimestamp": 1496813103553548,
+          "startTimestamp":1515562811,
+          "endTimestamp": 1515389691,
           "testBuildId": "4075328",
           "hostName": "test.google.com",
           "passCount": 1861,
@@ -16,7 +16,7 @@
           "testCaseIds": [2120003,9120003,7140003,9110002,7150002,110006,2160001,130003],
           "failingTestcaseIds": [2120003,9120003,7140003,9110002],
           "failingTestcaseOffsets": [212,234,388,384],
-          "links": ["https://test.google.com/host-log/2017-06-06/BionicUnitTests_1496812169433653_test_run_details.txt","https://test.google.com/host-log/2017-06-06/BionicUnitTests_1496812169433653.log","https://test.google.com/host-log/2017-06-06/BionicUnitTests_1496812169433653.txt"],
+          "links": ["https://google.com/test_run_details.txt","https://google.com/BionicUnitTests_1496812169433653.log","https://google.com/BionicUnitTests_1496812169433653.txt"],
           "coverageList": [
             {
               "group": "wkejfiowfe",
@@ -137,8 +137,8 @@
         {
           "testName": "CpuProfilingTest",
           "type": 2,
-          "startTimestamp":1496812169433653,
-          "endTimestamp": 1496813103553548,
+          "startTimestamp":1515562811,
+          "endTimestamp": 1515303611,
           "testBuildId": "4075338",
           "hostName": "test.google.com",
           "passCount": 1361,
@@ -148,9 +148,7 @@
           "testCaseIds": [2120003,9120003,7140003,9110002,7150002,110006,2160001,130003],
           "failingTestcaseIds": [2120003,9120003,7140003,9110002],
           "failingTestcaseOffsets": [212,234,388,384],
-          "links": [
-            "https://test.google.com/host-log/2017-06-06/BionicUnitTests_test_run_details.txt","https://test.google.com/host-log/2017-06-06/BionicUnitTests.log","https://test.google.com/host-log/2017-06-06/BionicUnitTests_1496812169433653.txt"
-          ],
+          "links": ["https://google.com/test_run_details.txt","https://google.com/BionicUnitTests_1496812169433653.log","https://google.com/BionicUnitTests_1496812169433653.txt"],
           "coverageList": [
             {
               "group": "wkejfiowfe",
