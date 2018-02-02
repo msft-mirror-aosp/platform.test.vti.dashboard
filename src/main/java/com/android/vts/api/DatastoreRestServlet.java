@@ -58,7 +58,7 @@ public class DatastoreRestServlet extends HttpServlet {
         // Verify service account access token.
         if (postMessage.hasAccessToken()) {
             String accessToken = postMessage.getAccessToken();
-            logger.log(Level.WARNING, "accessToken => " + accessToken);
+            logger.log(Level.INFO, "accessToken => " + accessToken);
             GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
             Oauth2 oauth2 =
                     new Oauth2.Builder(new NetHttpTransport(), new JacksonFactory(), credential)
