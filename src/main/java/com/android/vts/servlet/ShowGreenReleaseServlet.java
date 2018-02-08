@@ -244,16 +244,12 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                     {{
                         put("branch", new String[]{branchKey});
                         put("device", new String[]{deviceBuildInfo.getDeviceBuildTarget()});
-                        put("nonpassing", new String[]{"0"});
                     }};
 
                     Calendar cal = Calendar.getInstance();
                     cal.add(Calendar.DATE, -7);
                     Long startTime = cal.getTime().getTime() * 1000;
                     Long endTime = Calendar.getInstance().getTime().getTime() * 1000;
-
-                    logger.log(Level.INFO, "startTime => " + startTime);
-                    logger.log(Level.INFO, "endTime => " + endTime);
 
                     SortDirection dir = SortDirection.DESCENDING;
 
@@ -294,12 +290,6 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                             testPlanRunEntityList
                         );
 
-                        // The passBuildIdList containing all passed buildId List for device
-                        List<String> passBuildIdList = testPlanRunEntityList.stream()
-                            .map(entity -> entity.testBuildId)
-                            .collect(Collectors.toList());
-                        allPassIdLists.add(passBuildIdList);
-
                         // The logic for candidate build ID is starting from here
                         Comparator<TestPlanRunEntity> byPassing = Comparator
                             .comparingLong(elemFirst -> elemFirst.passCount);
@@ -318,6 +308,13 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                             return entity.startTimestamp;
                         }).orElse(0L);
                         deviceBuildInfo.setCandidateBuildIdTimestamp(buildIdTimestamp);
+
+                        // The passBuildIdList containing all passed buildId List for device
+                        List<String> passBuildIdList = testPlanRunEntityList.stream()
+                            .filter(entity -> entity.failCount == 0L)
+                            .map(entity -> entity.testBuildId)
+                            .collect(Collectors.toList());
+                        allPassIdLists.add(passBuildIdList);
                         logger.log(Level.INFO, "passBuildIdList => " + passBuildIdList);
                     } else {
                         allPassIdLists.add(new ArrayList<>());
