@@ -27,9 +27,42 @@
   <script src='js/plan_runs.js'></script>
   <script src='js/search_header.js'></script>
   <script type='text/javascript'>
-      var search;
       $(document).ready(function() {
-
+        var paraMap = {'path': '', 'entry': ''};
+        $('.modal').modal({
+          dismissible: true,  // Modal can be dismissed by clicking outside of the modal
+          opacity: .99,  // Opacity of modal background
+          inDuration: 300,  // Transition in duration
+          outDuration: 200,  // Transition out duration
+          startingTop: '4%',  // Starting top style attribute
+          endingTop: '10%',  // Ending top style attribute
+          ready: function(modal, trigger) {  // Callback for Modal open. Modal and trigger parameters available.
+            if ($(trigger).attr("href") == "#logEntryListModal") {
+              $(modal).find('#modal-entry-list').find("li").remove();
+              paraMap['path'] = trigger.text().trim();
+              var fileName = paraMap['path'].substring(paraMap['path'].lastIndexOf('/')+1);  // Getting filename
+              $(modal).find('#entry-list-modal-title').text(fileName);  // Set file name for modal window
+              var url = "${requestScope['javax.servlet.forward.servlet_path']}?path=" + paraMap['path'];
+              $(modal).find('#downloadLink').prop('href', url + "&action=download");
+              $.get( url, function(data) {
+                var entryList = $(modal).find('#modal-entry-list');
+                $(data.entryList).each(function( index, element ) {
+                  entryList.append("<li><a href='#logEntryViewModal'>" + element + "</a></li>");
+                });
+              });
+            } else {
+              paraMap['entry'] = trigger.text().trim();
+              $(modal).find('#entry-view-modal-title').text(paraMap['entry']);
+              var entryUrl = "${requestScope['javax.servlet.forward.servlet_path']}?path=" + paraMap['path'] + "&entry=" + paraMap['entry'];
+              $.get( entryUrl, function(data) {
+                $(modal).find('#entry-view-modal-content').text(data.entryContent);
+              });
+            }
+          },
+          complete: function() {
+              console.log("modal closed!");
+          }  // Callback for Modal close
+        });
       });
   </script>
 
@@ -55,7 +88,7 @@
         <h3>File List</h3>
         <c:forEach varStatus="fileLoop" var="fileName" items="${fileList}">
           <p>
-            <a href="${requestScope['javax.servlet.forward.servlet_path']}?path=${fileName}">
+            <a href="#logEntryListModal">
               <c:out value="${fileName}"></c:out>
             </a>
           </p>
@@ -64,6 +97,40 @@
         </c:forEach>
       </div>
     </div>
+
     <%@ include file="footer.jsp" %>
+
+    <!-- Modal For Zip file entries -->
+    <div id="logEntryListModal" class="modal">
+      <div class="modal-content">
+        <h4 id="entry-list-modal-title" class="truncate"></h4>
+        <div id="entry-list-modal-content">
+          <ul id="modal-entry-list"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="row">
+          <div class="col s3 offset-s6">
+            <a href="#!" id="downloadLink" class="modal-action modal-close waves-effect waves-green btn">Download</a>
+          </div>
+          <div class="col s3">
+            <a href="#!" class="modal-action modal-close waves-effect waves-green btn">Close</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal For Zip file entry's content -->
+    <div id="logEntryViewModal" class="modal modal-fixed-footer">
+      <div class="modal-content">
+        <h4 id="entry-view-modal-title" class="truncate"></h4>
+        <div id="entry-view-modal-content">
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn">Close</a>
+      </div>
+    </div>
   </body>
 </html>
