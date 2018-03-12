@@ -36,6 +36,8 @@ import javax.servlet.http.HttpSession;
 public abstract class BaseServlet extends HttpServlet {
     protected final Logger logger = Logger.getLogger(getClass().getName());
 
+    protected String ERROR_MESSAGE_JSP = "WEB-INF/jsp/error_msg.jsp";
+
     // Environment variables
     protected static final String GERRIT_URI = System.getProperty("GERRIT_URI");
     protected static final String GERRIT_SCOPE = System.getProperty("GERRIT_SCOPE");
