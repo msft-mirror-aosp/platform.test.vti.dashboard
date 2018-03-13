@@ -155,9 +155,9 @@ public class ShowGcsLogServlet extends BaseServlet {
 
                         } else {
                             if (entry.length() > 0) {
-                                System.out.println("param entry => " + entry);
+                                logger.log(Level.INFO, "param entry => " + entry);
                                 if (zipEntry.getName().equals(entry)) {
-                                    System.out.println("matched !!!! " + zipEntry.getName());
+                                    logger.log(Level.INFO, "matched !!!! " + zipEntry.getName());
                                     entryContent =
                                             IOUtils.toString(
                                                     zipInputStream, StandardCharsets.UTF_8.name());
@@ -214,7 +214,7 @@ public class ShowGcsLogServlet extends BaseServlet {
                         dirList.add(blob.getName());
                     } else {
                         logger.log(Level.INFO, "file name => " + blob.getName());
-                        fileList.add(blob.getName());
+                        fileList.add(Paths.get(blob.getName()).getFileName().toString());
                     }
                 }
 
