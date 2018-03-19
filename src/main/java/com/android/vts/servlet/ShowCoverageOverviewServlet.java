@@ -96,7 +96,7 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
         if (timeFilter != null) {
             testFilter = Query.CompositeFilterOperator.and(testFilter, timeFilter);
         }
-        Map<String, Object> parameterMap = request.getParameterMap();
+        Map<String, String[]> parameterMap = request.getParameterMap();
         List<Query.Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap);
         userTestFilters.add(0, testFilter);
         Query.Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
