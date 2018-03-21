@@ -205,7 +205,8 @@ public class ShowGcsLogServlet extends BaseServlet {
                             };
                 }
 
-                Iterator<Blob> blobIterator = vtsReportBucket.list(listOptions).iterateAll();
+                Iterable<Blob> blobIterable = vtsReportBucket.list(listOptions).iterateAll();
+                Iterator<Blob> blobIterator = blobIterable.iterator();
                 while (blobIterator.hasNext()) {
                     Blob blob = blobIterator.next();
                     logger.log(Level.INFO, "blob name => " + blob);
