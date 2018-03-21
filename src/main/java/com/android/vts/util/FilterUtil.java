@@ -204,7 +204,7 @@ public class FilterUtil {
      * @param key The key whose value to get.
      * @return The first value associated with the provided key.
      */
-    public static String getFirstParameter(Map<String, Object> parameterMap, String key) {
+    public static String getFirstParameter(Map<String, String[]> parameterMap, String key) {
         String[] values = (String[]) parameterMap.get(key);
         if (values.length == 0) return null;
         return values[0];
@@ -216,7 +216,7 @@ public class FilterUtil {
      * @param parameterMap The key-value map of url parameters.
      * @return A filter with the values from the user search parameters.
      */
-    public static Filter getUserDeviceFilter(Map<String, Object> parameterMap) {
+    public static Filter getUserDeviceFilter(Map<String, String[]> parameterMap) {
         Filter deviceFilter = null;
         for (String key : parameterMap.keySet()) {
             if (!FilterKey.isDeviceKey(key)) continue;
@@ -239,7 +239,7 @@ public class FilterUtil {
      * @param parameterMap The key-value map of url parameters.
      * @return A list of filters, each having at most one inequality filter.
      */
-    public static List<Filter> getUserTestFilters(Map<String, Object> parameterMap) {
+    public static List<Filter> getUserTestFilters(Map<String, String[]> parameterMap) {
         List<Filter> userFilters = new ArrayList<>();
         for (String key : parameterMap.keySet()) {
             if (!FilterKey.isTestKey(key)) continue;
@@ -520,11 +520,11 @@ public class FilterUtil {
      * @param request The request whose attributes to set.
      * @param parameterMap The map from key to (Object) String[] value whose entries to parse.
      */
-    public static void setAttributes(HttpServletRequest request, Map<String, Object> parameterMap) {
+    public static void setAttributes(HttpServletRequest request, Map<String, String[]> parameterMap) {
         for (String key : parameterMap.keySet()) {
             if (!FilterKey.isDeviceKey(key) && !FilterKey.isTestKey(key)) continue;
             FilterKey filterKey = FilterKey.parse(key);
-            String[] values = (String[]) parameterMap.get(key);
+            String[] values = parameterMap.get(key);
             if (values.length == 0) continue;
             String stringValue = values[0];
             request.setAttribute(filterKey.keyString, new Gson().toJson(stringValue));

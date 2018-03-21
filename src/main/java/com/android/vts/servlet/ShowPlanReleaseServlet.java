@@ -143,7 +143,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         Filter testPlanRunFilter =
                 FilterUtil.getTimeFilter(
                         testPlanKey, TestPlanRunEntity.KIND, startTime, endTime, typeFilter);
-        Map<String, Object> parameterMap = request.getParameterMap();
+        Map<String, String[]> parameterMap = request.getParameterMap();
         List<Filter> userTestFilters =
                 FilterUtil.getUserTestFilters(parameterMap);
         userTestFilters.add(0, testPlanRunFilter);
