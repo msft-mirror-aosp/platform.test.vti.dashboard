@@ -74,7 +74,7 @@ public class ShowProfilingOverviewServlet extends BaseServlet {
 
         // Create a query for test runs matching the time window filter
 
-        Map<String, Object> parameterMap = request.getParameterMap();
+        Map<String, String[]> parameterMap = request.getParameterMap();
         boolean hasBranchFilter = parameterMap.containsKey(FilterUtil.FilterKey.BRANCH.getValue());
         Filter deviceFilter;
         if (hasBranchFilter) {
