@@ -212,8 +212,8 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                     Map<String, List<TestPlanRunEntity>> allTestPlanRunEntityMap = new HashMap<>();
                     deviceBuildInfoList.forEach(
                             deviceBuildInfo -> {
-                                Map<String, Object> paramMap =
-                                        new HashMap<String, Object>() {
+                                Map<String, String[]> paramMap =
+                                        new HashMap<String, String[]>() {
                                             {
                                                 put("branch", new String[] {branchKey});
                                                 put(

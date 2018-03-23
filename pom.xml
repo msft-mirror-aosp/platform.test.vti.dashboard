@@ -25,7 +25,7 @@
   <properties>
     <app.id>s~google.com:android-vts-staging</app.id>
     <app.version>4</app.version>
-    <appengine.version>1.9.62</appengine.version>
+    <appengine.version>1.9.63</appengine.version>
 
     <appengine.clientID></appengine.clientID>
     <appengine.serviceClientID></appengine.serviceClientID>
@@ -52,8 +52,9 @@
 
     <dependency>
       <groupId>javax.servlet</groupId>
-      <artifactId>jsp-api</artifactId>
-      <version>2.0</version>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.0.1</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -77,13 +78,25 @@
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud</artifactId>
-      <version>0.8.0</version>
+      <version>0.39.0-alpha</version>
     </dependency>
 
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.7</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.googlecode.objectify</groupId>
+      <artifactId>objectify</artifactId>
+      <version>6.0b1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20180130</version>
     </dependency>
 
     <dependency>
@@ -114,6 +127,13 @@
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-oauth2</artifactId>
       <version>v1-rev136-1.23.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.16.20</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- Test Dependencies -->
