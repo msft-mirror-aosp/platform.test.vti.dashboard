@@ -16,18 +16,18 @@
 
 package com.android.vts.config;
 
-import com.android.vts.entity.TestLogSummaryEntity;
+import com.android.vts.entity.TestSuiteResultEntity;
+import com.googlecode.objectify.ObjectifyFactory;
 import com.googlecode.objectify.ObjectifyService;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /** The @WebListener annotation for registering a class as a listener of a web application. */
-@WebListener
+// @WebListener
 /**
  * Initializing Objectify Service at the container start up before any web components like servlet
  * get initialized.
@@ -36,13 +36,15 @@ public class ObjectifyListener implements ServletContextListener {
 
     private static final Logger logger = Logger.getLogger(ObjectifyListener.class.getName());
 
-    /** Receives notification that the web application initialization process is starting.
-     *  This function will register Entity classes for objectify.
+    /**
+     * Receives notification that the web application initialization process is starting. This
+     * function will register Entity classes for objectify.
      */
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
-        ObjectifyService.init();
-        ObjectifyService.register(TestLogSummaryEntity.class);
+        ObjectifyFactory objectifyFactory = ObjectifyService.factory();
+        objectifyFactory.register(TestSuiteResultEntity.class);
+        objectifyFactory.begin();
         logger.log(Level.INFO, "Value Initialized from context.");
     }
 

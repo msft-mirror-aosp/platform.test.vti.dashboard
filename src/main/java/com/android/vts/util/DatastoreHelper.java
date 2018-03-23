@@ -96,7 +96,7 @@ public class DatastoreHelper {
      * @return boolean True if there are newer data points.
      * @throws IOException
      */
-    public static boolean hasNewer(Key parentKey, String kind, Long lowerBound) throws IOException {
+    public static boolean hasNewer(Key parentKey, String kind, Long lowerBound) {
         if (lowerBound == null || lowerBound <= 0) return false;
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         Key startKey = KeyFactory.createKey(parentKey, kind, lowerBound);
@@ -116,7 +116,7 @@ public class DatastoreHelper {
      * @return boolean True if there are older data points.
      * @throws IOException
      */
-    public static boolean hasOlder(Key parentKey, String kind, Long upperBound) throws IOException {
+    public static boolean hasOlder(Key parentKey, String kind, Long upperBound) {
         if (upperBound == null || upperBound <= 0) return false;
         Key endKey = KeyFactory.createKey(parentKey, kind, upperBound);
         Filter endFilter =
