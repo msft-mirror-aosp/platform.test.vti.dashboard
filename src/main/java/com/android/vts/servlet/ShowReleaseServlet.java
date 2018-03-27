@@ -17,12 +17,17 @@
 package com.android.vts.servlet;
 
 import com.android.vts.entity.TestPlanEntity;
+import com.android.vts.entity.TestSuiteResultEntity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.users.UserServiceFactory;
-import com.google.gson.Gson;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,14 +35,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.stream.Collectors;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /** Represents the servlet that is invoked on loading the release page. */
 public class ShowReleaseServlet extends BaseServlet {
-    private static final String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
 
     @Override
     public PageType getNavParentType() {
@@ -52,6 +55,28 @@ public class ShowReleaseServlet extends BaseServlet {
     @Override
     public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        String testType =
+                request.getParameter("type") == null ? "plan" : request.getParameter("type");
+
+        RequestDispatcher dispatcher;
+        if (testType.equalsIgnoreCase("plan")) {
+            dispatcher = this.getTestPlanDispatcher(request, response);
+        } else {
+            dispatcher = this.getTestSuiteDispatcher(request, response);
+        }
+
+        try {
+            request.setAttribute("testType", testType);
+            response.setStatus(HttpServletResponse.SC_OK);
+            dispatcher.forward(request, response);
+        } catch (ServletException e) {
+            logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
+        }
+    }
+
+    private RequestDispatcher getTestPlanDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
         Set<String> planSet = new HashSet<>();
@@ -64,14 +89,31 @@ public class ShowReleaseServlet extends BaseServlet {
         List<String> plans = new ArrayList<>(planSet);
         plans.sort(Comparator.naturalOrder());
 
-        response.setStatus(HttpServletResponse.SC_OK);
         request.setAttribute("isAdmin", UserServiceFactory.getUserService().isUserAdmin());
         request.setAttribute("planNames", plans);
         RequestDispatcher dispatcher = request.getRequestDispatcher(RELEASE_JSP);
-        try {
-            dispatcher.forward(request, response);
-        } catch (ServletException e) {
-            logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
-        }
+        return dispatcher;
+    }
+
+    private RequestDispatcher getTestSuiteDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
+
+        List<TestSuiteResultEntity> suiteResultEntityList =
+                ofy().load()
+                        .type(TestSuiteResultEntity.class)
+                        .project("suitePlan")
+                        .distinct(true)
+                        .list();
+
+        List<String> plans =
+                suiteResultEntityList
+                        .stream()
+                        .map(suiteEntity -> suiteEntity.getSuitePlan())
+                        .collect(Collectors.toList());
+        request.setAttribute("isAdmin", UserServiceFactory.getUserService().isUserAdmin());
+        request.setAttribute("planNames", plans);
+        RequestDispatcher dispatcher = request.getRequestDispatcher(RELEASE_JSP);
+        return dispatcher;
     }
 }

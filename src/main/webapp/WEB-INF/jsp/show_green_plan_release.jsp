@@ -27,7 +27,6 @@
   <script src='js/plan_runs.js'></script>
   <script src='js/search_header.js'></script>
   <script type='text/javascript'>
-      var search;
       $(document).ready(function() {
 
       });
@@ -35,7 +34,12 @@
 
   <body>
     <div class='wide container'>
-      <div class='row' id='release-container'>
+      <div class="row">
+        <div class="col s12">
+          <h4 id="test-plan-section-header">Test Plans</h4>
+        </div>
+      </div>
+      <div class='row' id='test-plan-green-release-container'>
         <table class="bordered highlight">
           <thead>
             <tr>
@@ -93,6 +97,7 @@
           </tbody>
         </table>
       </div>
+
     </div>
     <%@ include file="footer.jsp" %>
   </body>
