@@ -19,36 +19,28 @@ package com.android.vts.servlet;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
+import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.FilterUtil;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.*;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.lang.StringUtils;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 public class ShowPlanReleaseServlet extends BaseServlet {
-    private static final String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_plan_release.jsp";
     private static final int MAX_RUNS_PER_PAGE = 90;
 
     @Override
@@ -99,7 +91,31 @@ public class ShowPlanReleaseServlet extends BaseServlet {
     @Override
     public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        String testType =
+                request.getParameter("type") == null ? "plan" : request.getParameter("type");
+
+        RequestDispatcher dispatcher;
+        if (testType.equalsIgnoreCase("plan")) {
+            dispatcher = this.getTestPlanDispatcher(request, response);
+        } else {
+            dispatcher = this.getTestSuiteDispatcher(request, response);
+        }
+
+        try {
+            request.setAttribute("testType", testType);
+            response.setStatus(HttpServletResponse.SC_OK);
+            dispatcher.forward(request, response);
+        } catch (ServletException e) {
+            logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
+        }
+    }
+
+    private RequestDispatcher getTestPlanDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_plan_release.jsp";
+
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
         Long startTime = null; // time in microseconds
         Long endTime = null; // time in microseconds
         if (request.getParameter("startTime") != null) {
@@ -144,8 +160,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 FilterUtil.getTimeFilter(
                         testPlanKey, TestPlanRunEntity.KIND, startTime, endTime, typeFilter);
         Map<String, String[]> parameterMap = request.getParameterMap();
-        List<Filter> userTestFilters =
-                FilterUtil.getUserTestFilters(parameterMap);
+        List<Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap);
         userTestFilters.add(0, testPlanRunFilter);
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
@@ -247,12 +262,23 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         request.setAttribute("endTime", new Gson().toJson(endTime));
         request.setAttribute("branches", new Gson().toJson(DatastoreHelper.getAllBranches()));
         request.setAttribute("devices", new Gson().toJson(DatastoreHelper.getAllBuildFlavors()));
-        response.setStatus(HttpServletResponse.SC_OK);
+
         RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
-        try {
-            dispatcher.forward(request, response);
-        } catch (ServletException e) {
-            logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
-        }
+        return dispatcher;
+    }
+
+    private RequestDispatcher getTestSuiteDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_suite_release.jsp";
+
+        String testPlan = request.getParameter("plan");
+
+        List<TestSuiteResultEntity> testSuiteResultEntityList =
+                ofy().load().type(TestSuiteResultEntity.class).filter("suitePlan", testPlan).list();
+
+        request.setAttribute("plan", request.getParameter("plan"));
+        request.setAttribute("testSuiteResultEntityList", testSuiteResultEntityList);
+        RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
+        return dispatcher;
     }
 }
