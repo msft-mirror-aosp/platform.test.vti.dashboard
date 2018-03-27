@@ -15,6 +15,21 @@ Copyright 2016 Google Inc. All Rights Reserved.
  limitations under the License.
 -->
 
+<listener>
+    <listener-class>
+        com.android.vts.config.ObjectifyListener
+    </listener-class>
+</listener>
+
+<filter>
+    <filter-name>ObjectifyFilter</filter-name>
+    <filter-class>com.googlecode.objectify.ObjectifyFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>ObjectifyFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+
 <servlet>
   <servlet-name>dashboard_main</servlet-name>
   <servlet-class>com.android.vts.servlet.DashboardMainServlet</servlet-class>
@@ -91,27 +106,27 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet>
 
 <servlet>
-  <servlet-name>test_data</servlet-name>
+  <servlet-name>test_data_api</servlet-name>
   <servlet-class>com.android.vts.api.TestDataForDevServlet</servlet-class>
 </servlet>
 
 <servlet>
-  <servlet-name>datastore</servlet-name>
+  <servlet-name>datastore_api</servlet-name>
   <servlet-class>com.android.vts.api.DatastoreRestServlet</servlet-class>
 </servlet>
 
 <servlet>
-  <servlet-name>test_run</servlet-name>
+  <servlet-name>test_run_api</servlet-name>
   <servlet-class>com.android.vts.api.TestRunRestServlet</servlet-class>
 </servlet>
 
 <servlet>
-  <servlet-name>favorites</servlet-name>
+  <servlet-name>favorites_api</servlet-name>
   <servlet-class>com.android.vts.api.UserFavoriteRestServlet</servlet-class>
 </servlet>
 
 <servlet>
-  <servlet-name>bigtable_legacy</servlet-name>
+  <servlet-name>bigtable_legacy_api</servlet-name>
   <servlet-class>com.android.vts.api.BigtableLegacyJsonServlet</servlet-class>
 </servlet>
 
@@ -221,27 +236,27 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet-mapping>
 
 <servlet-mapping>
-  <servlet-name>bigtable_legacy</servlet-name>
+  <servlet-name>bigtable_legacy_api</servlet-name>
   <url-pattern>/api/bigtable/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
-  <servlet-name>test_data</servlet-name>
+  <servlet-name>test_data_api</servlet-name>
   <url-pattern>/api/test_data/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
-  <servlet-name>datastore</servlet-name>
+  <servlet-name>datastore_api</servlet-name>
   <url-pattern>/api/datastore/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
-  <servlet-name>test_run</servlet-name>
+  <servlet-name>test_run_api</servlet-name>
   <url-pattern>/api/test_run/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
-  <servlet-name>favorites</servlet-name>
+  <servlet-name>favorites_api</servlet-name>
   <url-pattern>/api/favorites/*</url-pattern>
 </servlet-mapping>
 
