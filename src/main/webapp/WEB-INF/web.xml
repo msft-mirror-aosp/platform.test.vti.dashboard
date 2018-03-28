@@ -126,6 +126,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet>
 
 <servlet>
+  <servlet-name>test_suite_api</servlet-name>
+  <servlet-class>com.android.vts.api.TestSuiteResultRestServlet</servlet-class>
+</servlet>
+
+<servlet>
   <servlet-name>bigtable_legacy_api</servlet-name>
   <servlet-class>com.android.vts.api.BigtableLegacyJsonServlet</servlet-class>
 </servlet>
@@ -263,6 +268,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 <servlet-mapping>
   <servlet-name>test_acknowledgments</servlet-name>
   <url-pattern>/api/test_acknowledgments/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>test_suite_api</servlet-name>
+  <url-pattern>/api/test_suite/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
