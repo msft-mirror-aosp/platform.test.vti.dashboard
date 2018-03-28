@@ -43,9 +43,6 @@ public class TestSuiteResultEntity {
     /** Test Suite end time field */
     @Getter @Setter Long endTime;
 
-    /** Test Suite about field */
-    @Getter @Setter String about;
-
     /** Test Suite suite plan field */
     @Index @Getter @Setter String suitePlan;
 
@@ -89,7 +86,6 @@ public class TestSuiteResultEntity {
     public TestSuiteResultEntity(
             Long startTime,
             Long endTime,
-            String about,
             String suitePlan,
             String suiteVersion,
             String suiteBuildNumber,
@@ -104,7 +100,6 @@ public class TestSuiteResultEntity {
             int failedTestCaseCount) {
         this.startTime = startTime;
         this.endTime = endTime;
-        this.about = about;
         this.suitePlan = suitePlan;
         this.suiteVersion = suiteVersion;
         this.suiteBuildNumber = suiteBuildNumber;
