@@ -79,6 +79,9 @@ public class TestSuiteResultEntity {
     /** Test Suite test count for failure field */
     @Index @Getter @Setter int failedTestCaseCount;
 
+    /** Test Suite ratio of success to find candidate build */
+    @Index @Getter @Setter int passedTestCaseRatio;
+
     /** When this record was created or updated */
     @Index @Getter Date updated;
 
@@ -112,6 +115,8 @@ public class TestSuiteResultEntity {
         this.buildVendorFingerprint = buildVendorFingerprint;
         this.passedTestCaseCount = passedTestCaseCount;
         this.failedTestCaseCount = failedTestCaseCount;
+        this.passedTestCaseRatio =
+                passedTestCaseCount / (passedTestCaseCount + failedTestCaseCount) * 100;
     }
 
     /** Saving function for the instance of this class */
