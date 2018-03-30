@@ -18,33 +18,40 @@ package com.android.vts.servlet;
 
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
+import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.util.FilterUtil;
+import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 public class ShowGreenReleaseServlet extends BaseServlet {
-    private static final String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_green_release.jsp";
     private static final int MAX_RUNS_PER_PAGE = 9999;
 
     /** Helper class for displaying each device build info on the green build page. */
@@ -185,6 +192,30 @@ public class ShowGreenReleaseServlet extends BaseServlet {
     @Override
     public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+
+        String testType =
+                request.getParameter("type") == null ? "plan" : request.getParameter("type");
+
+        RequestDispatcher dispatcher;
+        if (testType.equalsIgnoreCase("plan")) {
+            dispatcher = this.getTestPlanDispatcher(request, response);
+        } else {
+            dispatcher = this.getTestSuiteDispatcher(request, response);
+        }
+
+        try {
+            request.setAttribute("testType", testType);
+            response.setStatus(HttpServletResponse.SC_OK);
+            dispatcher.forward(request, response);
+        } catch (ServletException e) {
+            logger.log(Level.SEVERE, "Servlet Exception caught : ", e);
+        }
+    }
+
+    private RequestDispatcher getTestPlanDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String GREEN_RELEASE_JSP = "WEB-INF/jsp/show_green_plan_release.jsp";
+
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
         Map<String, List<String>> paramInfoMap =
@@ -283,11 +314,14 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                                     + deviceBuildInfo.getDeviceBuildTarget(),
                                             testPlanRunEntityList);
 
-                                    // The passBuildIdList containing all passed buildId List for device
-                                    List<String> passBuildIdList = testPlanRunEntityList.stream()
-                                          .filter(entity -> entity.failCount == 0L)
-                                          .map(entity -> entity.testBuildId)
-                                          .collect(Collectors.toList());
+                                    // The passBuildIdList containing all passed buildId List for
+                                    // device
+                                    List<String> passBuildIdList =
+                                            testPlanRunEntityList
+                                                    .stream()
+                                                    .filter(entity -> entity.failCount == 0L)
+                                                    .map(entity -> entity.testBuildId)
+                                                    .collect(Collectors.toList());
                                     allPassIdLists.add(passBuildIdList);
                                     logger.log(Level.INFO, "passBuildIdList => " + passBuildIdList);
 
@@ -363,12 +397,99 @@ public class ShowGreenReleaseServlet extends BaseServlet {
 
         request.setAttribute("plan", request.getParameter("plan"));
         request.setAttribute("greenBuildInfo", baseParamMap);
-        response.setStatus(HttpServletResponse.SC_OK);
-        RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
-        try {
-            dispatcher.forward(request, response);
-        } catch (ServletException e) {
-            logger.log(Level.SEVERE, "Servlet Exception caught : ", e);
+        RequestDispatcher dispatcher = request.getRequestDispatcher(GREEN_RELEASE_JSP);
+        return dispatcher;
+    }
+
+    private RequestDispatcher getTestSuiteDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String GREEN_RELEASE_JSP = "WEB-INF/jsp/show_green_suite_release.jsp";
+
+        String testPlan = request.getParameter("plan");
+
+        List<TestSuiteResultEntity> branchTargetInfoList =
+                ofy().load()
+                        .type(TestSuiteResultEntity.class)
+                        .filter("suitePlan", testPlan)
+                        .project("branch")
+                        .distinct(true)
+                        .project("target")
+                        .distinct(true)
+                        .list();
+
+        Map<String, List<String>> paramInfoMap = new HashMap<>();
+        for (TestSuiteResultEntity testSuiteResultEntity : branchTargetInfoList) {
+            String branch = testSuiteResultEntity.getBranch();
+            String target = testSuiteResultEntity.getTarget();
+            if (paramInfoMap.containsKey(branch)) {
+                paramInfoMap.get(branch).add(target);
+            } else {
+                paramInfoMap.put(branch, new LinkedList<>(Arrays.asList(target)));
+            }
         }
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -7);
+        Long oneWeekAgoTimestamp = cal.getTime().getTime() * 1000;
+
+        Map<String, List<DeviceBuildInfo>> baseParamMap = getBasicParamMap(paramInfoMap);
+        baseParamMap.forEach(
+                (branchKey, deviceBuildInfoList) -> {
+                    List<List<String>> allPassIdLists = new ArrayList<>();
+
+                    deviceBuildInfoList.forEach(
+                            deviceBuildInfo -> {
+                                List<String> passBuildIdList =
+                                        ofy().load()
+                                                .type(TestSuiteResultEntity.class)
+                                                .filter("suitePlan", testPlan)
+                                                .filter("branch", branchKey)
+                                                .filter(
+                                                        "target",
+                                                        deviceBuildInfo.getDeviceBuildTarget())
+                                                .filter("failedTestCaseCount", 0)
+                                                .filterKey(
+                                                        ">=",
+                                                        com.googlecode.objectify.Key.create(
+                                                                TestSuiteResultEntity.class,
+                                                                oneWeekAgoTimestamp))
+                                                .project("buildId")
+                                                .list()
+                                                .stream()
+                                                .map(entity -> entity.getBuildId())
+                                                .collect(Collectors.toList());
+                                allPassIdLists.add(passBuildIdList);
+
+                                TestSuiteResultEntity candidateIdEntity =
+                                        ofy().load()
+                                                .type(TestSuiteResultEntity.class)
+                                                .filter("suitePlan", testPlan)
+                                                .filter("branch", branchKey)
+                                                .filter(
+                                                        "target",
+                                                        deviceBuildInfo.getDeviceBuildTarget())
+                                                .filterKey(
+                                                        ">=",
+                                                        com.googlecode.objectify.Key.create(
+                                                                TestSuiteResultEntity.class,
+                                                                oneWeekAgoTimestamp))
+                                                .project("buildId")
+                                                .order("__key__")
+                                                .order("-candidate_percentile")
+                                                .first()
+                                                .safe();
+                                if (candidateIdEntity == null) {
+                                    deviceBuildInfo.setCandidateBuildId("N/A");
+                                } else {
+                                    deviceBuildInfo.setCandidateBuildId(
+                                            candidateIdEntity.getBuildId());
+                                }
+                            });
+                });
+
+        request.setAttribute("plan", request.getParameter("plan"));
+        request.setAttribute("greenBuildInfo", baseParamMap);
+        RequestDispatcher dispatcher = request.getRequestDispatcher(GREEN_RELEASE_JSP);
+        return dispatcher;
     }
 }
