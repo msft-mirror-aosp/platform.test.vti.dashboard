@@ -16,15 +16,18 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.util.FilterUtil;
-import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.PropertyProjection;
+import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 
@@ -47,7 +50,6 @@ import java.util.Set;
 
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
@@ -216,25 +218,31 @@ public class ShowGreenReleaseServlet extends BaseServlet {
             HttpServletRequest request, HttpServletResponse response) {
         String GREEN_RELEASE_JSP = "WEB-INF/jsp/show_green_plan_release.jsp";
 
+        String testPlan = request.getParameter("plan");
+
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -7);
+        Long startTime = cal.getTime().getTime() * 1000;
+        Long endTime = Calendar.getInstance().getTime().getTime() * 1000;
+
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-        Map<String, List<String>> paramInfoMap =
-                new HashMap<String, List<String>>() {
-                    {
-                        put("master", Arrays.asList("sailfish-userdebug", "marlin-userdebug"));
-                        put(
-                                "oc-mr1",
-                                Arrays.asList(
-                                        "sailfish-userdebug",
-                                        "marlin-userdebug",
-                                        "taimen-userdebug",
-                                        "walleye-userdebug",
-                                        "aosp_arm_a-userdebug"));
-                        put("oc", Arrays.asList("sailfish-userdebug", "marlin-userdebug"));
-                    }
-                };
+        Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND)
+                .setAncestor(KeyFactory.createKey(TestPlanEntity.KIND, testPlan))
+                .addProjection(new PropertyProjection(DeviceInfoEntity.BRANCH, String.class))
+                .addProjection(new PropertyProjection(DeviceInfoEntity.BUILD_FLAVOR, String.class))
+                .setDistinct(true);
 
-        String testPlan = request.getParameter("plan");
+        Map<String, List<String>> paramInfoMap = new HashMap<>();
+        for (Entity entity : datastore.prepare(deviceInfoQuery).asIterable()) {
+            String branch = entity.getProperty(DeviceInfoEntity.BRANCH).toString();
+            String target = entity.getProperty(DeviceInfoEntity.BUILD_FLAVOR).toString();
+            if (paramInfoMap.containsKey(branch)) {
+                paramInfoMap.get(branch).add(target);
+            } else {
+                paramInfoMap.put(branch, new LinkedList<>(Arrays.asList(target)));
+            }
+        }
 
         Map<String, List<DeviceBuildInfo>> baseParamMap = getBasicParamMap(paramInfoMap);
         baseParamMap.forEach(
@@ -254,11 +262,6 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                                         });
                                             }
                                         };
-
-                                Calendar cal = Calendar.getInstance();
-                                cal.add(Calendar.DATE, -7);
-                                Long startTime = cal.getTime().getTime() * 1000;
-                                Long endTime = Calendar.getInstance().getTime().getTime() * 1000;
 
                                 SortDirection dir = SortDirection.DESCENDING;
 

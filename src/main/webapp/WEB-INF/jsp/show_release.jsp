@@ -36,10 +36,10 @@
 
           <ul class="tabs">
             <li class="tab col s6" id="planTabLink">
-              <a class="${testType == 'plan' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=plan"><h5>Test Plans</h5></a>
+              <a class="${testType == 'plan' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=plan">Test Plans</a>
             </li>
             <li class="tab col s6" id="suiteTabLink">
-              <a class="${testType == 'suite' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=suite"><h5>Suite Test Plans</h5></a>
+              <a class="${testType == 'suite' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=suite">Suite Test Plans</a>
             </li>
           </ul>
 
