@@ -40,33 +40,59 @@
         </div>
       </div>
 
-      <div class='row' id='test-suite-green-release-container'>
-        <div class="col s12">
-          <table class="bordered highlight">
-            <thead>
-              <tr>
-                <th>Branch</th>
-                <th>Target</th>
-                <th>Build ID</th>
-                <th>Suite Plan</th>
-                <th>System Fingerprint</th>
-                <th>Vendor Fingerprint</th>
-              </tr>
-            </thead>
-            <tbody>
-            <c:forEach var="testSuiteResultEntity" items="${testSuiteResultEntityList}">
-              <tr>
-                <td><c:out value="${testSuiteResultEntity.branch}"></c:out></td>
-                <td><c:out value="${testSuiteResultEntity.target}"></c:out></td>
-                <td><c:out value="${testSuiteResultEntity.buildId}"></c:out></td>
-                <td><c:out value="${testSuiteResultEntity.suitePlan}"></c:out></td>
-                <td><c:out value="${testSuiteResultEntity.buildSystemFingerprint}"></c:out></td>
-                <td><c:out value="${testSuiteResultEntity.buildVendorFingerprint}"></c:out></td>
-              </tr>
-            </c:forEach>
-            </tbody>
-          </table>
-        </div>
+      <div class='row' id='test-plan-green-release-container'>
+        <table class="bordered highlight">
+          <thead>
+          <tr>
+            <th>Branch</th>
+            <th>Last Finished Build</th>
+            <th>Last Green Build</th>
+          </tr>
+          </thead>
+
+          <tbody>
+          <c:forEach var="branchList" items="${greenBuildInfo}">
+            <tr>
+              <td> <c:out value="${branchList.key}"></c:out> </td>
+              <td>
+                <c:forEach varStatus="deviceLoop" var="deviceBuildInfo" items="${branchList.value}">
+                  <p>
+                    <c:out value="${deviceBuildInfo.deviceBuildTarget}"></c:out> :
+                    <c:choose>
+                      <c:when test="${deviceBuildInfo.candidateBuildId eq 'No Test Results'}">
+                        <c:out value="${deviceBuildInfo.candidateBuildId}"></c:out>
+                      </c:when>
+                      <c:otherwise>
+                        <c:out value="${deviceBuildInfo.candidateBuildId}"></c:out>
+                      </c:otherwise>
+                    </c:choose>
+                  </p>
+                  <c:if test="${!deviceLoop.last}">
+                    <hr/>
+                  </c:if>
+                </c:forEach>
+              </td>
+              <td>
+                <c:forEach varStatus="deviceLoop" var="deviceBuildInfo" items="${branchList.value}">
+                  <p>
+                    <c:choose>
+                      <c:when test="${deviceBuildInfo.greenBuildId eq 'N/A'}">
+                        <c:out value="${deviceBuildInfo.greenBuildId}"></c:out>
+                      </c:when>
+                      <c:otherwise>
+                        <c:out value="${deviceBuildInfo.greenBuildId}"></c:out>
+                      </c:otherwise>
+                    </c:choose>
+                  </p>
+                  <c:if test="${!deviceLoop.last}">
+                    <hr/>
+                  </c:if>
+                </c:forEach>
+              </td>
+            </tr>
+          </c:forEach>
+          </tbody>
+        </table>
       </div>
 
     </div>
