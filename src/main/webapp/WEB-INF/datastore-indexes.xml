@@ -95,4 +95,10 @@
     <property name="buildFlavor" direction="asc"/>
     <property name="startTime" direction="asc"/>
   </datastore-index>
+
+  <datastore-index kind="DeviceInfo" ancestor="true" source="manual">
+    <property name="branch" direction="asc"/>
+    <property name="buildFlavor" direction="asc"/>
+  </datastore-index>
+
 </datastore-indexes>
