@@ -16,7 +16,19 @@
 
 package com.android.vts.api;
 
-import com.android.vts.entity.*;
+import com.android.vts.entity.BranchEntity;
+import com.android.vts.entity.BuildTargetEntity;
+import com.android.vts.entity.CoverageEntity;
+import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.ProfilingPointRunEntity;
+import com.android.vts.entity.TestCaseRunEntity;
+import com.android.vts.entity.TestEntity;
+import com.android.vts.entity.TestPlanEntity;
+import com.android.vts.entity.TestPlanRunEntity;
+import com.android.vts.entity.TestRunEntity;
+import com.android.vts.entity.TestSuiteResultEntity;
+import com.android.vts.entity.TestStatusEntity;
+
 import com.android.vts.entity.TestRunEntity.TestRunType;
 import com.android.vts.entity.TestStatusEntity.TestCaseReference;
 import com.google.appengine.api.datastore.DatastoreFailureException;
@@ -38,6 +50,8 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -175,8 +189,8 @@ public class TestDataForDevServlet extends HttpServlet {
                                 idx -> {
                                     TestSuiteResultEntity ttestSuiteResultEntity =
                                             new TestSuiteResultEntity(
-                                                    rand.nextLong(),
-                                                    rand.nextLong(),
+                                                    Instant.now().minus(rand.nextInt(100), ChronoUnit.DAYS).getEpochSecond(),
+                                                    Instant.now().minus(rand.nextInt(100), ChronoUnit.DAYS).getEpochSecond(),
                                                     "Suite Test Plan",
                                                     "Suite Version " + idx,
                                                     "Suite Build Number " + idx,
@@ -184,7 +198,7 @@ public class TestDataForDevServlet extends HttpServlet {
                                                     rand.nextInt(),
                                                     branch,
                                                     target,
-                                                    Long.toString(rand.nextLong()),
+                                                    Long.toString(Math.abs(rand.nextLong())),
                                                     "Build System Fingerprint " + idx,
                                                     "Build Vendor Fingerprint " + idx,
                                                     rand.nextInt(),
