@@ -16,18 +16,8 @@
 
 package com.android.vts.api;
 
-import com.android.vts.entity.BranchEntity;
-import com.android.vts.entity.BuildTargetEntity;
-import com.android.vts.entity.CoverageEntity;
-import com.android.vts.entity.DeviceInfoEntity;
-import com.android.vts.entity.ProfilingPointRunEntity;
-import com.android.vts.entity.TestCaseRunEntity;
-import com.android.vts.entity.TestEntity;
-import com.android.vts.entity.TestPlanEntity;
-import com.android.vts.entity.TestPlanRunEntity;
-import com.android.vts.entity.TestRunEntity;
+import com.android.vts.entity.*;
 import com.android.vts.entity.TestRunEntity.TestRunType;
-import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.TestStatusEntity.TestCaseReference;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
@@ -48,14 +38,11 @@ import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -173,6 +160,65 @@ public class TestDataForDevServlet extends HttpServlet {
         public String toString() {
             return "(" + testPlanList + ")";
         }
+    }
+
+    private Map<String, Object> generateSuiteTestData(HttpServletRequest request, HttpServletResponse response) {
+        Map<String, Object> resultMap = new HashMap<>();
+        Random rand = new Random();
+        List<String> branchList = Arrays.asList("master", "oc_mr", "oc");
+        List<String> targetList = Arrays.asList("sailfish-userdebug", "marlin-userdebug", "taimen-userdebug",
+                "walleye-userdebug", "aosp_arm_a-userdebug");
+        branchList.forEach(branch -> {
+            targetList.forEach(target -> {
+                IntStream.range(0, 10)
+                        .forEach(
+                                idx -> {
+                                    TestSuiteResultEntity ttestSuiteResultEntity =
+                                            new TestSuiteResultEntity(
+                                                    rand.nextLong(),
+                                                    rand.nextLong(),
+                                                    "Suite Test Plan",
+                                                    "Suite Version " + idx,
+                                                    "Suite Build Number " + idx,
+                                                    rand.nextInt(),
+                                                    rand.nextInt(),
+                                                    branch,
+                                                    target,
+                                                    Long.toString(rand.nextLong()),
+                                                    "Build System Fingerprint " + idx,
+                                                    "Build Vendor Fingerprint " + idx,
+                                                    rand.nextInt(),
+                                                    rand.nextInt()
+                                            );
+
+                                    ttestSuiteResultEntity.save();
+                                });
+            });
+        });
+        resultMap.put("result", "successfully generated!");
+        return resultMap;
+    }
+
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String requestUri = request.getRequestURI();
+        String requestArgs = request.getQueryString();
+
+        Map<String, Object> resultMap = new HashMap<>();
+        String pathInfo = requestUri.replace("/api/test_data/", "");
+        switch (pathInfo) {
+            case "suite":
+                resultMap = this.generateSuiteTestData(request, response);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid path info of URL");
+        }
+
+        String json = new Gson().toJson(resultMap);
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(json);
     }
 
     /** Add mock data to local dev datastore. */
