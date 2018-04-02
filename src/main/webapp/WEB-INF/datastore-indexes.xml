@@ -101,4 +101,26 @@
     <property name="buildFlavor" direction="asc"/>
   </datastore-index>
 
+  <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
+    <property name="suitePlan" direction="asc"/>
+    <property name="branch" direction="asc"/>
+    <property name="target" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
+    <property name="branch" direction="asc"/>
+    <property name="failedTestCaseCount" direction="asc"/>
+    <property name="suitePlan" direction="asc"/>
+    <property name="target" direction="asc"/>
+    <property name="__key__" direction="asc"/>
+    <property name="buildId" direction="asc"/>
+  </datastore-index>
+
+  <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
+    <property name="branch" direction="asc"/>
+    <property name="suitePlan" direction="asc"/>
+    <property name="target" direction="asc"/>
+    <property name="__key__" direction="asc"/>
+    <property name="buildId" direction="asc"/>
+  </datastore-index>
 </datastore-indexes>
