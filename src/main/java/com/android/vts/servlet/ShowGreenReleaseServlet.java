@@ -227,11 +227,14 @@ public class ShowGreenReleaseServlet extends BaseServlet {
 
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-        Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND)
-                .setAncestor(KeyFactory.createKey(TestPlanEntity.KIND, testPlan))
-                .addProjection(new PropertyProjection(DeviceInfoEntity.BRANCH, String.class))
-                .addProjection(new PropertyProjection(DeviceInfoEntity.BUILD_FLAVOR, String.class))
-                .setDistinct(true);
+        Query deviceInfoQuery =
+                new Query(DeviceInfoEntity.KIND)
+                        .setAncestor(KeyFactory.createKey(TestPlanEntity.KIND, testPlan))
+                        .addProjection(
+                                new PropertyProjection(DeviceInfoEntity.BRANCH, String.class))
+                        .addProjection(
+                                new PropertyProjection(DeviceInfoEntity.BUILD_FLAVOR, String.class))
+                        .setDistinct(true);
 
         Map<String, List<String>> paramInfoMap = new HashMap<>();
         for (Entity entity : datastore.prepare(deviceInfoQuery).asIterable()) {
@@ -382,9 +385,10 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                                     .stream()
                                                     .filter(
                                                             entity ->
-                                                                    entity.testBuildId
-                                                                            .equalsIgnoreCase(
-                                                                                    greenBuildId))
+                                                                    entity.failCount == 0L
+                                                                            && entity.testBuildId
+                                                                                    .equalsIgnoreCase(
+                                                                                            greenBuildId))
                                                     .findFirst();
                                     // Setting the greenBuildId value and timestamp to
                                     // deviceBuildInfo object
@@ -478,9 +482,9 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                                                 oneWeekAgoTimestamp))
                                                 .project("buildId")
                                                 .order("__key__")
-                                                .order("-candidate_percentile")
+                                                .order("-passedTestCaseRatio")
                                                 .first()
-                                                .safe();
+                                                .now();
                                 if (candidateIdEntity == null) {
                                     deviceBuildInfo.setCandidateBuildId("N/A");
                                 } else {
