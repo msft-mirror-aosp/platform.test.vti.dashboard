@@ -22,6 +22,7 @@ import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.FilterUtil;
+import com.android.vts.util.Pagination;
 import com.google.appengine.api.datastore.*;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
@@ -272,12 +273,22 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_suite_release.jsp";
 
         String testPlan = request.getParameter("plan");
+        int page = request.getParameter("page") == null ? 1 : Integer.valueOf(request.getParameter("page"));
+        String nextPageToken = request.getParameter("nextPageToken") == null ? "" : request.getParameter("nextPageToken");
 
-        List<TestSuiteResultEntity> testSuiteResultEntityList =
-                ofy().load().type(TestSuiteResultEntity.class).filter("suitePlan", testPlan).list();
+        com.googlecode.objectify.cmd.Query<TestSuiteResultEntity> testSuiteResultEntityQuery = ofy().load().type(TestSuiteResultEntity.class).filter("suitePlan", testPlan).limit(105);
+
+        Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination = new Pagination(testSuiteResultEntityQuery, page, Pagination.DEFAULT_PAGE_SIZE, nextPageToken);
+
+        logger.log(Level.INFO, "list => " + testSuiteResultEntityPagination.getList());
+        logger.log(Level.INFO, "next page count token => " + testSuiteResultEntityPagination.getNextPageCountToken());
+        logger.log(Level.INFO, "page min range => " + testSuiteResultEntityPagination.getMinPageRange());
+        logger.log(Level.INFO, "page max range => " + testSuiteResultEntityPagination.getMaxPageRange());
+        logger.log(Level.INFO, "page size => " + testSuiteResultEntityPagination.getPageSize());
+        logger.log(Level.INFO, "total count => " + testSuiteResultEntityPagination.getTotalCount());
 
         request.setAttribute("plan", request.getParameter("plan"));
-        request.setAttribute("testSuiteResultEntityList", testSuiteResultEntityList);
+        request.setAttribute("testSuiteResultEntityPagination", testSuiteResultEntityPagination);
         RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
         return dispatcher;
     }
