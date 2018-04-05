@@ -101,6 +101,12 @@
     <property name="buildFlavor" direction="asc"/>
   </datastore-index>
 
+  <datastore-index kind="TestSuiteFileEntity" ancestor="false" source="manual">
+    <property name="day" direction="asc"/>
+    <property name="month" direction="asc"/>
+    <property name="year" direction="asc"/>
+  </datastore-index>
+
   <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
     <property name="suitePlan" direction="asc"/>
     <property name="branch" direction="asc"/>
