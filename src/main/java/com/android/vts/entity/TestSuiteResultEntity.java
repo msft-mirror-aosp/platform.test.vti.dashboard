@@ -38,7 +38,7 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 public class TestSuiteResultEntity {
 
     /** Test Suite start time field */
-    @Id Long startTime;
+    @Id @Getter @Setter Long startTime;
 
     /** Test Suite end time field */
     @Getter @Setter Long endTime;
