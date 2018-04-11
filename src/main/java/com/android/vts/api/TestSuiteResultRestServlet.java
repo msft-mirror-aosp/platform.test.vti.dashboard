@@ -16,6 +16,7 @@
 
 package com.android.vts.api;
 
+import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.proto.TestSuiteResultMessageProto.TestSuiteResultMessage;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -24,6 +25,7 @@ import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Tokeninfo;
 import com.google.gson.Gson;
+import com.googlecode.objectify.Key;
 import org.apache.commons.codec.binary.Base64;
 
 import javax.servlet.http.HttpServlet;
@@ -73,8 +75,10 @@ public class TestSuiteResultRestServlet extends HttpServlet {
             Tokeninfo tokenInfo = oauth2.tokeninfo().setAccessToken(accessToken).execute();
 
             if (tokenInfo.getIssuedTo().equals(SERVICE_CLIENT_ID)) {
+                Key<TestSuiteFileEntity> testSuiteFileParent = Key.create(TestSuiteFileEntity.class, "suite_result/2019/04/06/132343.bin");
                 TestSuiteResultEntity testSuiteResultEntity =
                         new TestSuiteResultEntity(
+                                testSuiteFileParent,
                                 testSuiteResultMessage.getStartTime(),
                                 testSuiteResultMessage.getEndTime(),
                                 testSuiteResultMessage.getSuitePlan(),
