@@ -26,6 +26,7 @@ import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestRunEntity;
+import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.entity.TestStatusEntity;
 
@@ -52,7 +53,15 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
@@ -187,8 +196,10 @@ public class TestDataForDevServlet extends HttpServlet {
                 IntStream.range(0, 10)
                         .forEach(
                                 idx -> {
+                                    com.googlecode.objectify.Key<TestSuiteFileEntity> testSuiteFileParent = com.googlecode.objectify.Key.create(TestSuiteFileEntity.class, "suite_result/2019/04/06/132343.bin");
                                     TestSuiteResultEntity ttestSuiteResultEntity =
                                             new TestSuiteResultEntity(
+                                                    testSuiteFileParent,
                                                     Instant.now().minus(rand.nextInt(100), ChronoUnit.DAYS).getEpochSecond(),
                                                     Instant.now().minus(rand.nextInt(100), ChronoUnit.DAYS).getEpochSecond(),
                                                     "Suite Test Plan",

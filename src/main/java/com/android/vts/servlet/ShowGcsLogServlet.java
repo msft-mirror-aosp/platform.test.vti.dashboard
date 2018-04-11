@@ -16,6 +16,7 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.util.GcsHelper;
 import com.google.appengine.api.memcache.ErrorHandlers;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
@@ -53,8 +54,6 @@ public class ShowGcsLogServlet extends BaseServlet {
 
     private static final String GCS_LOG_JSP = "WEB-INF/jsp/show_gcs_log.jsp";
 
-    /** Google Cloud Storage project ID */
-    private static final String GCS_PROJECT_ID = System.getProperty("GCS_PROJECT_ID");
     /** Google Cloud Storage project's key file to access the storage */
     private static final String GCS_KEY_FILE = System.getProperty("GCS_KEY_FILE");
     /** Google Cloud Storage project's default bucket name for vtslab log files */
@@ -75,23 +74,16 @@ public class ShowGcsLogServlet extends BaseServlet {
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
-        keyFileInputStream =
+
+        this.keyFileInputStream =
                 this.getServletContext().getResourceAsStream("/WEB-INF/keys/" + GCS_KEY_FILE);
 
-        if (keyFileInputStream == null) {
-            logger.log(Level.SEVERE, "Error GCS key file is not exiting. Check key file!");
+        Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
+        if (optionalStorage.isPresent()) {
+            this.storage = optionalStorage.get();
         } else {
-            try {
-                storage =
-                        StorageOptions.newBuilder()
-                                .setProjectId(GCS_PROJECT_ID)
-                                .setCredentials(
-                                        ServiceAccountCredentials.fromStream(keyFileInputStream))
-                                .build()
-                                .getService();
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Error on creating storage instance!");
-            }
+            logger.log(Level.SEVERE, "Error on getting storage instance!");
+            throw new ServletException("Creating storage instance exception!");
         }
         syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
     }
