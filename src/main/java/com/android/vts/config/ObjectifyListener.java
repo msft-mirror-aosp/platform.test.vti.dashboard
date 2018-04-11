@@ -16,6 +16,7 @@
 
 package com.android.vts.config;
 
+import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.googlecode.objectify.ObjectifyFactory;
 import com.googlecode.objectify.ObjectifyService;
@@ -43,6 +44,7 @@ public class ObjectifyListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         ObjectifyFactory objectifyFactory = ObjectifyService.factory();
+        objectifyFactory.register(TestSuiteFileEntity.class);
         objectifyFactory.register(TestSuiteResultEntity.class);
         objectifyFactory.begin();
         logger.log(Level.INFO, "Value Initialized from context.");

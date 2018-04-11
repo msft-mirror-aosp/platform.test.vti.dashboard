@@ -16,10 +16,12 @@
 
 package com.android.vts.entity;
 
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
+import com.googlecode.objectify.annotation.Parent;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,6 +38,9 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 public class TestSuiteResultEntity {
+
+    @Parent
+    Key<TestSuiteFileEntity> testSuiteFileEntityKey;
 
     /** Test Suite start time field */
     @Id @Getter @Setter Long startTime;
@@ -87,6 +92,7 @@ public class TestSuiteResultEntity {
 
     /** Construction function for TestSuiteResultEntity Class */
     public TestSuiteResultEntity(
+            Key<TestSuiteFileEntity> testSuiteFileEntityKey,
             Long startTime,
             Long endTime,
             String suitePlan,
@@ -101,6 +107,7 @@ public class TestSuiteResultEntity {
             String buildVendorFingerprint,
             int passedTestCaseCount,
             int failedTestCaseCount) {
+        this.testSuiteFileEntityKey = testSuiteFileEntityKey;
         this.startTime = startTime;
         this.endTime = endTime;
         this.suitePlan = suitePlan;
@@ -115,14 +122,19 @@ public class TestSuiteResultEntity {
         this.buildVendorFingerprint = buildVendorFingerprint;
         this.passedTestCaseCount = passedTestCaseCount;
         this.failedTestCaseCount = failedTestCaseCount;
-        this.passedTestCaseRatio =
-                passedTestCaseCount / (passedTestCaseCount + failedTestCaseCount) * 100;
+
+        int totalTestCaseCount = passedTestCaseCount + failedTestCaseCount;
+        if ( totalTestCaseCount <= 0 ) {
+            this.passedTestCaseRatio = 0;
+        } else {
+            this.passedTestCaseRatio = passedTestCaseCount / totalTestCaseCount * 100;
+        }
     }
 
     /** Saving function for the instance of this class */
     public void save() {
         this.updated = new Date();
-        ofy().defer().save().entity(this);
+        ofy().save().entity(this).now();
     }
 
     public List<? extends TestSuiteResultEntity> getTestSuitePlans() {
