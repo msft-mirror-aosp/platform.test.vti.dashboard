@@ -42,7 +42,7 @@
         <div class="col s12">
 
             <ul data-collapsible="expandable" class="collapsible popout test-runs">
-                <c:forEach var="testSuiteResultEntity" items="${testSuiteResultEntityList}">
+                <c:forEach var="testSuiteResultEntity" items="${testSuiteResultEntityPagination.list}">
                     <li class="test-run-container">
                     <div test="SampleShellTest" time="1522488372555217" class="collapsible-header test-run">
                         <span class="test-run-metadata">
@@ -57,7 +57,7 @@
                             (<c:out value="${executionTime}"></c:out>s)
                         </span>
                         <span class="indicator right center green">
-                            <c:out value="${testSuiteResultEntity.passedTestCaseRatio}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseRatio + testSuiteResultEntity.failedTestCaseCount}"></c:out>
+                            <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
                         </span>
                         <i class="material-icons expand-arrow">expand_more</i>
                     </div>
@@ -83,6 +83,44 @@
                 </c:forEach>
             </ul>
 
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col s12">
+          <ul class="pagination">
+            <c:choose>
+                <c:when test="${testSuiteResultEntityPagination.minPageRange gt testSuiteResultEntityPagination.pageSize}">
+                    <li class="waves-effect">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}">
+                            <i class="material-icons">chevron_left</i>
+                        </a>
+                    </li>
+                </c:when>
+                <c:otherwise>
+
+                </c:otherwise>
+            </c:choose>
+            <c:forEach var="pageLoop" begin="${testSuiteResultEntityPagination.minPageRange}" end="${testSuiteResultEntityPagination.maxPageRange}">
+              <li class="waves-effect">
+                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
+                      <c:out value="${pageLoop}" />
+                  </a>
+              </li>
+            </c:forEach>
+            <c:choose>
+                <c:when test="${testSuiteResultEntityPagination.maxPages gt testSuiteResultEntityPagination.pageSize}">
+                    <li class="waves-effect">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}">
+                            <i class="material-icons">chevron_right</i>
+                        </a>
+                    </li>
+                </c:when>
+                <c:otherwise>
+
+                </c:otherwise>
+            </c:choose>
+          </ul>
         </div>
       </div>
 

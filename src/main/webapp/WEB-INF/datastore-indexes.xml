@@ -109,6 +109,11 @@
 
   <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
     <property name="suitePlan" direction="asc"/>
+    <property name="__key__" direction="desc"/>
+  </datastore-index>
+
+  <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
+    <property name="suitePlan" direction="asc"/>
     <property name="branch" direction="asc"/>
     <property name="target" direction="asc"/>
   </datastore-index>
