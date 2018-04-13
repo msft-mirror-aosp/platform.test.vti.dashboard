@@ -39,6 +39,7 @@
     <gcs.projectID></gcs.projectID>
     <gcs.keyFile></gcs.keyFile>
     <gcs.bucketName></gcs.bucketName>
+    <gcs.suiteTestFolderName></gcs.suiteTestFolderName>
 
     <maven.compiler.target>1.8</maven.compiler.target>
     <maven.compiler.source>1.8</maven.compiler.source>

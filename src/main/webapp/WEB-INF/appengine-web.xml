@@ -30,6 +30,7 @@
     <property name="GCS_PROJECT_ID" value="${gcs.projectID}" />
     <property name="GCS_KEY_FILE" value="${gcs.keyFile}" />
     <property name="GCS_BUCKET_NAME" value="${gcs.bucketName}" />
+    <property name="GCS_SUITE_TEST_FOLDER_NAME" value="${gcs.suiteTestFolderName}" />
   </system-properties>
 
 </appengine-web-app>
