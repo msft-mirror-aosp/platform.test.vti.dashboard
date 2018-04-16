@@ -38,11 +38,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 public class ShowPlanReleaseServlet extends BaseServlet {
     private static final int MAX_RUNS_PER_PAGE = 90;
+
+    /** the previous cursor string token list where to start */
+    private static final LinkedHashSet<String> pageCountTokenSet = new LinkedHashSet<>();
 
     @Override
     public PageType getNavParentType() {
@@ -273,21 +277,51 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_suite_release.jsp";
 
         String testPlan = request.getParameter("plan");
-        int page = request.getParameter("page") == null ? 1 : Integer.valueOf(request.getParameter("page"));
-        String nextPageToken = request.getParameter("nextPageToken") == null ? "" : request.getParameter("nextPageToken");
+        int page =
+                Objects.isNull(request.getParameter("page"))
+                        ? 1
+                        : Integer.valueOf(request.getParameter("page"));
+        String nextPageToken =
+                Objects.isNull(request.getParameter("nextPageToken"))
+                        ? ""
+                        : request.getParameter("nextPageToken");
 
-        com.googlecode.objectify.cmd.Query<TestSuiteResultEntity> testSuiteResultEntityQuery = ofy().load().type(TestSuiteResultEntity.class).filter("suitePlan", testPlan).limit(105);
+        com.googlecode.objectify.cmd.Query<TestSuiteResultEntity> testSuiteResultEntityQuery =
+                ofy().load().type(TestSuiteResultEntity.class).filter("suitePlan", testPlan).orderKey(true);
 
-        Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination = new Pagination(testSuiteResultEntityQuery, page, Pagination.DEFAULT_PAGE_SIZE, nextPageToken);
+        Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
+                new Pagination(
+                        testSuiteResultEntityQuery,
+                        page,
+                        Pagination.DEFAULT_PAGE_SIZE,
+                        nextPageToken,
+                        pageCountTokenSet);
+
+        String nextPageTokenPagination = testSuiteResultEntityPagination.getNextPageCountToken();
+        if (nextPageTokenPagination == "") {
+
+        } else {
+            this.pageCountTokenSet.add(nextPageTokenPagination);
+        }
+        logger.log(Level.INFO, "pageCountTokenSet => " + pageCountTokenSet);
 
         logger.log(Level.INFO, "list => " + testSuiteResultEntityPagination.getList());
-        logger.log(Level.INFO, "next page count token => " + testSuiteResultEntityPagination.getNextPageCountToken());
-        logger.log(Level.INFO, "page min range => " + testSuiteResultEntityPagination.getMinPageRange());
-        logger.log(Level.INFO, "page max range => " + testSuiteResultEntityPagination.getMaxPageRange());
+        logger.log(
+                Level.INFO,
+                "next page count token => "
+                        + testSuiteResultEntityPagination.getNextPageCountToken());
+        logger.log(
+                Level.INFO,
+                "page min range => " + testSuiteResultEntityPagination.getMinPageRange());
+        logger.log(
+                Level.INFO,
+                "page max range => " + testSuiteResultEntityPagination.getMaxPageRange());
         logger.log(Level.INFO, "page size => " + testSuiteResultEntityPagination.getPageSize());
         logger.log(Level.INFO, "total count => " + testSuiteResultEntityPagination.getTotalCount());
 
-        request.setAttribute("plan", request.getParameter("plan"));
+        request.setAttribute("page", page);
+        request.setAttribute("testType", "suite");
+        request.setAttribute("plan", testPlan);
         request.setAttribute("testSuiteResultEntityPagination", testSuiteResultEntityPagination);
         RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
         return dispatcher;
