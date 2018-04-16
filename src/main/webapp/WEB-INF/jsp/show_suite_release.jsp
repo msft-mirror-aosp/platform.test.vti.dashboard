@@ -19,6 +19,7 @@
 <%@ taglib prefix='fmt' uri='http://java.sun.com/jsp/jstl/fmt'%>
 <jsp:useBean id="startDateObject" class="java.util.Date"/>
 <jsp:useBean id="endDateObject" class="java.util.Date"/>
+<c:set var="timeZone" value="America/Los_Angeles"/>
 
 <html>
   <%@ include file='header.jsp' %>
@@ -52,7 +53,7 @@
                             <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
                             <jsp:setProperty name="startDateObject" property="time" value="${testSuiteResultEntity.startTime}"/>
                             <jsp:setProperty name="endDateObject" property="time" value="${testSuiteResultEntity.endTime}"/>
-                            <fmt:formatDate value="${startDateObject}" pattern="yyyy-MM-dd HH:mm:ss" /> - <fmt:formatDate value="${endDateObject}" pattern="yyyy-MM-dd HH:mm:ss z" />
+                            <fmt:formatDate value="${startDateObject}" pattern="yyyy-MM-dd HH:mm:ss" timeZone="${timeZone}" /> - <fmt:formatDate value="${endDateObject}" pattern="yyyy-MM-dd HH:mm:ss z" timeZone="${timeZone}" />
                             <c:set var="executionTime" scope="page" value="${(testSuiteResultEntity.endTime - testSuiteResultEntity.startTime) / 1000}"/>
                             (<c:out value="${executionTime}"></c:out>s)
                         </span>
