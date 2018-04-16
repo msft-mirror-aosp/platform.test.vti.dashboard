@@ -64,6 +64,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -136,61 +137,70 @@ public class VtsSuiteTestJobServlet extends HttpServlet {
 
         logger.log(Level.INFO, "Job Started!!!!!!!!!!!!!");
 
-        Queue queue = QueueFactory.getQueue(QUEUE);
+        long currentMicroSecond = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
+        String todayDateString = TimeUtil.getDateString(currentMicroSecond);
+        String[] dateArray = todayDateString.split("-");
+        if (dateArray.length == 3) {
 
-        List<TaskOptions> tasks = new ArrayList<>();
+            Queue queue = QueueFactory.getQueue(QUEUE);
 
-        String fileSeparator = FileSystems.getDefault().getSeparator();
-        Date today = new Date();
-        String year = new SimpleDateFormat("yyyy").format(today);
-        String month = new SimpleDateFormat("MM").format(today);
-        String day = new SimpleDateFormat("dd").format(today);
+            List<TaskOptions> tasks = new ArrayList<>();
 
-        List<String> pathList = Arrays.asList(GCS_SUITE_TEST_FOLDER_NAME, year, month, day);
-        Path pathInfo = Paths.get(String.join(fileSeparator, pathList));
+            String fileSeparator = FileSystems.getDefault().getSeparator();
 
-        List<TestSuiteFileEntity> testSuiteFileEntityList =
-                ofy().load()
-                        .type(TestSuiteFileEntity.class)
-                        .filter("year", Integer.parseInt(year))
-                        .filter("month", Integer.parseInt(month))
-                        .filter("day", Integer.parseInt(day))
-                        .list();
+            String year = dateArray[0];
+            String month = dateArray[1];
+            String day = dateArray[2];
 
-        List<String> filePathList =
-                testSuiteFileEntityList
-                        .stream()
-                        .map(testSuiteFile -> testSuiteFile.getFilePath())
-                        .collect(Collectors.toList());
+            List<String> pathList = Arrays.asList(GCS_SUITE_TEST_FOLDER_NAME, year, month, day);
+            Path pathInfo = Paths.get(String.join(fileSeparator, pathList));
 
-        Bucket vtsReportBucket = this.storage.get(GCS_BUCKET_NAME);
+            List<TestSuiteFileEntity> testSuiteFileEntityList =
+                    ofy().load()
+                            .type(TestSuiteFileEntity.class)
+                            .filter("year", Integer.parseInt(year))
+                            .filter("month", Integer.parseInt(month))
+                            .filter("day", Integer.parseInt(day))
+                            .list();
 
-        Storage.BlobListOption[] listOptions =
-                new Storage.BlobListOption[] {
-                    Storage.BlobListOption.prefix(pathInfo.toString() + fileSeparator)
-                };
+            List<String> filePathList =
+                    testSuiteFileEntityList
+                            .stream()
+                            .map(testSuiteFile -> testSuiteFile.getFilePath())
+                            .collect(Collectors.toList());
 
-        Iterable<Blob> blobIterable = vtsReportBucket.list(listOptions).iterateAll();
-        Iterator<Blob> blobIterator = blobIterable.iterator();
-        while (blobIterator.hasNext()) {
-            Blob blob = blobIterator.next();
-            if (blob.isDirectory()) {
-                logger.log(Level.INFO, blob.getName() + " directory will be skipped!");
-            } else {
-                if (filePathList.contains(blob.getName())) {
-                    logger.log(Level.INFO, "filePathList contain => " + blob.getName());
-                } else if (blob.getName().endsWith(fileSeparator)) {
-                    logger.log(Level.INFO, blob.getName() + " endswith slash!");
+            Bucket vtsReportBucket = this.storage.get(GCS_BUCKET_NAME);
+
+            Storage.BlobListOption[] listOptions =
+                    new Storage.BlobListOption[] {
+                        Storage.BlobListOption.prefix(pathInfo.toString() + fileSeparator)
+                    };
+
+            Iterable<Blob> blobIterable = vtsReportBucket.list(listOptions).iterateAll();
+            Iterator<Blob> blobIterator = blobIterable.iterator();
+            while (blobIterator.hasNext()) {
+                Blob blob = blobIterator.next();
+                if (blob.isDirectory()) {
+                    logger.log(Level.INFO, blob.getName() + " directory will be skipped!");
                 } else {
-                    TaskOptions task =
-                            TaskOptions.Builder.withUrl(SUITE_TEST_URL)
-                                    .param("filePath", blob.getName())
-                                    .method(TaskOptions.Method.POST);
-                    tasks.add(task);
+                    if (filePathList.contains(blob.getName())) {
+                        logger.log(Level.INFO, "filePathList contain => " + blob.getName());
+                    } else if (blob.getName().endsWith(fileSeparator)) {
+                        logger.log(Level.INFO, blob.getName() + " endswith slash!");
+                    } else {
+                        TaskOptions task =
+                                TaskOptions.Builder.withUrl(SUITE_TEST_URL)
+                                        .param("filePath", blob.getName())
+                                        .method(TaskOptions.Method.POST);
+                        tasks.add(task);
+                    }
                 }
             }
+            TaskQueueHelper.addToQueue(queue, tasks);
+        } else {
+            throw new IllegalArgumentException(
+                    todayDateString + " date string not in correct format");
         }
-        TaskQueueHelper.addToQueue(queue, tasks);
     }
 
     @Override
