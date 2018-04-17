@@ -51,6 +51,7 @@
                             <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
                             <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
                             <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
+                            <b>LOG Path: </b><c:out value="${testSuiteResultEntity.resultPath}"></c:out><br>
                             <jsp:setProperty name="startDateObject" property="time" value="${testSuiteResultEntity.startTime}"/>
                             <jsp:setProperty name="endDateObject" property="time" value="${testSuiteResultEntity.endTime}"/>
                             <fmt:formatDate value="${startDateObject}" pattern="yyyy-MM-dd HH:mm:ss" timeZone="${timeZone}" /> - <fmt:formatDate value="${endDateObject}" pattern="yyyy-MM-dd HH:mm:ss z" timeZone="${timeZone}" />
