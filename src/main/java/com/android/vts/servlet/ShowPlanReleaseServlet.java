@@ -278,16 +278,19 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         String testPlan = request.getParameter("plan");
         int page =
-                Objects.isNull(request.getParameter("page"))
+                request.getParameter("page") == null
                         ? 1
                         : Integer.valueOf(request.getParameter("page"));
         String nextPageToken =
-                Objects.isNull(request.getParameter("nextPageToken"))
+                request.getParameter("nextPageToken") == null
                         ? ""
                         : request.getParameter("nextPageToken");
 
         com.googlecode.objectify.cmd.Query<TestSuiteResultEntity> testSuiteResultEntityQuery =
-                ofy().load().type(TestSuiteResultEntity.class).filter("suitePlan", testPlan).orderKey(true);
+                ofy().load()
+                        .type(TestSuiteResultEntity.class)
+                        .filter("suitePlan", testPlan)
+                        .limit(105);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
                 new Pagination(
