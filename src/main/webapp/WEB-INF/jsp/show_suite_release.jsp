@@ -19,6 +19,7 @@
 <%@ taglib prefix='fmt' uri='http://java.sun.com/jsp/jstl/fmt'%>
 <jsp:useBean id="startDateObject" class="java.util.Date"/>
 <jsp:useBean id="endDateObject" class="java.util.Date"/>
+<c:set var="timeZone" value="America/Los_Angeles"/>
 
 <html>
   <%@ include file='header.jsp' %>
@@ -42,7 +43,7 @@
         <div class="col s12">
 
             <ul data-collapsible="expandable" class="collapsible popout test-runs">
-                <c:forEach var="testSuiteResultEntity" items="${testSuiteResultEntityList}">
+                <c:forEach var="testSuiteResultEntity" items="${testSuiteResultEntityPagination.list}">
                     <li class="test-run-container">
                     <div test="SampleShellTest" time="1522488372555217" class="collapsible-header test-run">
                         <span class="test-run-metadata">
@@ -50,14 +51,15 @@
                             <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
                             <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
                             <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
+                            <b>LOG Path: </b><c:out value="${testSuiteResultEntity.resultPath}"></c:out><br>
                             <jsp:setProperty name="startDateObject" property="time" value="${testSuiteResultEntity.startTime}"/>
                             <jsp:setProperty name="endDateObject" property="time" value="${testSuiteResultEntity.endTime}"/>
-                            <fmt:formatDate value="${startDateObject}" pattern="yyyy-MM-dd HH:mm:ss" /> - <fmt:formatDate value="${endDateObject}" pattern="yyyy-MM-dd HH:mm:ss z" />
+                            <fmt:formatDate value="${startDateObject}" pattern="yyyy-MM-dd HH:mm:ss" timeZone="${timeZone}" /> - <fmt:formatDate value="${endDateObject}" pattern="yyyy-MM-dd HH:mm:ss z" timeZone="${timeZone}" />
                             <c:set var="executionTime" scope="page" value="${(testSuiteResultEntity.endTime - testSuiteResultEntity.startTime) / 1000}"/>
                             (<c:out value="${executionTime}"></c:out>s)
                         </span>
                         <span class="indicator right center green">
-                            <c:out value="${testSuiteResultEntity.passedTestCaseRatio}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseRatio + testSuiteResultEntity.failedTestCaseCount}"></c:out>
+                            <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
                         </span>
                         <i class="material-icons expand-arrow">expand_more</i>
                     </div>
@@ -83,6 +85,44 @@
                 </c:forEach>
             </ul>
 
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col s12">
+          <ul class="pagination">
+            <c:choose>
+                <c:when test="${testSuiteResultEntityPagination.minPageRange gt testSuiteResultEntityPagination.pageSize}">
+                    <li class="waves-effect">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}">
+                            <i class="material-icons">chevron_left</i>
+                        </a>
+                    </li>
+                </c:when>
+                <c:otherwise>
+
+                </c:otherwise>
+            </c:choose>
+            <c:forEach var="pageLoop" begin="${testSuiteResultEntityPagination.minPageRange}" end="${testSuiteResultEntityPagination.maxPageRange}">
+              <li class="waves-effect">
+                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
+                      <c:out value="${pageLoop}" />
+                  </a>
+              </li>
+            </c:forEach>
+            <c:choose>
+                <c:when test="${testSuiteResultEntityPagination.maxPages gt testSuiteResultEntityPagination.pageSize}">
+                    <li class="waves-effect">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}">
+                            <i class="material-icons">chevron_right</i>
+                        </a>
+                    </li>
+                </c:when>
+                <c:otherwise>
+
+                </c:otherwise>
+            </c:choose>
+          </ul>
         </div>
       </div>
 
