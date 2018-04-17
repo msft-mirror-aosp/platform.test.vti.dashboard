@@ -39,6 +39,10 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @NoArgsConstructor
 public class TestSuiteResultEntity {
 
+    public enum GROUP_TYPE {
+        OTA, SIGNED, TOT
+    }
+
     @Parent
     Key<TestSuiteFileEntity> testSuiteFileEntityKey;
 
@@ -48,13 +52,25 @@ public class TestSuiteResultEntity {
     /** Test Suite end time field */
     @Getter @Setter Long endTime;
 
-    /** Test Suite suite plan field */
+    /** Test Suite group type OTA, Signed, ToT field */
+    @Index @Getter @Setter GROUP_TYPE groupType;
+
+    /** Test Suite result path field */
+    @Getter @Setter String resultPath;
+
+    /** Test Suite host name field */
+    @Getter @Setter String hostName;
+
+    /** Test Suite plan field */
     @Index @Getter @Setter String suitePlan;
 
-    /** Test Suite suite version field */
+    /** Test Suite version field */
     @Getter @Setter String suiteVersion;
 
-    /** Test Suite suite build number field */
+    /** Test Suite name field */
+    @Getter @Setter String suiteName;
+
+    /** Test Suite build number field */
     @Getter @Setter String suiteBuildNumber;
 
     /** Test Suite test finished module count field */
@@ -95,8 +111,11 @@ public class TestSuiteResultEntity {
             Key<TestSuiteFileEntity> testSuiteFileEntityKey,
             Long startTime,
             Long endTime,
+            String resultPath,
+            String hostName,
             String suitePlan,
             String suiteVersion,
+            String suiteName,
             String suiteBuildNumber,
             int modulesDone,
             int modulesTotal,
@@ -110,8 +129,11 @@ public class TestSuiteResultEntity {
         this.testSuiteFileEntityKey = testSuiteFileEntityKey;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.resultPath = resultPath;
+        this.hostName = hostName;
         this.suitePlan = suitePlan;
         this.suiteVersion = suiteVersion;
+        this.suiteName = suiteName;
         this.suiteBuildNumber = suiteBuildNumber;
         this.modulesDone = modulesDone;
         this.modulesTotal = modulesTotal;

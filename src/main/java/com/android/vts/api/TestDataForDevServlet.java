@@ -267,8 +267,11 @@ public class TestDataForDevServlet extends HttpServlet {
                                                                                             100),
                                                                                     ChronoUnit.DAYS)
                                                                             .getEpochSecond(),
+                                                                    pathInfo.toString(),
+                                                                    "Test Place Name -" + idx,
                                                                     "Suite Test Plan",
                                                                     "Suite Version " + idx,
+                                                                    "Suite Test Name",
                                                                     "Suite Build Number " + idx,
                                                                     rand.nextInt(),
                                                                     rand.nextInt(),
