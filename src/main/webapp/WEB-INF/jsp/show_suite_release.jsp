@@ -27,6 +27,11 @@
   <link type='text/css' href='/css/test_results.css' rel='stylesheet'>
   <script type='text/javascript'>
       $(document).ready(function() {
+          $("li.tab").each(function( index ) {
+              $(this).click(function() {
+                  window.open($(this).children().attr("href"), '_self');
+              });
+          });
       });
   </script>
   <body>
@@ -37,6 +42,24 @@
           <h4 id="test-suite-section-header">Test Suites</h4>
         </div>
       </div>
+
+        <div class='row'>
+            <div class='col s12'>
+
+                <ul class="tabs">
+                    <li class="tab col s6" id="otaTabLink">
+                        <a class="${groupType == 'OTA' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=OTA">OTA</a>
+                    </li>
+                    <li class="tab col s6" id="signedTabLink">
+                        <a class="${groupType == 'SIGNED' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=SIGNED">SIGNED</a>
+                    </li>
+                    <li class="tab col s6" id="totTabLink">
+                        <a class="${groupType == 'TOT' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=TOT">TOT</a>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
 
       <div class='row' id='test-suite-green-release-container'>
         <div class="col s12">
@@ -117,7 +140,7 @@
             <c:choose>
                 <c:when test="${testSuiteResultEntityPagination.minPageRange gt testSuiteResultEntityPagination.pageSize}">
                     <li class="waves-effect">
-                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=${groupType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}">
                             <i class="material-icons">chevron_left</i>
                         </a>
                     </li>
@@ -128,7 +151,7 @@
             </c:choose>
             <c:forEach var="pageLoop" begin="${testSuiteResultEntityPagination.minPageRange}" end="${testSuiteResultEntityPagination.maxPageRange}">
               <li class="waves-effect">
-                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
+                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=${groupType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
                       <c:out value="${pageLoop}" />
                   </a>
               </li>
@@ -136,7 +159,7 @@
             <c:choose>
                 <c:when test="${testSuiteResultEntityPagination.maxPages gt testSuiteResultEntityPagination.pageSize}">
                     <li class="waves-effect">
-                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=${groupType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}">
                             <i class="material-icons">chevron_right</i>
                         </a>
                     </li>
