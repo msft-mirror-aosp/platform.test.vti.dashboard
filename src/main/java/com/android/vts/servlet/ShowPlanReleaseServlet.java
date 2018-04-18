@@ -290,7 +290,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 ofy().load()
                         .type(TestSuiteResultEntity.class)
                         .filter("suitePlan", testPlan)
-                        .limit(105);
+                        .orderKey(true);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
                 new Pagination(
@@ -306,6 +306,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         } else {
             this.pageCountTokenSet.add(nextPageTokenPagination);
         }
+
         logger.log(Level.INFO, "pageCountTokenSet => " + pageCountTokenSet);
 
         logger.log(Level.INFO, "list => " + testSuiteResultEntityPagination.getList());
