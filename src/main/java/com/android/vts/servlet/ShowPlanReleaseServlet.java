@@ -55,9 +55,17 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
     @Override
     public List<Page> getBreadcrumbLinks(HttpServletRequest request) {
+        String testType =
+                request.getParameter("type") == null ? "plan" : request.getParameter("type");
         List<Page> links = new ArrayList<>();
         String planName = request.getParameter("plan");
-        links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
+        if (testType.equals("plan")) {
+            links.add(new Page(PageType.RELEASE, "TEST PLANS", "?type=" + testType, true));
+            links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
+        } else {
+            links.add(new Page(PageType.RELEASE, "SUITE TEST PLANS", "?type=" + testType, true));
+            links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName + "&type=" + testType));
+        }
         return links;
     }
 
@@ -301,9 +309,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                         pageCountTokenSet);
 
         String nextPageTokenPagination = testSuiteResultEntityPagination.getNextPageCountToken();
-        if (nextPageTokenPagination == "") {
-
-        } else {
+        if (!nextPageTokenPagination.trim().isEmpty()) {
             this.pageCountTokenSet.add(nextPageTokenPagination);
         }
 

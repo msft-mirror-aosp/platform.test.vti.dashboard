@@ -64,7 +64,12 @@
                             <div class="col s7">
                                 <span class="suite-test-run-metadata">
                                     <b>Host: </b><c:out value="${testSuiteResultEntity.hostName}"></c:out><br>
-                                    <b>LOG Path: </b><c:out value="${testSuiteResultEntity.resultPath}"></c:out><br>
+                                    <b>LOG Path: </b>
+                                        <c:set var="logPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
+                                        <a href="show_gcs_log?path=${logPath}">
+                                            <c:out value="${logPath}"></c:out>
+                                        </a>
+                                    <br>
                                 </span>
                             </div>
                             <div class="col s10">
