@@ -103,14 +103,14 @@ public class Pagination<T> implements Iterable<T> {
                 this.totalCount / this.pageSize + (this.totalCount % this.pageSize == 0 ? 0 : 1);
 
         int iteratorIndex = 0;
-        int startIndex = (page % pageSize == 0 ? 1 : page % pageSize - 1) * pageSize;
+        int startIndex = (page % pageSize == 0 ? 9 : page % pageSize - 1) * pageSize;
 
         QueryResultIterator<T> resultIterator = query.iterator();
         while (resultIterator.hasNext()) {
             if (startIndex <= iteratorIndex && iteratorIndex < startIndex + this.pageSize)
                 this.list.add(resultIterator.next());
             else resultIterator.next();
-            if (iteratorIndex == DEFAULT_PAGE_SIZE * this.pageSize) {
+            if (iteratorIndex == DEFAULT_PAGE_WINDOW * this.pageSize) {
                 this.nextPageCountToken = resultIterator.getCursor().toWebSafeString();
             }
             iteratorIndex++;
