@@ -86,6 +86,12 @@ public abstract class BaseServlet extends HttpServlet {
             this.url = type.defaultUrl + url;
         }
 
+        public Page(PageType type, String name, String url, Boolean withoutDefault) {
+            this.type = type;
+            this.name = name;
+            this.url = type.defaultUrl + url;
+        }
+
         public Page(PageType type, String url) {
             this.type = type;
             this.name = type.defaultName;
