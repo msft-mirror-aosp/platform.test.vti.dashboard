@@ -285,6 +285,10 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_suite_release.jsp";
 
         String testPlan = request.getParameter("plan");
+        String groupType =
+                request.getParameter("groupType") == null
+                        ? "OTA"
+                        : request.getParameter("groupType");
         int page =
                 request.getParameter("page") == null
                         ? 1
@@ -298,6 +302,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 ofy().load()
                         .type(TestSuiteResultEntity.class)
                         .filter("suitePlan", testPlan)
+                        .filter("groupType", groupType)
                         .orderKey(true);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
@@ -331,6 +336,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         request.setAttribute("page", page);
         request.setAttribute("testType", "suite");
+        request.setAttribute("groupType", groupType);
         request.setAttribute("plan", testPlan);
         request.setAttribute("testSuiteResultEntityPagination", testSuiteResultEntityPagination);
         RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
