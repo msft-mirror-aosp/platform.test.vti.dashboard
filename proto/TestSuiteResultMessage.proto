@@ -28,6 +28,9 @@ message TestSuiteResultMessage {
   // GCS path to the corresponding result directory
   optional string result_path = 2;
 
+  // whether the device(s) booted-up successfully
+  optional bool boot_success = 3  [default = true];
+
   // test suite build info
   required string branch = 11;
   required string target = 12;
