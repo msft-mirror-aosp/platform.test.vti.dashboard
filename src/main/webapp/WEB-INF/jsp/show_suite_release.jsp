@@ -73,7 +73,16 @@
                                 <b><c:out value="${testSuiteResultEntity.branch}"></c:out>/<c:out value="${testSuiteResultEntity.target}"></c:out> (<c:out value="${testSuiteResultEntity.buildId}"></c:out>)</b>
                             </div>
                             <div class="col s3">
-                                <span class="indicator right center green">
+                                <span class="indicator right center
+                                <c:choose>
+                                    <c:when test="${testSuiteResultEntity.passedTestCaseCount eq 0 and testSuiteResultEntity.failedTestCaseCount eq 0}">
+                                        black
+                                    </c:when>
+                                    <c:otherwise>
+                                        green
+                                    </c:otherwise>
+                                </c:choose>
+                                ">
                                     <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
                                 </span>
                             </div>
