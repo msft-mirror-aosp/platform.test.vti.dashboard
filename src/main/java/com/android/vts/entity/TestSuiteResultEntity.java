@@ -27,8 +27,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
@@ -40,11 +45,12 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 public class TestSuiteResultEntity {
 
     public enum GROUP_TYPE {
-        OTA, SIGNED, TOT
+        OTA,
+        SIGNED,
+        TOT
     }
 
-    @Parent
-    Key<TestSuiteFileEntity> testSuiteFileEntityKey;
+    @Parent Key<TestSuiteFileEntity> testSuiteFileEntityKey;
 
     /** Test Suite start time field */
     @Id @Getter @Setter Long startTime;
@@ -146,11 +152,13 @@ public class TestSuiteResultEntity {
         this.failedTestCaseCount = failedTestCaseCount;
 
         int totalTestCaseCount = passedTestCaseCount + failedTestCaseCount;
-        if ( totalTestCaseCount <= 0 ) {
+        if (totalTestCaseCount <= 0) {
             this.passedTestCaseRatio = 0;
         } else {
             this.passedTestCaseRatio = passedTestCaseCount / totalTestCaseCount * 100;
         }
+
+        this.groupType = this.getGroupType();
     }
 
     /** Saving function for the instance of this class */
@@ -161,5 +169,45 @@ public class TestSuiteResultEntity {
 
     public List<? extends TestSuiteResultEntity> getTestSuitePlans() {
         return ofy().load().type(this.getClass()).project("suitePlan").distinct(true).list();
+    }
+
+    private String getNormalizedVersion(String fingerprint) {
+        Map<String, Pattern> partternMap =
+                new HashMap<String, Pattern>() {
+                    {
+                        put(
+                                "9",
+                                Pattern.compile(
+                                        "(:9(\\.\\d\\.\\d|\\.\\d|)|:P\\w*/)",
+                                        Pattern.CASE_INSENSITIVE));
+                        put(
+                                "8.1",
+                                Pattern.compile(
+                                        "(:8\\.1\\.\\d\\/|:O\\w+-MR1/)", Pattern.CASE_INSENSITIVE));
+                        put(
+                                "8",
+                                Pattern.compile(
+                                        "(:8\\.0\\.\\d\\/|:O\\w*/)", Pattern.CASE_INSENSITIVE));
+                    }
+                };
+
+        for (Map.Entry<String, Pattern> entry : partternMap.entrySet()) {
+            Matcher systemMatcher = entry.getValue().matcher(fingerprint);
+            if (systemMatcher.find()) {
+                return entry.getKey();
+            }
+        }
+        return "unknown-version-" + Instant.now().toEpochMilli();
+    }
+
+    public GROUP_TYPE getGroupType() {
+        if (this.getNormalizedVersion(this.buildSystemFingerprint)
+                != this.getNormalizedVersion(this.buildVendorFingerprint)) {
+            return GROUP_TYPE.OTA;
+        } else if (this.buildVendorFingerprint.endsWith("release-keys")) {
+            return GROUP_TYPE.SIGNED;
+        } else {
+            return GROUP_TYPE.TOT;
+        }
     }
 }
