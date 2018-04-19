@@ -46,7 +46,7 @@ public final class TestSuiteResultMessageProto {
 
     /**
      * <pre>
-     * GCS path to the corresponding result files
+     * GCS path to the corresponding result directory
      * </pre>
      *
      * <code>optional string result_path = 2;</code>
@@ -54,7 +54,7 @@ public final class TestSuiteResultMessageProto {
     boolean hasResultPath();
     /**
      * <pre>
-     * GCS path to the corresponding result files
+     * GCS path to the corresponding result directory
      * </pre>
      *
      * <code>optional string result_path = 2;</code>
@@ -62,13 +62,30 @@ public final class TestSuiteResultMessageProto {
     java.lang.String getResultPath();
     /**
      * <pre>
-     * GCS path to the corresponding result files
+     * GCS path to the corresponding result directory
      * </pre>
      *
      * <code>optional string result_path = 2;</code>
      */
     com.google.protobuf.ByteString
         getResultPathBytes();
+
+    /**
+     * <pre>
+     * whether the device(s) booted-up successfully
+     * </pre>
+     *
+     * <code>optional bool boot_success = 3 [default = true];</code>
+     */
+    boolean hasBootSuccess();
+    /**
+     * <pre>
+     * whether the device(s) booted-up successfully
+     * </pre>
+     *
+     * <code>optional bool boot_success = 3 [default = true];</code>
+     */
+    boolean getBootSuccess();
 
     /**
      * <pre>
@@ -326,6 +343,7 @@ public final class TestSuiteResultMessageProto {
     private TestSuiteResultMessage() {
       accessToken_ = "";
       resultPath_ = "";
+      bootSuccess_ = true;
       branch_ = "";
       target_ = "";
       buildId_ = "";
@@ -384,93 +402,98 @@ public final class TestSuiteResultMessageProto {
               resultPath_ = bs;
               break;
             }
+            case 24: {
+              bitField0_ |= 0x00000004;
+              bootSuccess_ = input.readBool();
+              break;
+            }
             case 90: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000004;
+              bitField0_ |= 0x00000008;
               branch_ = bs;
               break;
             }
             case 98: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000008;
+              bitField0_ |= 0x00000010;
               target_ = bs;
               break;
             }
             case 106: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000010;
+              bitField0_ |= 0x00000020;
               buildId_ = bs;
               break;
             }
             case 170: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000020;
+              bitField0_ |= 0x00000040;
               suitePlan_ = bs;
               break;
             }
             case 178: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000040;
+              bitField0_ |= 0x00000080;
               suiteVersion_ = bs;
               break;
             }
             case 186: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000080;
+              bitField0_ |= 0x00000100;
               suiteBuildNumber_ = bs;
               break;
             }
             case 192: {
-              bitField0_ |= 0x00000100;
+              bitField0_ |= 0x00000200;
               startTime_ = input.readInt64();
               break;
             }
             case 200: {
-              bitField0_ |= 0x00000200;
+              bitField0_ |= 0x00000400;
               endTime_ = input.readInt64();
               break;
             }
             case 210: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000400;
+              bitField0_ |= 0x00000800;
               hostName_ = bs;
               break;
             }
             case 218: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000800;
+              bitField0_ |= 0x00001000;
               suiteName_ = bs;
               break;
             }
             case 250: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00001000;
+              bitField0_ |= 0x00002000;
               buildSystemFingerprint_ = bs;
               break;
             }
             case 258: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00002000;
+              bitField0_ |= 0x00004000;
               buildVendorFingerprint_ = bs;
               break;
             }
             case 328: {
-              bitField0_ |= 0x00004000;
+              bitField0_ |= 0x00008000;
               passedTestCaseCount_ = input.readInt32();
               break;
             }
             case 336: {
-              bitField0_ |= 0x00008000;
+              bitField0_ |= 0x00010000;
               failedTestCaseCount_ = input.readInt32();
               break;
             }
             case 344: {
-              bitField0_ |= 0x00010000;
+              bitField0_ |= 0x00020000;
               modulesDone_ = input.readInt32();
               break;
             }
             case 352: {
-              bitField0_ |= 0x00020000;
+              bitField0_ |= 0x00040000;
               modulesTotal_ = input.readInt32();
               break;
             }
@@ -557,7 +580,7 @@ public final class TestSuiteResultMessageProto {
     private volatile java.lang.Object resultPath_;
     /**
      * <pre>
-     * GCS path to the corresponding result files
+     * GCS path to the corresponding result directory
      * </pre>
      *
      * <code>optional string result_path = 2;</code>
@@ -567,7 +590,7 @@ public final class TestSuiteResultMessageProto {
     }
     /**
      * <pre>
-     * GCS path to the corresponding result files
+     * GCS path to the corresponding result directory
      * </pre>
      *
      * <code>optional string result_path = 2;</code>
@@ -588,7 +611,7 @@ public final class TestSuiteResultMessageProto {
     }
     /**
      * <pre>
-     * GCS path to the corresponding result files
+     * GCS path to the corresponding result directory
      * </pre>
      *
      * <code>optional string result_path = 2;</code>
@@ -607,6 +630,29 @@ public final class TestSuiteResultMessageProto {
       }
     }
 
+    public static final int BOOT_SUCCESS_FIELD_NUMBER = 3;
+    private boolean bootSuccess_;
+    /**
+     * <pre>
+     * whether the device(s) booted-up successfully
+     * </pre>
+     *
+     * <code>optional bool boot_success = 3 [default = true];</code>
+     */
+    public boolean hasBootSuccess() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <pre>
+     * whether the device(s) booted-up successfully
+     * </pre>
+     *
+     * <code>optional bool boot_success = 3 [default = true];</code>
+     */
+    public boolean getBootSuccess() {
+      return bootSuccess_;
+    }
+
     public static final int BRANCH_FIELD_NUMBER = 11;
     private volatile java.lang.Object branch_;
     /**
@@ -617,7 +663,7 @@ public final class TestSuiteResultMessageProto {
      * <code>required string branch = 11;</code>
      */
     public boolean hasBranch() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <pre>
@@ -667,7 +713,7 @@ public final class TestSuiteResultMessageProto {
      * <code>required string target = 12;</code>
      */
     public boolean hasTarget() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
      * <code>required string target = 12;</code>
@@ -709,7 +755,7 @@ public final class TestSuiteResultMessageProto {
      * <code>required string build_id = 13;</code>
      */
     public boolean hasBuildId() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
      * <code>required string build_id = 13;</code>
@@ -755,7 +801,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string suite_plan = 21;</code>
      */
     public boolean hasSuitePlan() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
      * <pre>
@@ -805,7 +851,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string suite_version = 22;</code>
      */
     public boolean hasSuiteVersion() {
-      return ((bitField0_ & 0x00000040) == 0x00000040);
+      return ((bitField0_ & 0x00000080) == 0x00000080);
     }
     /**
      * <code>optional string suite_version = 22;</code>
@@ -847,7 +893,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string suite_build_number = 23;</code>
      */
     public boolean hasSuiteBuildNumber() {
-      return ((bitField0_ & 0x00000080) == 0x00000080);
+      return ((bitField0_ & 0x00000100) == 0x00000100);
     }
     /**
      * <code>optional string suite_build_number = 23;</code>
@@ -889,7 +935,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int64 start_time = 24;</code>
      */
     public boolean hasStartTime() {
-      return ((bitField0_ & 0x00000100) == 0x00000100);
+      return ((bitField0_ & 0x00000200) == 0x00000200);
     }
     /**
      * <code>optional int64 start_time = 24;</code>
@@ -904,7 +950,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int64 end_time = 25;</code>
      */
     public boolean hasEndTime() {
-      return ((bitField0_ & 0x00000200) == 0x00000200);
+      return ((bitField0_ & 0x00000400) == 0x00000400);
     }
     /**
      * <code>optional int64 end_time = 25;</code>
@@ -919,7 +965,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string host_name = 26;</code>
      */
     public boolean hasHostName() {
-      return ((bitField0_ & 0x00000400) == 0x00000400);
+      return ((bitField0_ & 0x00000800) == 0x00000800);
     }
     /**
      * <code>optional string host_name = 26;</code>
@@ -961,7 +1007,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string suite_name = 27;</code>
      */
     public boolean hasSuiteName() {
-      return ((bitField0_ & 0x00000800) == 0x00000800);
+      return ((bitField0_ & 0x00001000) == 0x00001000);
     }
     /**
      * <code>optional string suite_name = 27;</code>
@@ -1007,7 +1053,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string build_system_fingerprint = 31;</code>
      */
     public boolean hasBuildSystemFingerprint() {
-      return ((bitField0_ & 0x00001000) == 0x00001000);
+      return ((bitField0_ & 0x00002000) == 0x00002000);
     }
     /**
      * <pre>
@@ -1057,7 +1103,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string build_vendor_fingerprint = 32;</code>
      */
     public boolean hasBuildVendorFingerprint() {
-      return ((bitField0_ & 0x00002000) == 0x00002000);
+      return ((bitField0_ & 0x00004000) == 0x00004000);
     }
     /**
      * <code>optional string build_vendor_fingerprint = 32;</code>
@@ -1103,7 +1149,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 passed_test_case_count = 41;</code>
      */
     public boolean hasPassedTestCaseCount() {
-      return ((bitField0_ & 0x00004000) == 0x00004000);
+      return ((bitField0_ & 0x00008000) == 0x00008000);
     }
     /**
      * <pre>
@@ -1122,7 +1168,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 failed_test_case_count = 42;</code>
      */
     public boolean hasFailedTestCaseCount() {
-      return ((bitField0_ & 0x00008000) == 0x00008000);
+      return ((bitField0_ & 0x00010000) == 0x00010000);
     }
     /**
      * <code>optional int32 failed_test_case_count = 42;</code>
@@ -1137,7 +1183,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 modules_done = 43;</code>
      */
     public boolean hasModulesDone() {
-      return ((bitField0_ & 0x00010000) == 0x00010000);
+      return ((bitField0_ & 0x00020000) == 0x00020000);
     }
     /**
      * <code>optional int32 modules_done = 43;</code>
@@ -1152,7 +1198,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 modules_total = 44;</code>
      */
     public boolean hasModulesTotal() {
-      return ((bitField0_ & 0x00020000) == 0x00020000);
+      return ((bitField0_ & 0x00040000) == 0x00040000);
     }
     /**
      * <code>optional int32 modules_total = 44;</code>
@@ -1192,51 +1238,54 @@ public final class TestSuiteResultMessageProto {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, resultPath_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 11, branch_);
+        output.writeBool(3, bootSuccess_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 12, target_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 11, branch_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 13, buildId_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 12, target_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 21, suitePlan_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 13, buildId_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 22, suiteVersion_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 21, suitePlan_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 23, suiteBuildNumber_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 22, suiteVersion_);
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        output.writeInt64(24, startTime_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 23, suiteBuildNumber_);
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
-        output.writeInt64(25, endTime_);
+        output.writeInt64(24, startTime_);
       }
       if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 26, hostName_);
+        output.writeInt64(25, endTime_);
       }
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 27, suiteName_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 26, hostName_);
       }
       if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 31, buildSystemFingerprint_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 27, suiteName_);
       }
       if (((bitField0_ & 0x00002000) == 0x00002000)) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 32, buildVendorFingerprint_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 31, buildSystemFingerprint_);
       }
       if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        output.writeInt32(41, passedTestCaseCount_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 32, buildVendorFingerprint_);
       }
       if (((bitField0_ & 0x00008000) == 0x00008000)) {
-        output.writeInt32(42, failedTestCaseCount_);
+        output.writeInt32(41, passedTestCaseCount_);
       }
       if (((bitField0_ & 0x00010000) == 0x00010000)) {
-        output.writeInt32(43, modulesDone_);
+        output.writeInt32(42, failedTestCaseCount_);
       }
       if (((bitField0_ & 0x00020000) == 0x00020000)) {
+        output.writeInt32(43, modulesDone_);
+      }
+      if (((bitField0_ & 0x00040000) == 0x00040000)) {
         output.writeInt32(44, modulesTotal_);
       }
       unknownFields.writeTo(output);
@@ -1254,56 +1303,60 @@ public final class TestSuiteResultMessageProto {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, resultPath_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, branch_);
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, bootSuccess_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(12, target_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(11, branch_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, buildId_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(12, target_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(21, suitePlan_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(13, buildId_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(22, suiteVersion_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(21, suitePlan_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(23, suiteBuildNumber_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(22, suiteVersion_);
       }
       if (((bitField0_ & 0x00000100) == 0x00000100)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(24, startTime_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(23, suiteBuildNumber_);
       }
       if (((bitField0_ & 0x00000200) == 0x00000200)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(25, endTime_);
+          .computeInt64Size(24, startTime_);
       }
       if (((bitField0_ & 0x00000400) == 0x00000400)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(26, hostName_);
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(25, endTime_);
       }
       if (((bitField0_ & 0x00000800) == 0x00000800)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(27, suiteName_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(26, hostName_);
       }
       if (((bitField0_ & 0x00001000) == 0x00001000)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(31, buildSystemFingerprint_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(27, suiteName_);
       }
       if (((bitField0_ & 0x00002000) == 0x00002000)) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(32, buildVendorFingerprint_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(31, buildSystemFingerprint_);
       }
       if (((bitField0_ & 0x00004000) == 0x00004000)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(41, passedTestCaseCount_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(32, buildVendorFingerprint_);
       }
       if (((bitField0_ & 0x00008000) == 0x00008000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(42, failedTestCaseCount_);
+          .computeInt32Size(41, passedTestCaseCount_);
       }
       if (((bitField0_ & 0x00010000) == 0x00010000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(43, modulesDone_);
+          .computeInt32Size(42, failedTestCaseCount_);
       }
       if (((bitField0_ & 0x00020000) == 0x00020000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(43, modulesDone_);
+      }
+      if (((bitField0_ & 0x00040000) == 0x00040000)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(44, modulesTotal_);
       }
@@ -1333,6 +1386,11 @@ public final class TestSuiteResultMessageProto {
       if (hasResultPath()) {
         result = result && getResultPath()
             .equals(other.getResultPath());
+      }
+      result = result && (hasBootSuccess() == other.hasBootSuccess());
+      if (hasBootSuccess()) {
+        result = result && (getBootSuccess()
+            == other.getBootSuccess());
       }
       result = result && (hasBranch() == other.hasBranch());
       if (hasBranch()) {
@@ -1432,6 +1490,11 @@ public final class TestSuiteResultMessageProto {
       if (hasResultPath()) {
         hash = (37 * hash) + RESULT_PATH_FIELD_NUMBER;
         hash = (53 * hash) + getResultPath().hashCode();
+      }
+      if (hasBootSuccess()) {
+        hash = (37 * hash) + BOOT_SUCCESS_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
+            getBootSuccess());
       }
       if (hasBranch()) {
         hash = (37 * hash) + BRANCH_FIELD_NUMBER;
@@ -1625,38 +1688,40 @@ public final class TestSuiteResultMessageProto {
         bitField0_ = (bitField0_ & ~0x00000001);
         resultPath_ = "";
         bitField0_ = (bitField0_ & ~0x00000002);
-        branch_ = "";
+        bootSuccess_ = true;
         bitField0_ = (bitField0_ & ~0x00000004);
-        target_ = "";
+        branch_ = "";
         bitField0_ = (bitField0_ & ~0x00000008);
-        buildId_ = "";
+        target_ = "";
         bitField0_ = (bitField0_ & ~0x00000010);
-        suitePlan_ = "";
+        buildId_ = "";
         bitField0_ = (bitField0_ & ~0x00000020);
-        suiteVersion_ = "";
+        suitePlan_ = "";
         bitField0_ = (bitField0_ & ~0x00000040);
-        suiteBuildNumber_ = "";
+        suiteVersion_ = "";
         bitField0_ = (bitField0_ & ~0x00000080);
-        startTime_ = 0L;
+        suiteBuildNumber_ = "";
         bitField0_ = (bitField0_ & ~0x00000100);
-        endTime_ = 0L;
+        startTime_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000200);
-        hostName_ = "";
+        endTime_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000400);
-        suiteName_ = "";
+        hostName_ = "";
         bitField0_ = (bitField0_ & ~0x00000800);
-        buildSystemFingerprint_ = "";
+        suiteName_ = "";
         bitField0_ = (bitField0_ & ~0x00001000);
-        buildVendorFingerprint_ = "";
+        buildSystemFingerprint_ = "";
         bitField0_ = (bitField0_ & ~0x00002000);
-        passedTestCaseCount_ = 0;
+        buildVendorFingerprint_ = "";
         bitField0_ = (bitField0_ & ~0x00004000);
-        failedTestCaseCount_ = 0;
+        passedTestCaseCount_ = 0;
         bitField0_ = (bitField0_ & ~0x00008000);
-        modulesDone_ = 0;
+        failedTestCaseCount_ = 0;
         bitField0_ = (bitField0_ & ~0x00010000);
-        modulesTotal_ = 0;
+        modulesDone_ = 0;
         bitField0_ = (bitField0_ & ~0x00020000);
+        modulesTotal_ = 0;
+        bitField0_ = (bitField0_ & ~0x00040000);
         return this;
       }
 
@@ -1692,65 +1757,69 @@ public final class TestSuiteResultMessageProto {
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.branch_ = branch_;
+        result.bootSuccess_ = bootSuccess_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.target_ = target_;
+        result.branch_ = branch_;
         if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000010;
         }
-        result.buildId_ = buildId_;
+        result.target_ = target_;
         if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
           to_bitField0_ |= 0x00000020;
         }
-        result.suitePlan_ = suitePlan_;
+        result.buildId_ = buildId_;
         if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
           to_bitField0_ |= 0x00000040;
         }
-        result.suiteVersion_ = suiteVersion_;
+        result.suitePlan_ = suitePlan_;
         if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
           to_bitField0_ |= 0x00000080;
         }
-        result.suiteBuildNumber_ = suiteBuildNumber_;
+        result.suiteVersion_ = suiteVersion_;
         if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
           to_bitField0_ |= 0x00000100;
         }
-        result.startTime_ = startTime_;
+        result.suiteBuildNumber_ = suiteBuildNumber_;
         if (((from_bitField0_ & 0x00000200) == 0x00000200)) {
           to_bitField0_ |= 0x00000200;
         }
-        result.endTime_ = endTime_;
+        result.startTime_ = startTime_;
         if (((from_bitField0_ & 0x00000400) == 0x00000400)) {
           to_bitField0_ |= 0x00000400;
         }
-        result.hostName_ = hostName_;
+        result.endTime_ = endTime_;
         if (((from_bitField0_ & 0x00000800) == 0x00000800)) {
           to_bitField0_ |= 0x00000800;
         }
-        result.suiteName_ = suiteName_;
+        result.hostName_ = hostName_;
         if (((from_bitField0_ & 0x00001000) == 0x00001000)) {
           to_bitField0_ |= 0x00001000;
         }
-        result.buildSystemFingerprint_ = buildSystemFingerprint_;
+        result.suiteName_ = suiteName_;
         if (((from_bitField0_ & 0x00002000) == 0x00002000)) {
           to_bitField0_ |= 0x00002000;
         }
-        result.buildVendorFingerprint_ = buildVendorFingerprint_;
+        result.buildSystemFingerprint_ = buildSystemFingerprint_;
         if (((from_bitField0_ & 0x00004000) == 0x00004000)) {
           to_bitField0_ |= 0x00004000;
         }
-        result.passedTestCaseCount_ = passedTestCaseCount_;
+        result.buildVendorFingerprint_ = buildVendorFingerprint_;
         if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
           to_bitField0_ |= 0x00008000;
         }
-        result.failedTestCaseCount_ = failedTestCaseCount_;
+        result.passedTestCaseCount_ = passedTestCaseCount_;
         if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
           to_bitField0_ |= 0x00010000;
         }
-        result.modulesDone_ = modulesDone_;
+        result.failedTestCaseCount_ = failedTestCaseCount_;
         if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
           to_bitField0_ |= 0x00020000;
+        }
+        result.modulesDone_ = modulesDone_;
+        if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
+          to_bitField0_ |= 0x00040000;
         }
         result.modulesTotal_ = modulesTotal_;
         result.bitField0_ = to_bitField0_;
@@ -1805,33 +1874,36 @@ public final class TestSuiteResultMessageProto {
           resultPath_ = other.resultPath_;
           onChanged();
         }
+        if (other.hasBootSuccess()) {
+          setBootSuccess(other.getBootSuccess());
+        }
         if (other.hasBranch()) {
-          bitField0_ |= 0x00000004;
+          bitField0_ |= 0x00000008;
           branch_ = other.branch_;
           onChanged();
         }
         if (other.hasTarget()) {
-          bitField0_ |= 0x00000008;
+          bitField0_ |= 0x00000010;
           target_ = other.target_;
           onChanged();
         }
         if (other.hasBuildId()) {
-          bitField0_ |= 0x00000010;
+          bitField0_ |= 0x00000020;
           buildId_ = other.buildId_;
           onChanged();
         }
         if (other.hasSuitePlan()) {
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
           suitePlan_ = other.suitePlan_;
           onChanged();
         }
         if (other.hasSuiteVersion()) {
-          bitField0_ |= 0x00000040;
+          bitField0_ |= 0x00000080;
           suiteVersion_ = other.suiteVersion_;
           onChanged();
         }
         if (other.hasSuiteBuildNumber()) {
-          bitField0_ |= 0x00000080;
+          bitField0_ |= 0x00000100;
           suiteBuildNumber_ = other.suiteBuildNumber_;
           onChanged();
         }
@@ -1842,22 +1914,22 @@ public final class TestSuiteResultMessageProto {
           setEndTime(other.getEndTime());
         }
         if (other.hasHostName()) {
-          bitField0_ |= 0x00000400;
+          bitField0_ |= 0x00000800;
           hostName_ = other.hostName_;
           onChanged();
         }
         if (other.hasSuiteName()) {
-          bitField0_ |= 0x00000800;
+          bitField0_ |= 0x00001000;
           suiteName_ = other.suiteName_;
           onChanged();
         }
         if (other.hasBuildSystemFingerprint()) {
-          bitField0_ |= 0x00001000;
+          bitField0_ |= 0x00002000;
           buildSystemFingerprint_ = other.buildSystemFingerprint_;
           onChanged();
         }
         if (other.hasBuildVendorFingerprint()) {
-          bitField0_ |= 0x00002000;
+          bitField0_ |= 0x00004000;
           buildVendorFingerprint_ = other.buildVendorFingerprint_;
           onChanged();
         }
@@ -2013,7 +2085,7 @@ public final class TestSuiteResultMessageProto {
       private java.lang.Object resultPath_ = "";
       /**
        * <pre>
-       * GCS path to the corresponding result files
+       * GCS path to the corresponding result directory
        * </pre>
        *
        * <code>optional string result_path = 2;</code>
@@ -2023,7 +2095,7 @@ public final class TestSuiteResultMessageProto {
       }
       /**
        * <pre>
-       * GCS path to the corresponding result files
+       * GCS path to the corresponding result directory
        * </pre>
        *
        * <code>optional string result_path = 2;</code>
@@ -2044,7 +2116,7 @@ public final class TestSuiteResultMessageProto {
       }
       /**
        * <pre>
-       * GCS path to the corresponding result files
+       * GCS path to the corresponding result directory
        * </pre>
        *
        * <code>optional string result_path = 2;</code>
@@ -2064,7 +2136,7 @@ public final class TestSuiteResultMessageProto {
       }
       /**
        * <pre>
-       * GCS path to the corresponding result files
+       * GCS path to the corresponding result directory
        * </pre>
        *
        * <code>optional string result_path = 2;</code>
@@ -2081,7 +2153,7 @@ public final class TestSuiteResultMessageProto {
       }
       /**
        * <pre>
-       * GCS path to the corresponding result files
+       * GCS path to the corresponding result directory
        * </pre>
        *
        * <code>optional string result_path = 2;</code>
@@ -2094,7 +2166,7 @@ public final class TestSuiteResultMessageProto {
       }
       /**
        * <pre>
-       * GCS path to the corresponding result files
+       * GCS path to the corresponding result directory
        * </pre>
        *
        * <code>optional string result_path = 2;</code>
@@ -2110,6 +2182,54 @@ public final class TestSuiteResultMessageProto {
         return this;
       }
 
+      private boolean bootSuccess_ = true;
+      /**
+       * <pre>
+       * whether the device(s) booted-up successfully
+       * </pre>
+       *
+       * <code>optional bool boot_success = 3 [default = true];</code>
+       */
+      public boolean hasBootSuccess() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <pre>
+       * whether the device(s) booted-up successfully
+       * </pre>
+       *
+       * <code>optional bool boot_success = 3 [default = true];</code>
+       */
+      public boolean getBootSuccess() {
+        return bootSuccess_;
+      }
+      /**
+       * <pre>
+       * whether the device(s) booted-up successfully
+       * </pre>
+       *
+       * <code>optional bool boot_success = 3 [default = true];</code>
+       */
+      public Builder setBootSuccess(boolean value) {
+        bitField0_ |= 0x00000004;
+        bootSuccess_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * whether the device(s) booted-up successfully
+       * </pre>
+       *
+       * <code>optional bool boot_success = 3 [default = true];</code>
+       */
+      public Builder clearBootSuccess() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        bootSuccess_ = true;
+        onChanged();
+        return this;
+      }
+
       private java.lang.Object branch_ = "";
       /**
        * <pre>
@@ -2119,7 +2239,7 @@ public final class TestSuiteResultMessageProto {
        * <code>required string branch = 11;</code>
        */
       public boolean hasBranch() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
        * <pre>
@@ -2174,7 +2294,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
         branch_ = value;
         onChanged();
         return this;
@@ -2187,7 +2307,7 @@ public final class TestSuiteResultMessageProto {
        * <code>required string branch = 11;</code>
        */
       public Builder clearBranch() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000008);
         branch_ = getDefaultInstance().getBranch();
         onChanged();
         return this;
@@ -2204,7 +2324,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
         branch_ = value;
         onChanged();
         return this;
@@ -2215,7 +2335,7 @@ public final class TestSuiteResultMessageProto {
        * <code>required string target = 12;</code>
        */
       public boolean hasTarget() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       /**
        * <code>required string target = 12;</code>
@@ -2258,7 +2378,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
         target_ = value;
         onChanged();
         return this;
@@ -2267,7 +2387,7 @@ public final class TestSuiteResultMessageProto {
        * <code>required string target = 12;</code>
        */
       public Builder clearTarget() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000010);
         target_ = getDefaultInstance().getTarget();
         onChanged();
         return this;
@@ -2280,7 +2400,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
         target_ = value;
         onChanged();
         return this;
@@ -2291,7 +2411,7 @@ public final class TestSuiteResultMessageProto {
        * <code>required string build_id = 13;</code>
        */
       public boolean hasBuildId() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
        * <code>required string build_id = 13;</code>
@@ -2334,7 +2454,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
         buildId_ = value;
         onChanged();
         return this;
@@ -2343,7 +2463,7 @@ public final class TestSuiteResultMessageProto {
        * <code>required string build_id = 13;</code>
        */
       public Builder clearBuildId() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000020);
         buildId_ = getDefaultInstance().getBuildId();
         onChanged();
         return this;
@@ -2356,7 +2476,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
         buildId_ = value;
         onChanged();
         return this;
@@ -2371,7 +2491,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_plan = 21;</code>
        */
       public boolean hasSuitePlan() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+        return ((bitField0_ & 0x00000040) == 0x00000040);
       }
       /**
        * <pre>
@@ -2426,7 +2546,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         suitePlan_ = value;
         onChanged();
         return this;
@@ -2439,7 +2559,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_plan = 21;</code>
        */
       public Builder clearSuitePlan() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000040);
         suitePlan_ = getDefaultInstance().getSuitePlan();
         onChanged();
         return this;
@@ -2456,7 +2576,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         suitePlan_ = value;
         onChanged();
         return this;
@@ -2467,7 +2587,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_version = 22;</code>
        */
       public boolean hasSuiteVersion() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
        * <code>optional string suite_version = 22;</code>
@@ -2510,7 +2630,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
         suiteVersion_ = value;
         onChanged();
         return this;
@@ -2519,7 +2639,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_version = 22;</code>
        */
       public Builder clearSuiteVersion() {
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000080);
         suiteVersion_ = getDefaultInstance().getSuiteVersion();
         onChanged();
         return this;
@@ -2532,7 +2652,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000040;
+  bitField0_ |= 0x00000080;
         suiteVersion_ = value;
         onChanged();
         return this;
@@ -2543,7 +2663,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_build_number = 23;</code>
        */
       public boolean hasSuiteBuildNumber() {
-        return ((bitField0_ & 0x00000080) == 0x00000080);
+        return ((bitField0_ & 0x00000100) == 0x00000100);
       }
       /**
        * <code>optional string suite_build_number = 23;</code>
@@ -2586,7 +2706,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000080;
+  bitField0_ |= 0x00000100;
         suiteBuildNumber_ = value;
         onChanged();
         return this;
@@ -2595,7 +2715,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_build_number = 23;</code>
        */
       public Builder clearSuiteBuildNumber() {
-        bitField0_ = (bitField0_ & ~0x00000080);
+        bitField0_ = (bitField0_ & ~0x00000100);
         suiteBuildNumber_ = getDefaultInstance().getSuiteBuildNumber();
         onChanged();
         return this;
@@ -2608,7 +2728,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000080;
+  bitField0_ |= 0x00000100;
         suiteBuildNumber_ = value;
         onChanged();
         return this;
@@ -2619,7 +2739,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int64 start_time = 24;</code>
        */
       public boolean hasStartTime() {
-        return ((bitField0_ & 0x00000100) == 0x00000100);
+        return ((bitField0_ & 0x00000200) == 0x00000200);
       }
       /**
        * <code>optional int64 start_time = 24;</code>
@@ -2631,7 +2751,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int64 start_time = 24;</code>
        */
       public Builder setStartTime(long value) {
-        bitField0_ |= 0x00000100;
+        bitField0_ |= 0x00000200;
         startTime_ = value;
         onChanged();
         return this;
@@ -2640,7 +2760,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int64 start_time = 24;</code>
        */
       public Builder clearStartTime() {
-        bitField0_ = (bitField0_ & ~0x00000100);
+        bitField0_ = (bitField0_ & ~0x00000200);
         startTime_ = 0L;
         onChanged();
         return this;
@@ -2651,7 +2771,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int64 end_time = 25;</code>
        */
       public boolean hasEndTime() {
-        return ((bitField0_ & 0x00000200) == 0x00000200);
+        return ((bitField0_ & 0x00000400) == 0x00000400);
       }
       /**
        * <code>optional int64 end_time = 25;</code>
@@ -2663,7 +2783,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int64 end_time = 25;</code>
        */
       public Builder setEndTime(long value) {
-        bitField0_ |= 0x00000200;
+        bitField0_ |= 0x00000400;
         endTime_ = value;
         onChanged();
         return this;
@@ -2672,7 +2792,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int64 end_time = 25;</code>
        */
       public Builder clearEndTime() {
-        bitField0_ = (bitField0_ & ~0x00000200);
+        bitField0_ = (bitField0_ & ~0x00000400);
         endTime_ = 0L;
         onChanged();
         return this;
@@ -2683,7 +2803,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string host_name = 26;</code>
        */
       public boolean hasHostName() {
-        return ((bitField0_ & 0x00000400) == 0x00000400);
+        return ((bitField0_ & 0x00000800) == 0x00000800);
       }
       /**
        * <code>optional string host_name = 26;</code>
@@ -2726,7 +2846,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000400;
+  bitField0_ |= 0x00000800;
         hostName_ = value;
         onChanged();
         return this;
@@ -2735,7 +2855,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string host_name = 26;</code>
        */
       public Builder clearHostName() {
-        bitField0_ = (bitField0_ & ~0x00000400);
+        bitField0_ = (bitField0_ & ~0x00000800);
         hostName_ = getDefaultInstance().getHostName();
         onChanged();
         return this;
@@ -2748,7 +2868,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000400;
+  bitField0_ |= 0x00000800;
         hostName_ = value;
         onChanged();
         return this;
@@ -2759,7 +2879,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_name = 27;</code>
        */
       public boolean hasSuiteName() {
-        return ((bitField0_ & 0x00000800) == 0x00000800);
+        return ((bitField0_ & 0x00001000) == 0x00001000);
       }
       /**
        * <code>optional string suite_name = 27;</code>
@@ -2802,7 +2922,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000800;
+  bitField0_ |= 0x00001000;
         suiteName_ = value;
         onChanged();
         return this;
@@ -2811,7 +2931,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string suite_name = 27;</code>
        */
       public Builder clearSuiteName() {
-        bitField0_ = (bitField0_ & ~0x00000800);
+        bitField0_ = (bitField0_ & ~0x00001000);
         suiteName_ = getDefaultInstance().getSuiteName();
         onChanged();
         return this;
@@ -2824,7 +2944,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000800;
+  bitField0_ |= 0x00001000;
         suiteName_ = value;
         onChanged();
         return this;
@@ -2839,7 +2959,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string build_system_fingerprint = 31;</code>
        */
       public boolean hasBuildSystemFingerprint() {
-        return ((bitField0_ & 0x00001000) == 0x00001000);
+        return ((bitField0_ & 0x00002000) == 0x00002000);
       }
       /**
        * <pre>
@@ -2894,7 +3014,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00001000;
+  bitField0_ |= 0x00002000;
         buildSystemFingerprint_ = value;
         onChanged();
         return this;
@@ -2907,7 +3027,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string build_system_fingerprint = 31;</code>
        */
       public Builder clearBuildSystemFingerprint() {
-        bitField0_ = (bitField0_ & ~0x00001000);
+        bitField0_ = (bitField0_ & ~0x00002000);
         buildSystemFingerprint_ = getDefaultInstance().getBuildSystemFingerprint();
         onChanged();
         return this;
@@ -2924,7 +3044,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00001000;
+  bitField0_ |= 0x00002000;
         buildSystemFingerprint_ = value;
         onChanged();
         return this;
@@ -2935,7 +3055,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string build_vendor_fingerprint = 32;</code>
        */
       public boolean hasBuildVendorFingerprint() {
-        return ((bitField0_ & 0x00002000) == 0x00002000);
+        return ((bitField0_ & 0x00004000) == 0x00004000);
       }
       /**
        * <code>optional string build_vendor_fingerprint = 32;</code>
@@ -2978,7 +3098,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00002000;
+  bitField0_ |= 0x00004000;
         buildVendorFingerprint_ = value;
         onChanged();
         return this;
@@ -2987,7 +3107,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string build_vendor_fingerprint = 32;</code>
        */
       public Builder clearBuildVendorFingerprint() {
-        bitField0_ = (bitField0_ & ~0x00002000);
+        bitField0_ = (bitField0_ & ~0x00004000);
         buildVendorFingerprint_ = getDefaultInstance().getBuildVendorFingerprint();
         onChanged();
         return this;
@@ -3000,7 +3120,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00002000;
+  bitField0_ |= 0x00004000;
         buildVendorFingerprint_ = value;
         onChanged();
         return this;
@@ -3015,7 +3135,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 passed_test_case_count = 41;</code>
        */
       public boolean hasPassedTestCaseCount() {
-        return ((bitField0_ & 0x00004000) == 0x00004000);
+        return ((bitField0_ & 0x00008000) == 0x00008000);
       }
       /**
        * <pre>
@@ -3035,7 +3155,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 passed_test_case_count = 41;</code>
        */
       public Builder setPassedTestCaseCount(int value) {
-        bitField0_ |= 0x00004000;
+        bitField0_ |= 0x00008000;
         passedTestCaseCount_ = value;
         onChanged();
         return this;
@@ -3048,7 +3168,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 passed_test_case_count = 41;</code>
        */
       public Builder clearPassedTestCaseCount() {
-        bitField0_ = (bitField0_ & ~0x00004000);
+        bitField0_ = (bitField0_ & ~0x00008000);
         passedTestCaseCount_ = 0;
         onChanged();
         return this;
@@ -3059,7 +3179,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 failed_test_case_count = 42;</code>
        */
       public boolean hasFailedTestCaseCount() {
-        return ((bitField0_ & 0x00008000) == 0x00008000);
+        return ((bitField0_ & 0x00010000) == 0x00010000);
       }
       /**
        * <code>optional int32 failed_test_case_count = 42;</code>
@@ -3071,7 +3191,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 failed_test_case_count = 42;</code>
        */
       public Builder setFailedTestCaseCount(int value) {
-        bitField0_ |= 0x00008000;
+        bitField0_ |= 0x00010000;
         failedTestCaseCount_ = value;
         onChanged();
         return this;
@@ -3080,7 +3200,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 failed_test_case_count = 42;</code>
        */
       public Builder clearFailedTestCaseCount() {
-        bitField0_ = (bitField0_ & ~0x00008000);
+        bitField0_ = (bitField0_ & ~0x00010000);
         failedTestCaseCount_ = 0;
         onChanged();
         return this;
@@ -3091,7 +3211,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_done = 43;</code>
        */
       public boolean hasModulesDone() {
-        return ((bitField0_ & 0x00010000) == 0x00010000);
+        return ((bitField0_ & 0x00020000) == 0x00020000);
       }
       /**
        * <code>optional int32 modules_done = 43;</code>
@@ -3103,7 +3223,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_done = 43;</code>
        */
       public Builder setModulesDone(int value) {
-        bitField0_ |= 0x00010000;
+        bitField0_ |= 0x00020000;
         modulesDone_ = value;
         onChanged();
         return this;
@@ -3112,7 +3232,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_done = 43;</code>
        */
       public Builder clearModulesDone() {
-        bitField0_ = (bitField0_ & ~0x00010000);
+        bitField0_ = (bitField0_ & ~0x00020000);
         modulesDone_ = 0;
         onChanged();
         return this;
@@ -3123,7 +3243,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_total = 44;</code>
        */
       public boolean hasModulesTotal() {
-        return ((bitField0_ & 0x00020000) == 0x00020000);
+        return ((bitField0_ & 0x00040000) == 0x00040000);
       }
       /**
        * <code>optional int32 modules_total = 44;</code>
@@ -3135,7 +3255,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_total = 44;</code>
        */
       public Builder setModulesTotal(int value) {
-        bitField0_ |= 0x00020000;
+        bitField0_ |= 0x00040000;
         modulesTotal_ = value;
         onChanged();
         return this;
@@ -3144,7 +3264,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_total = 44;</code>
        */
       public Builder clearModulesTotal() {
-        bitField0_ = (bitField0_ & ~0x00020000);
+        bitField0_ = (bitField0_ & ~0x00040000);
         modulesTotal_ = 0;
         onChanged();
         return this;
@@ -3213,19 +3333,20 @@ public final class TestSuiteResultMessageProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\"proto/TestSuiteResultMessage.proto\022\013an" +
-      "droid.vts\"\272\003\n\026TestSuiteResultMessage\022\024\n\014" +
+      "droid.vts\"\326\003\n\026TestSuiteResultMessage\022\024\n\014" +
       "access_token\030\001 \001(\t\022\023\n\013result_path\030\002 \001(\t\022" +
-      "\016\n\006branch\030\013 \002(\t\022\016\n\006target\030\014 \002(\t\022\020\n\010build" +
-      "_id\030\r \002(\t\022\022\n\nsuite_plan\030\025 \001(\t\022\025\n\rsuite_v" +
-      "ersion\030\026 \001(\t\022\032\n\022suite_build_number\030\027 \001(\t" +
-      "\022\022\n\nstart_time\030\030 \001(\003\022\020\n\010end_time\030\031 \001(\003\022\021" +
-      "\n\thost_name\030\032 \001(\t\022\022\n\nsuite_name\030\033 \001(\t\022 \n" +
-      "\030build_system_fingerprint\030\037 \001(\t\022 \n\030build" +
-      "_vendor_fingerprint\030  \001(\t\022\036\n\026passed_test",
-      "_case_count\030) \001(\005\022\036\n\026failed_test_case_co" +
-      "unt\030* \001(\005\022\024\n\014modules_done\030+ \001(\005\022\025\n\rmodul" +
-      "es_total\030, \001(\005B6\n\025com.android.vts.protoB" +
-      "\033TestSuiteResultMessageProtoP\000"
+      "\032\n\014boot_success\030\003 \001(\010:\004true\022\016\n\006branch\030\013 " +
+      "\002(\t\022\016\n\006target\030\014 \002(\t\022\020\n\010build_id\030\r \002(\t\022\022\n" +
+      "\nsuite_plan\030\025 \001(\t\022\025\n\rsuite_version\030\026 \001(\t" +
+      "\022\032\n\022suite_build_number\030\027 \001(\t\022\022\n\nstart_ti" +
+      "me\030\030 \001(\003\022\020\n\010end_time\030\031 \001(\003\022\021\n\thost_name\030" +
+      "\032 \001(\t\022\022\n\nsuite_name\030\033 \001(\t\022 \n\030build_syste" +
+      "m_fingerprint\030\037 \001(\t\022 \n\030build_vendor_fing",
+      "erprint\030  \001(\t\022\036\n\026passed_test_case_count\030" +
+      ") \001(\005\022\036\n\026failed_test_case_count\030* \001(\005\022\024\n" +
+      "\014modules_done\030+ \001(\005\022\025\n\rmodules_total\030, \001" +
+      "(\005B6\n\025com.android.vts.protoB\033TestSuiteRe" +
+      "sultMessageProtoP\000"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -3244,7 +3365,7 @@ public final class TestSuiteResultMessageProto {
     internal_static_android_vts_TestSuiteResultMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_android_vts_TestSuiteResultMessage_descriptor,
-        new java.lang.String[] { "AccessToken", "ResultPath", "Branch", "Target", "BuildId", "SuitePlan", "SuiteVersion", "SuiteBuildNumber", "StartTime", "EndTime", "HostName", "SuiteName", "BuildSystemFingerprint", "BuildVendorFingerprint", "PassedTestCaseCount", "FailedTestCaseCount", "ModulesDone", "ModulesTotal", });
+        new java.lang.String[] { "AccessToken", "ResultPath", "BootSuccess", "Branch", "Target", "BuildId", "SuitePlan", "SuiteVersion", "SuiteBuildNumber", "StartTime", "EndTime", "HostName", "SuiteName", "BuildSystemFingerprint", "BuildVendorFingerprint", "PassedTestCaseCount", "FailedTestCaseCount", "ModulesDone", "ModulesTotal", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
