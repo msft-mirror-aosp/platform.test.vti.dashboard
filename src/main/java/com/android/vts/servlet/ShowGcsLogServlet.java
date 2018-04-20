@@ -71,6 +71,9 @@ public class ShowGcsLogServlet extends BaseServlet {
     /** This is the instance of App Engine memcache service java library */
     private MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
 
+    /** GCS Bucket instance */
+    private Bucket vtsReportBucket;
+
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
@@ -81,6 +84,7 @@ public class ShowGcsLogServlet extends BaseServlet {
         Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
         if (optionalStorage.isPresent()) {
             this.storage = optionalStorage.get();
+            this.vtsReportBucket = storage.get(GCS_BUCKET_NAME);
         } else {
             logger.log(Level.SEVERE, "Error on getting storage instance!");
             throw new ServletException("Creating storage instance exception!");
@@ -111,117 +115,142 @@ public class ShowGcsLogServlet extends BaseServlet {
                 logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
             }
         } else {
-
-            String action =
-                    request.getParameter("action") == null
-                            ? "read"
-                            : request.getParameter("action");
-            String path = request.getParameter("path") == null ? "/" : request.getParameter("path");
-            String entry =
-                    request.getParameter("entry") == null ? "" : request.getParameter("entry");
-            Path pathInfo = Paths.get(path);
-
-            Bucket vtsReportBucket = storage.get(GCS_BUCKET_NAME);
-
-            List<String> dirList = new ArrayList<>();
-            List<String> fileList = new ArrayList<>();
-            List<String> entryList = new ArrayList<>();
-            Map<String, Object> resultMap = new HashMap<>();
-            String entryContent = "";
-
-            if (pathInfo.toString().endsWith(".zip")) {
-
-                Blob blobFile = (Blob) this.syncCache.get(path.toString());
-                if (blobFile == null) {
-                    blobFile = vtsReportBucket.get(path);
-                    this.syncCache.put(path.toString(), blobFile);
+            String pathInfo = request.getPathInfo();
+            if (Objects.nonNull(pathInfo)) {
+                if (pathInfo.equalsIgnoreCase("download")) {
+                    downloadHandler(request, response);
+                } else {
+                    logger.log(Level.WARNING, "Unknown path access!");
                 }
+            } else {
+                defaultHandler(request, response);
+            }
+        }
+    }
 
-                if (action.equalsIgnoreCase("read")) {
-                    InputStream blobInputStream = new ByteArrayInputStream(blobFile.getContent());
-                    ZipInputStream zipInputStream = new ZipInputStream(blobInputStream);
+    private void downloadHandler(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String file = request.getParameter("file") == null ? "/" : request.getParameter("file");
+        Path filePathInfo = Paths.get(file);
 
-                    ZipEntry zipEntry;
-                    while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-                        if (zipEntry.isDirectory()) {
+        Blob blobFile = vtsReportBucket.get(filePathInfo.toString());
 
-                        } else {
-                            if (entry.length() > 0) {
-                                logger.log(Level.INFO, "param entry => " + entry);
-                                if (zipEntry.getName().equals(entry)) {
-                                    logger.log(Level.INFO, "matched !!!! " + zipEntry.getName());
-                                    entryContent =
-                                            IOUtils.toString(
-                                                    zipInputStream, StandardCharsets.UTF_8.name());
-                                }
-                            } else {
-                                entryList.add(zipEntry.getName());
+        response.setContentType("application/octet-stream");
+        response.setContentLength(blobFile.getSize().intValue());
+        response.setHeader(
+                "Content-Disposition",
+                "attachment; filename=\"" + filePathInfo.getFileName() + "\"");
+
+        response.getOutputStream().write(blobFile.getContent());
+    }
+
+    private void defaultHandler(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        String action =
+                request.getParameter("action") == null ? "read" : request.getParameter("action");
+        String path = request.getParameter("path") == null ? "/" : request.getParameter("path");
+        String entry = request.getParameter("entry") == null ? "" : request.getParameter("entry");
+        Path pathInfo = Paths.get(path);
+
+        List<String> dirList = new ArrayList<>();
+        List<String> fileList = new ArrayList<>();
+        List<String> entryList = new ArrayList<>();
+        Map<String, Object> resultMap = new HashMap<>();
+        String entryContent = "";
+
+        if (pathInfo.toString().endsWith(".zip")) {
+
+            Blob blobFile = (Blob) this.syncCache.get(path.toString());
+            if (blobFile == null) {
+                blobFile = vtsReportBucket.get(path);
+                this.syncCache.put(path.toString(), blobFile);
+            }
+
+            if (action.equalsIgnoreCase("read")) {
+                InputStream blobInputStream = new ByteArrayInputStream(blobFile.getContent());
+                ZipInputStream zipInputStream = new ZipInputStream(blobInputStream);
+
+                ZipEntry zipEntry;
+                while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+                    if (zipEntry.isDirectory()) {
+
+                    } else {
+                        if (entry.length() > 0) {
+                            logger.log(Level.INFO, "param entry => " + entry);
+                            if (zipEntry.getName().equals(entry)) {
+                                logger.log(Level.INFO, "matched !!!! " + zipEntry.getName());
+                                entryContent =
+                                        IOUtils.toString(
+                                                zipInputStream, StandardCharsets.UTF_8.name());
                             }
+                        } else {
+                            entryList.add(zipEntry.getName());
                         }
                     }
-                    resultMap.put("entryList", entryList);
-                    resultMap.put("entryContent", entryContent);
-
-                    String json = new Gson().toJson(resultMap);
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write(json);
-                } else {
-                    response.setContentType("application/octet-stream");
-                    response.setContentLength(blobFile.getSize().intValue());
-                    response.setHeader(
-                            "Content-Disposition",
-                            "attachment; filename=\"" + pathInfo.getFileName() + "\"");
-
-                    response.getOutputStream().write(blobFile.getContent());
                 }
+                resultMap.put("entryList", entryList);
+                resultMap.put("entryContent", entryContent);
 
+                String json = new Gson().toJson(resultMap);
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(json);
             } else {
+                response.setContentType("application/octet-stream");
+                response.setContentLength(blobFile.getSize().intValue());
+                response.setHeader(
+                        "Content-Disposition",
+                        "attachment; filename=\"" + pathInfo.getFileName() + "\"");
 
-                logger.log(Level.INFO, "path info => " + pathInfo);
-                logger.log(Level.INFO, "path name count => " + pathInfo.getNameCount());
+                response.getOutputStream().write(blobFile.getContent());
+            }
 
-                BlobListOption[] listOptions;
-                if (pathInfo.getNameCount() == 0) {
-                    listOptions = new BlobListOption[] {BlobListOption.currentDirectory()};
+        } else {
+
+            logger.log(Level.INFO, "path info => " + pathInfo);
+            logger.log(Level.INFO, "path name count => " + pathInfo.getNameCount());
+
+            BlobListOption[] listOptions;
+            if (pathInfo.getNameCount() == 0) {
+                listOptions = new BlobListOption[] {BlobListOption.currentDirectory()};
+            } else {
+                if (pathInfo.getNameCount() <= 1) {
+                    dirList.add("/");
                 } else {
-                    if (pathInfo.getNameCount() <= 1) {
-                        dirList.add("/");
-                    } else {
-                        dirList.add(pathInfo.getParent().toString());
-                    }
-                    listOptions =
-                            new BlobListOption[] {
-                                BlobListOption.currentDirectory(),
-                                BlobListOption.prefix(pathInfo.toString() + "/")
-                            };
+                    dirList.add(pathInfo.getParent().toString());
                 }
+                listOptions =
+                        new BlobListOption[] {
+                            BlobListOption.currentDirectory(),
+                            BlobListOption.prefix(pathInfo.toString() + "/")
+                        };
+            }
 
-                Iterable<Blob> blobIterable = vtsReportBucket.list(listOptions).iterateAll();
-                Iterator<Blob> blobIterator = blobIterable.iterator();
-                while (blobIterator.hasNext()) {
-                    Blob blob = blobIterator.next();
-                    logger.log(Level.INFO, "blob name => " + blob);
-                    if (blob.isDirectory()) {
-                        logger.log(Level.INFO, "directory name => " + blob.getName());
-                        dirList.add(blob.getName());
-                    } else {
-                        logger.log(Level.INFO, "file name => " + blob.getName());
-                        fileList.add(Paths.get(blob.getName()).getFileName().toString());
-                    }
+            Iterable<Blob> blobIterable = vtsReportBucket.list(listOptions).iterateAll();
+            Iterator<Blob> blobIterator = blobIterable.iterator();
+            while (blobIterator.hasNext()) {
+                Blob blob = blobIterator.next();
+                logger.log(Level.INFO, "blob name => " + blob);
+                if (blob.isDirectory()) {
+                    logger.log(Level.INFO, "directory name => " + blob.getName());
+                    dirList.add(blob.getName());
+                } else {
+                    logger.log(Level.INFO, "file name => " + blob.getName());
+                    fileList.add(Paths.get(blob.getName()).getFileName().toString());
                 }
+            }
 
-                response.setStatus(HttpServletResponse.SC_OK);
-                request.setAttribute("entryList", entryList);
-                request.setAttribute("dirList", dirList);
-                request.setAttribute("fileList", fileList);
-                request.setAttribute("path", path);
-                RequestDispatcher dispatcher = request.getRequestDispatcher(GCS_LOG_JSP);
-                try {
-                    dispatcher.forward(request, response);
-                } catch (ServletException e) {
-                    logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
-                }
+            response.setStatus(HttpServletResponse.SC_OK);
+            request.setAttribute("entryList", entryList);
+            request.setAttribute("dirList", dirList);
+            request.setAttribute("fileList", fileList);
+            request.setAttribute("path", path);
+            RequestDispatcher dispatcher = request.getRequestDispatcher(GCS_LOG_JSP);
+            try {
+                dispatcher.forward(request, response);
+            } catch (ServletException e) {
+                logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
             }
         }
     }
