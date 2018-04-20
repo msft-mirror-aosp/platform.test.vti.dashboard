@@ -197,7 +197,7 @@ public class TestSuiteResultEntity {
                 return entry.getKey();
             }
         }
-        return "unknown-version-" + Instant.now().toEpochMilli();
+        return "unknown-version";
     }
 
     public GROUP_TYPE getGroupType() {
