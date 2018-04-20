@@ -27,7 +27,11 @@
   <link type='text/css' href='/css/test_results.css' rel='stylesheet'>
   <script type='text/javascript'>
       $(document).ready(function() {
-
+          $("li.tab").each(function( index ) {
+              $(this).click(function() {
+                  window.open($(this).children().attr("href"), '_self');
+              });
+          });
       });
   </script>
   <body>
@@ -39,29 +43,80 @@
         </div>
       </div>
 
+        <div class='row'>
+            <div class='col s12'>
+
+                <ul class="tabs">
+                    <li class="tab col s6" id="totTabLink">
+                        <a class="${groupType == 'TOT' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=TOT">TOT</a>
+                    </li>
+                    <li class="tab col s6" id="signedTabLink">
+                        <a class="${groupType == 'SIGNED' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=SIGNED">SIGNED</a>
+                    </li>
+                    <li class="tab col s6" id="otaTabLink">
+                        <a class="${groupType == 'OTA' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=OTA">OTA</a>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+
       <div class='row' id='test-suite-green-release-container'>
         <div class="col s12">
 
-            <ul data-collapsible="expandable" class="collapsible popout test-runs">
+            <ul class="collapsible popout test-runs">
                 <c:forEach var="testSuiteResultEntity" items="${testSuiteResultEntityPagination.list}">
                     <li class="test-run-container">
-                    <div test="SampleShellTest" time="1522488372555217" class="collapsible-header test-run">
-                        <span class="test-run-metadata">
-                            <b><c:out value="${testSuiteResultEntity.branch}"></c:out>/<c:out value="${testSuiteResultEntity.target}"></c:out> (<c:out value="${testSuiteResultEntity.buildId}"></c:out>)</b><br>
-                            <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
-                            <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
-                            <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
-                            <b>LOG Path: </b><c:out value="${testSuiteResultEntity.resultPath}"></c:out><br>
-                            <jsp:setProperty name="startDateObject" property="time" value="${testSuiteResultEntity.startTime}"/>
-                            <jsp:setProperty name="endDateObject" property="time" value="${testSuiteResultEntity.endTime}"/>
-                            <fmt:formatDate value="${startDateObject}" pattern="yyyy-MM-dd HH:mm:ss" timeZone="${timeZone}" /> - <fmt:formatDate value="${endDateObject}" pattern="yyyy-MM-dd HH:mm:ss z" timeZone="${timeZone}" />
-                            <c:set var="executionTime" scope="page" value="${(testSuiteResultEntity.endTime - testSuiteResultEntity.startTime) / 1000}"/>
-                            (<c:out value="${executionTime}"></c:out>s)
-                        </span>
-                        <span class="indicator right center green">
-                            <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
-                        </span>
-                        <i class="material-icons expand-arrow">expand_more</i>
+                    <div class="collapsible-header test-run">
+                        <div class="row" style="margin-bottom: 0px; line-height: 30px;">
+                            <div class="col s9">
+                                <b><c:out value="${testSuiteResultEntity.branch}"></c:out>/<c:out value="${testSuiteResultEntity.target}"></c:out> (<c:out value="${testSuiteResultEntity.buildId}"></c:out>)</b>
+                            </div>
+                            <div class="col s3">
+                                <span class="indicator right center
+                                <c:choose>
+                                    <c:when test="${testSuiteResultEntity.passedTestCaseCount eq 0 and testSuiteResultEntity.failedTestCaseCount eq 0}">
+                                        black
+                                    </c:when>
+                                    <c:otherwise>
+                                        green
+                                    </c:otherwise>
+                                </c:choose>
+                                ">
+                                    <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
+                                </span>
+                            </div>
+                            <div class="col s5">
+                                <span class="suite-test-run-metadata">
+                                    <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
+                                    <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
+                                    <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
+                                </span>
+                            </div>
+                            <div class="col s7">
+                                <span class="suite-test-run-metadata">
+                                    <b>Host: </b><c:out value="${testSuiteResultEntity.hostName}"></c:out><br>
+                                    <b>LOG Path: </b>
+                                        <c:set var="logPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
+                                        <a href="show_gcs_log?path=${logPath}">
+                                            <c:out value="${logPath}"></c:out>
+                                        </a>
+                                    <br>
+                                </span>
+                            </div>
+                            <div class="col s10">
+                                <span style="font-size: 13px;">
+                                <jsp:setProperty name="startDateObject" property="time" value="${testSuiteResultEntity.startTime}"/>
+                                <jsp:setProperty name="endDateObject" property="time" value="${testSuiteResultEntity.endTime}"/>
+                                <fmt:formatDate value="${startDateObject}" pattern="yyyy-MM-dd HH:mm:ss" timeZone="${timeZone}" /> - <fmt:formatDate value="${endDateObject}" pattern="yyyy-MM-dd HH:mm:ss z" timeZone="${timeZone}" />
+                                <c:set var="executionTime" scope="page" value="${(testSuiteResultEntity.endTime - testSuiteResultEntity.startTime) / 1000}"/>
+                                (<c:out value="${executionTime}"></c:out>s)
+                                </span>
+                            </div>
+                            <div class="col s2">
+                                <i class="material-icons expand-arrow">expand_more</i>
+                            </div>
+                        </div>
                     </div>
                         <div class="collapsible-body test-results row" style="display: none;">
                             <div class="col test-col grey lighten-5 s12 left-most right-most">
@@ -89,12 +144,12 @@
       </div>
 
       <div class="row">
-        <div class="col s12">
+        <div class="col s12 center-align">
           <ul class="pagination">
             <c:choose>
                 <c:when test="${testSuiteResultEntityPagination.minPageRange gt testSuiteResultEntityPagination.pageSize}">
                     <li class="waves-effect">
-                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=${groupType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}">
                             <i class="material-icons">chevron_left</i>
                         </a>
                     </li>
@@ -105,7 +160,7 @@
             </c:choose>
             <c:forEach var="pageLoop" begin="${testSuiteResultEntityPagination.minPageRange}" end="${testSuiteResultEntityPagination.maxPageRange}">
               <li class="waves-effect">
-                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
+                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=${groupType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
                       <c:out value="${pageLoop}" />
                   </a>
               </li>
@@ -113,7 +168,7 @@
             <c:choose>
                 <c:when test="${testSuiteResultEntityPagination.maxPages gt testSuiteResultEntityPagination.pageSize}">
                     <li class="waves-effect">
-                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=${groupType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}">
                             <i class="material-icons">chevron_right</i>
                         </a>
                     </li>
