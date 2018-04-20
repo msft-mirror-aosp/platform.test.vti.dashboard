@@ -287,7 +287,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         String testPlan = request.getParameter("plan");
         String groupType =
                 request.getParameter("groupType") == null
-                        ? "OTA"
+                        ? "TOT"
                         : request.getParameter("groupType");
         int page =
                 request.getParameter("page") == null

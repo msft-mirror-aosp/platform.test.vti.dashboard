@@ -47,14 +47,14 @@
             <div class='col s12'>
 
                 <ul class="tabs">
-                    <li class="tab col s6" id="otaTabLink">
-                        <a class="${groupType == 'OTA' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=OTA">OTA</a>
+                    <li class="tab col s6" id="totTabLink">
+                        <a class="${groupType == 'TOT' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=TOT">TOT</a>
                     </li>
                     <li class="tab col s6" id="signedTabLink">
                         <a class="${groupType == 'SIGNED' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=SIGNED">SIGNED</a>
                     </li>
-                    <li class="tab col s6" id="totTabLink">
-                        <a class="${groupType == 'TOT' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=TOT">TOT</a>
+                    <li class="tab col s6" id="otaTabLink">
+                        <a class="${groupType == 'OTA' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=OTA">OTA</a>
                     </li>
                 </ul>
 
