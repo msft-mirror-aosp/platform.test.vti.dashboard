@@ -63,7 +63,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
             links.add(new Page(PageType.RELEASE, "TEST PLANS", "?type=" + testType, true));
             links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
         } else {
-            links.add(new Page(PageType.RELEASE, "SUITE TEST PLANS", "?type=" + testType, true));
+            links.add(new Page(PageType.RELEASE, "TEST SUITES", "?type=" + testType, true));
             links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName + "&type=" + testType));
         }
         return links;
