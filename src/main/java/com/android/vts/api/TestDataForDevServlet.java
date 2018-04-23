@@ -267,7 +267,9 @@ public class TestDataForDevServlet extends HttpServlet {
                                                                                             100),
                                                                                     ChronoUnit.DAYS)
                                                                             .getEpochSecond(),
+                                                                    idx / 2 == 0 ? false : true,
                                                                     pathInfo.toString(),
+                                                                    idx / 2 == 0 ? "/error/infra/log" : "",
                                                                     "Test Place Name -" + idx,
                                                                     "Suite Test Plan",
                                                                     "Suite Version " + idx,
