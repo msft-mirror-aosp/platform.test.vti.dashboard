@@ -324,6 +324,32 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 modules_total = 44;</code>
      */
     int getModulesTotal();
+
+    /**
+     * <pre>
+     * GCS path to the corresponding infra log file.
+     * </pre>
+     *
+     * <code>optional string infra_log_path = 51;</code>
+     */
+    boolean hasInfraLogPath();
+    /**
+     * <pre>
+     * GCS path to the corresponding infra log file.
+     * </pre>
+     *
+     * <code>optional string infra_log_path = 51;</code>
+     */
+    java.lang.String getInfraLogPath();
+    /**
+     * <pre>
+     * GCS path to the corresponding infra log file.
+     * </pre>
+     *
+     * <code>optional string infra_log_path = 51;</code>
+     */
+    com.google.protobuf.ByteString
+        getInfraLogPathBytes();
   }
   /**
    * <pre>
@@ -360,6 +386,7 @@ public final class TestSuiteResultMessageProto {
       failedTestCaseCount_ = 0;
       modulesDone_ = 0;
       modulesTotal_ = 0;
+      infraLogPath_ = "";
     }
 
     @java.lang.Override
@@ -495,6 +522,12 @@ public final class TestSuiteResultMessageProto {
             case 352: {
               bitField0_ |= 0x00040000;
               modulesTotal_ = input.readInt32();
+              break;
+            }
+            case 410: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00080000;
+              infraLogPath_ = bs;
               break;
             }
           }
@@ -1207,6 +1240,60 @@ public final class TestSuiteResultMessageProto {
       return modulesTotal_;
     }
 
+    public static final int INFRA_LOG_PATH_FIELD_NUMBER = 51;
+    private volatile java.lang.Object infraLogPath_;
+    /**
+     * <pre>
+     * GCS path to the corresponding infra log file.
+     * </pre>
+     *
+     * <code>optional string infra_log_path = 51;</code>
+     */
+    public boolean hasInfraLogPath() {
+      return ((bitField0_ & 0x00080000) == 0x00080000);
+    }
+    /**
+     * <pre>
+     * GCS path to the corresponding infra log file.
+     * </pre>
+     *
+     * <code>optional string infra_log_path = 51;</code>
+     */
+    public java.lang.String getInfraLogPath() {
+      java.lang.Object ref = infraLogPath_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          infraLogPath_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * GCS path to the corresponding infra log file.
+     * </pre>
+     *
+     * <code>optional string infra_log_path = 51;</code>
+     */
+    public com.google.protobuf.ByteString
+        getInfraLogPathBytes() {
+      java.lang.Object ref = infraLogPath_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        infraLogPath_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -1288,6 +1375,9 @@ public final class TestSuiteResultMessageProto {
       if (((bitField0_ & 0x00040000) == 0x00040000)) {
         output.writeInt32(44, modulesTotal_);
       }
+      if (((bitField0_ & 0x00080000) == 0x00080000)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 51, infraLogPath_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -1359,6 +1449,9 @@ public final class TestSuiteResultMessageProto {
       if (((bitField0_ & 0x00040000) == 0x00040000)) {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(44, modulesTotal_);
+      }
+      if (((bitField0_ & 0x00080000) == 0x00080000)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(51, infraLogPath_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -1472,6 +1565,11 @@ public final class TestSuiteResultMessageProto {
         result = result && (getModulesTotal()
             == other.getModulesTotal());
       }
+      result = result && (hasInfraLogPath() == other.hasInfraLogPath());
+      if (hasInfraLogPath()) {
+        result = result && getInfraLogPath()
+            .equals(other.getInfraLogPath());
+      }
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -1561,6 +1659,10 @@ public final class TestSuiteResultMessageProto {
       if (hasModulesTotal()) {
         hash = (37 * hash) + MODULES_TOTAL_FIELD_NUMBER;
         hash = (53 * hash) + getModulesTotal();
+      }
+      if (hasInfraLogPath()) {
+        hash = (37 * hash) + INFRA_LOG_PATH_FIELD_NUMBER;
+        hash = (53 * hash) + getInfraLogPath().hashCode();
       }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
@@ -1722,6 +1824,8 @@ public final class TestSuiteResultMessageProto {
         bitField0_ = (bitField0_ & ~0x00020000);
         modulesTotal_ = 0;
         bitField0_ = (bitField0_ & ~0x00040000);
+        infraLogPath_ = "";
+        bitField0_ = (bitField0_ & ~0x00080000);
         return this;
       }
 
@@ -1822,6 +1926,10 @@ public final class TestSuiteResultMessageProto {
           to_bitField0_ |= 0x00040000;
         }
         result.modulesTotal_ = modulesTotal_;
+        if (((from_bitField0_ & 0x00080000) == 0x00080000)) {
+          to_bitField0_ |= 0x00080000;
+        }
+        result.infraLogPath_ = infraLogPath_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1944,6 +2052,11 @@ public final class TestSuiteResultMessageProto {
         }
         if (other.hasModulesTotal()) {
           setModulesTotal(other.getModulesTotal());
+        }
+        if (other.hasInfraLogPath()) {
+          bitField0_ |= 0x00080000;
+          infraLogPath_ = other.infraLogPath_;
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -3269,6 +3382,106 @@ public final class TestSuiteResultMessageProto {
         onChanged();
         return this;
       }
+
+      private java.lang.Object infraLogPath_ = "";
+      /**
+       * <pre>
+       * GCS path to the corresponding infra log file.
+       * </pre>
+       *
+       * <code>optional string infra_log_path = 51;</code>
+       */
+      public boolean hasInfraLogPath() {
+        return ((bitField0_ & 0x00080000) == 0x00080000);
+      }
+      /**
+       * <pre>
+       * GCS path to the corresponding infra log file.
+       * </pre>
+       *
+       * <code>optional string infra_log_path = 51;</code>
+       */
+      public java.lang.String getInfraLogPath() {
+        java.lang.Object ref = infraLogPath_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            infraLogPath_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * GCS path to the corresponding infra log file.
+       * </pre>
+       *
+       * <code>optional string infra_log_path = 51;</code>
+       */
+      public com.google.protobuf.ByteString
+          getInfraLogPathBytes() {
+        java.lang.Object ref = infraLogPath_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          infraLogPath_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * GCS path to the corresponding infra log file.
+       * </pre>
+       *
+       * <code>optional string infra_log_path = 51;</code>
+       */
+      public Builder setInfraLogPath(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00080000;
+        infraLogPath_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * GCS path to the corresponding infra log file.
+       * </pre>
+       *
+       * <code>optional string infra_log_path = 51;</code>
+       */
+      public Builder clearInfraLogPath() {
+        bitField0_ = (bitField0_ & ~0x00080000);
+        infraLogPath_ = getDefaultInstance().getInfraLogPath();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * GCS path to the corresponding infra log file.
+       * </pre>
+       *
+       * <code>optional string infra_log_path = 51;</code>
+       */
+      public Builder setInfraLogPathBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00080000;
+        infraLogPath_ = value;
+        onChanged();
+        return this;
+      }
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFields(unknownFields);
@@ -3333,7 +3546,7 @@ public final class TestSuiteResultMessageProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\"proto/TestSuiteResultMessage.proto\022\013an" +
-      "droid.vts\"\326\003\n\026TestSuiteResultMessage\022\024\n\014" +
+      "droid.vts\"\356\003\n\026TestSuiteResultMessage\022\024\n\014" +
       "access_token\030\001 \001(\t\022\023\n\013result_path\030\002 \001(\t\022" +
       "\032\n\014boot_success\030\003 \001(\010:\004true\022\016\n\006branch\030\013 " +
       "\002(\t\022\016\n\006target\030\014 \002(\t\022\020\n\010build_id\030\r \002(\t\022\022\n" +
@@ -3345,8 +3558,9 @@ public final class TestSuiteResultMessageProto {
       "erprint\030  \001(\t\022\036\n\026passed_test_case_count\030" +
       ") \001(\005\022\036\n\026failed_test_case_count\030* \001(\005\022\024\n" +
       "\014modules_done\030+ \001(\005\022\025\n\rmodules_total\030, \001" +
-      "(\005B6\n\025com.android.vts.protoB\033TestSuiteRe" +
-      "sultMessageProtoP\000"
+      "(\005\022\026\n\016infra_log_path\0303 \001(\tB6\n\025com.androi" +
+      "d.vts.protoB\033TestSuiteResultMessageProto" +
+      "P\000"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -3365,7 +3579,7 @@ public final class TestSuiteResultMessageProto {
     internal_static_android_vts_TestSuiteResultMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_android_vts_TestSuiteResultMessage_descriptor,
-        new java.lang.String[] { "AccessToken", "ResultPath", "BootSuccess", "Branch", "Target", "BuildId", "SuitePlan", "SuiteVersion", "SuiteBuildNumber", "StartTime", "EndTime", "HostName", "SuiteName", "BuildSystemFingerprint", "BuildVendorFingerprint", "PassedTestCaseCount", "FailedTestCaseCount", "ModulesDone", "ModulesTotal", });
+        new java.lang.String[] { "AccessToken", "ResultPath", "BootSuccess", "Branch", "Target", "BuildId", "SuitePlan", "SuiteVersion", "SuiteBuildNumber", "StartTime", "EndTime", "HostName", "SuiteName", "BuildSystemFingerprint", "BuildVendorFingerprint", "PassedTestCaseCount", "FailedTestCaseCount", "ModulesDone", "ModulesTotal", "InfraLogPath", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
