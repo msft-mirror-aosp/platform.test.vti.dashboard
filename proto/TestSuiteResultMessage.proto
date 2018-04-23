@@ -54,4 +54,7 @@ message TestSuiteResultMessage {
   optional int32 failed_test_case_count = 42;
   optional int32 modules_done = 43;
   optional int32 modules_total = 44;
+
+  // GCS path to the corresponding infra log file.
+  optional string infra_log_path = 51;
 }
