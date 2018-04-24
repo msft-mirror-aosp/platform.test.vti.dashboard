@@ -25,6 +25,7 @@
   <%@ include file='header.jsp' %>
   <link type='text/css' href='/css/show_test_runs_common.css' rel='stylesheet'>
   <link type='text/css' href='/css/test_results.css' rel='stylesheet'>
+  <link rel='stylesheet' href='/css/search_header.css'>
   <script type='text/javascript'>
       $(document).ready(function() {
           $("li.tab").each(function( index ) {
@@ -32,16 +33,67 @@
                   window.open($(this).children().attr("href"), '_self');
               });
           });
+
+          $(".search-icon-wrapper").click(function() {
+              console.log($(this));
+
+              $(".search-wrapper").slideToggle("fast", function() {
+                  // Animation complete.
+              });
+          });
       });
   </script>
   <body>
     <div class='wide container'>
 
-      <div class="row">
-        <div class="col s12">
-          <h4 id="test-suite-section-header">Test Suites</h4>
+        <div class="row card search-bar expanded">
+            <div class="header-wrapper">
+                <h5 class="section-header">
+                    <b>Plan: </b><span><c:out value="${plan}"></c:out></span>
+                </h5>
+                <div class="search-icon-wrapper">
+                    <i class="material-icons">search</i>
+                </div>
+            </div>
+            <div class="search-wrapper" style="display: none">
+                <div class="col s12">
+                    <div class="input-field col s4">
+                        <input class="filter-input ui-autocomplete-input" type="text" autocomplete="off" />
+                        <label>Device Branch</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input ui-autocomplete-input" type="text" autocomplete="off" />
+                        <label>Device Type</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input" type="text" />
+                        <label>Device Build ID</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input" type="text" />
+                        <label>Host</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input validate" type="text" pattern="(^)(<|>|<=|>=|=)?[ ]*?[0-9]+$" placeholder="e.g. 5, >0, <=10" />
+                        <label class="active">Passing Test Case Count</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input validate" type="text" pattern="(^)(<|>|<=|>=|=)?[ ]*?[0-9]+$" placeholder="e.g. 5, >0, <=10" />
+                        <label class="active">Non-Passing Test Case Count</label>
+                    </div>
+                </div>
+                <div class="col s12">
+                    <div class="run-type-wrapper col s9">
+
+                    </div>
+                    <div class="run-type-wrapper col s3">
+                        <a class="waves-effect waves-light btn">
+                            <i class="material-icons left">search</i>Apply
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
 
         <div class='row'>
             <div class='col s12'>
