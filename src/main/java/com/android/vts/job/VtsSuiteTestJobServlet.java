@@ -65,6 +65,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -135,72 +137,92 @@ public class VtsSuiteTestJobServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-        logger.log(Level.INFO, "Job Started!!!!!!!!!!!!!");
+        List<String> dateStringList = new ArrayList<>();
 
         long currentMicroSecond = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis());
+
+        ZonedDateTime checkZonedDateTime = TimeUtil.getZonedDateTime(currentMicroSecond);
+        String checkDateString =
+                DateTimeFormatter.ofPattern(TimeUtil.DATE_FORMAT)
+                        .format(checkZonedDateTime.minusMinutes(5));
         String todayDateString = TimeUtil.getDateString(currentMicroSecond);
-        String[] dateArray = todayDateString.split("-");
-        if (dateArray.length == 3) {
-
-            Queue queue = QueueFactory.getQueue(QUEUE);
-
-            List<TaskOptions> tasks = new ArrayList<>();
-
-            String fileSeparator = FileSystems.getDefault().getSeparator();
-
-            String year = dateArray[0];
-            String month = dateArray[1];
-            String day = dateArray[2];
-
-            List<String> pathList = Arrays.asList(GCS_SUITE_TEST_FOLDER_NAME, year, month, day);
-            Path pathInfo = Paths.get(String.join(fileSeparator, pathList));
-
-            List<TestSuiteFileEntity> testSuiteFileEntityList =
-                    ofy().load()
-                            .type(TestSuiteFileEntity.class)
-                            .filter("year", Integer.parseInt(year))
-                            .filter("month", Integer.parseInt(month))
-                            .filter("day", Integer.parseInt(day))
-                            .list();
-
-            List<String> filePathList =
-                    testSuiteFileEntityList
-                            .stream()
-                            .map(testSuiteFile -> testSuiteFile.getFilePath())
-                            .collect(Collectors.toList());
-
-            Bucket vtsReportBucket = this.storage.get(GCS_BUCKET_NAME);
-
-            Storage.BlobListOption[] listOptions =
-                    new Storage.BlobListOption[] {
-                        Storage.BlobListOption.prefix(pathInfo.toString() + fileSeparator)
-                    };
-
-            Iterable<Blob> blobIterable = vtsReportBucket.list(listOptions).iterateAll();
-            Iterator<Blob> blobIterator = blobIterable.iterator();
-            while (blobIterator.hasNext()) {
-                Blob blob = blobIterator.next();
-                if (blob.isDirectory()) {
-                    logger.log(Level.INFO, blob.getName() + " directory will be skipped!");
-                } else {
-                    if (filePathList.contains(blob.getName())) {
-                        logger.log(Level.INFO, "filePathList contain => " + blob.getName());
-                    } else if (blob.getName().endsWith(fileSeparator)) {
-                        logger.log(Level.INFO, blob.getName() + " endswith slash!");
-                    } else {
-                        TaskOptions task =
-                                TaskOptions.Builder.withUrl(SUITE_TEST_URL)
-                                        .param("filePath", blob.getName())
-                                        .method(TaskOptions.Method.POST);
-                        tasks.add(task);
-                    }
-                }
-            }
-            TaskQueueHelper.addToQueue(queue, tasks);
-        } else {
-            throw new IllegalArgumentException(
-                    todayDateString + " date string not in correct format");
+        if (!checkDateString.equals(todayDateString)) {
+            dateStringList.add(checkDateString);
+            logger.log(Level.INFO, "Yesterday is added to the process queue and processed!");
         }
+        dateStringList.add(todayDateString);
+
+        dateStringList.forEach(
+                dateString -> {
+                    String[] dateArray = dateString.split("-");
+                    if (dateArray.length == 3) {
+
+                        Queue queue = QueueFactory.getQueue(QUEUE);
+
+                        List<TaskOptions> tasks = new ArrayList<>();
+
+                        String fileSeparator = FileSystems.getDefault().getSeparator();
+
+                        String year = dateArray[0];
+                        String month = dateArray[1];
+                        String day = dateArray[2];
+
+                        List<String> pathList =
+                                Arrays.asList(GCS_SUITE_TEST_FOLDER_NAME, year, month, day);
+                        Path pathInfo = Paths.get(String.join(fileSeparator, pathList));
+
+                        List<TestSuiteFileEntity> testSuiteFileEntityList =
+                                ofy().load()
+                                        .type(TestSuiteFileEntity.class)
+                                        .filter("year", Integer.parseInt(year))
+                                        .filter("month", Integer.parseInt(month))
+                                        .filter("day", Integer.parseInt(day))
+                                        .list();
+
+                        List<String> filePathList =
+                                testSuiteFileEntityList
+                                        .stream()
+                                        .map(testSuiteFile -> testSuiteFile.getFilePath())
+                                        .collect(Collectors.toList());
+
+                        Bucket vtsReportBucket = this.storage.get(GCS_BUCKET_NAME);
+
+                        Storage.BlobListOption[] listOptions =
+                                new Storage.BlobListOption[] {
+                                    Storage.BlobListOption.prefix(
+                                            pathInfo.toString() + fileSeparator)
+                                };
+
+                        Iterable<Blob> blobIterable =
+                                vtsReportBucket.list(listOptions).iterateAll();
+                        Iterator<Blob> blobIterator = blobIterable.iterator();
+                        while (blobIterator.hasNext()) {
+                            Blob blob = blobIterator.next();
+                            if (blob.isDirectory()) {
+                                logger.log(
+                                        Level.INFO, blob.getName() + " directory will be skipped!");
+                            } else {
+                                if (filePathList.contains(blob.getName())) {
+                                    logger.log(
+                                            Level.INFO,
+                                            "filePathList contain => " + blob.getName());
+                                } else if (blob.getName().endsWith(fileSeparator)) {
+                                    logger.log(Level.INFO, blob.getName() + " endswith slash!");
+                                } else {
+                                    TaskOptions task =
+                                            TaskOptions.Builder.withUrl(SUITE_TEST_URL)
+                                                    .param("filePath", blob.getName())
+                                                    .method(TaskOptions.Method.POST);
+                                    tasks.add(task);
+                                }
+                            }
+                        }
+                        TaskQueueHelper.addToQueue(queue, tasks);
+                    } else {
+                        throw new IllegalArgumentException(
+                                todayDateString + " date string not in correct format");
+                    }
+                });
     }
 
     @Override
@@ -246,7 +268,9 @@ public class VtsSuiteTestJobServlet extends HttpServlet {
                                         testSuiteFileEntityKey,
                                         testSuiteResultMessage.getStartTime(),
                                         testSuiteResultMessage.getEndTime(),
+                                        testSuiteResultMessage.getBootSuccess(),
                                         testSuiteResultMessage.getResultPath(),
+                                        testSuiteResultMessage.getInfraLogPath(),
                                         testSuiteResultMessage.getHostName(),
                                         testSuiteResultMessage.getSuitePlan(),
                                         testSuiteResultMessage.getSuiteVersion(),

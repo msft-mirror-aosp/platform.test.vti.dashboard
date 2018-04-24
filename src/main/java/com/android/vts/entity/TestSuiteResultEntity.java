@@ -61,8 +61,14 @@ public class TestSuiteResultEntity {
     /** Test Suite group type OTA, Signed, ToT field */
     @Index @Getter @Setter GROUP_TYPE groupType;
 
+    /** Test Suite bootup error field */
+    @Getter @Setter Boolean bootSuccess;
+
     /** Test Suite result path field */
     @Getter @Setter String resultPath;
+
+    /** Test Suite infra log path field */
+    @Getter @Setter String infraLogPath;
 
     /** Test Suite host name field */
     @Getter @Setter String hostName;
@@ -117,7 +123,9 @@ public class TestSuiteResultEntity {
             Key<TestSuiteFileEntity> testSuiteFileEntityKey,
             Long startTime,
             Long endTime,
+            Boolean bootSuccess,
             String resultPath,
+            String infraLogPath,
             String hostName,
             String suitePlan,
             String suiteVersion,
@@ -135,7 +143,9 @@ public class TestSuiteResultEntity {
         this.testSuiteFileEntityKey = testSuiteFileEntityKey;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.bootSuccess = bootSuccess;
         this.resultPath = resultPath;
+        this.infraLogPath = infraLogPath;
         this.hostName = hostName;
         this.suitePlan = suitePlan;
         this.suiteVersion = suiteVersion;
