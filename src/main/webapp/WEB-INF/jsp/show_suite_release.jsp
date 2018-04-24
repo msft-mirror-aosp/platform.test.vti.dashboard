@@ -90,17 +90,29 @@
                                 <span class="suite-test-run-metadata">
                                     <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
                                     <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
-                                    <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
                                 </span>
                             </div>
                             <div class="col s7">
                                 <span class="suite-test-run-metadata">
                                     <b>Host: </b><c:out value="${testSuiteResultEntity.hostName}"></c:out><br>
-                                    <b>LOG Path: </b>
+                                    <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
+                                </span>
+                            </div>
+                            <div class="col s12">
+                                <span class="suite-test-run-metadata">
+                                    <b>Result Log Path: </b>
                                         <c:set var="logPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
                                         <a href="show_gcs_log?path=${logPath}">
                                             <c:out value="${logPath}"></c:out>
                                         </a>
+                                    <br>
+                                    <b>Infra Log Path: </b>
+                                        <c:if test="${!testSuiteResultEntity.bootSuccess}">
+                                            <c:set var="infraLogPath" value="${fn:replace(testSuiteResultEntity.infraLogPath, 'gs://vts-report/', '')}"/>
+                                            <a href="show_gcs_log/download?file=${infraLogPath}">
+                                                <c:out value="${infraLogPath}"></c:out>
+                                            </a>
+                                        </c:if>
                                     <br>
                                 </span>
                             </div>
