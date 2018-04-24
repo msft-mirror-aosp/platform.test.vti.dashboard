@@ -26,8 +26,8 @@ import java.util.logging.Logger;
 public class TimeUtil {
     protected static final Logger logger = Logger.getLogger(TimeUtil.class.getName());
 
-    protected static final String DATE_FORMAT = "yyyy-MM-dd";
-    protected static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss (z)";
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
+    public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss (z)";
     public static final ZoneId PT_ZONE = ZoneId.of("America/Los_Angeles");
 
     /**
@@ -52,5 +52,16 @@ public class TimeUtil {
         long timeMillis = TimeUnit.MICROSECONDS.toMillis(timeMicroseconds);
         ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), PT_ZONE);
         return DateTimeFormatter.ofPattern(DATE_FORMAT).format(zdt);
+    }
+
+    /**
+     * Create a ZonedDateTime object from the provided timestamp.
+     *
+     * @param timeMicroseconds The time in microseconds
+     * @return A ZonedDateTime object.
+     */
+    public static ZonedDateTime getZonedDateTime(long timeMicroseconds) {
+        long timeMillis = TimeUnit.MICROSECONDS.toMillis(timeMicroseconds);
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), PT_ZONE);
     }
 }
