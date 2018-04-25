@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='TestSuiteResultMessage.proto',
   package='android.vts',
   syntax='proto2',
-  serialized_pb=_b('\n\x1cTestSuiteResultMessage.proto\x12\x0b\x61ndroid.vts\"\xee\x03\n\x16TestSuiteResultMessage\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x01 \x01(\t\x12\x13\n\x0bresult_path\x18\x02 \x01(\t\x12\x1a\n\x0c\x62oot_success\x18\x03 \x01(\x08:\x04true\x12\x0e\n\x06\x62ranch\x18\x0b \x02(\t\x12\x0e\n\x06target\x18\x0c \x02(\t\x12\x10\n\x08\x62uild_id\x18\r \x02(\t\x12\x12\n\nsuite_plan\x18\x15 \x01(\t\x12\x15\n\rsuite_version\x18\x16 \x01(\t\x12\x1a\n\x12suite_build_number\x18\x17 \x01(\t\x12\x12\n\nstart_time\x18\x18 \x01(\x03\x12\x10\n\x08\x65nd_time\x18\x19 \x01(\x03\x12\x11\n\thost_name\x18\x1a \x01(\t\x12\x12\n\nsuite_name\x18\x1b \x01(\t\x12 \n\x18\x62uild_system_fingerprint\x18\x1f \x01(\t\x12 \n\x18\x62uild_vendor_fingerprint\x18  \x01(\t\x12\x1e\n\x16passed_test_case_count\x18) \x01(\x05\x12\x1e\n\x16\x66\x61iled_test_case_count\x18* \x01(\x05\x12\x14\n\x0cmodules_done\x18+ \x01(\x05\x12\x15\n\rmodules_total\x18, \x01(\x05\x12\x16\n\x0einfra_log_path\x18\x33 \x01(\tB6\n\x15\x63om.android.vts.protoB\x1bTestSuiteResultMessageProtoP\x00')
+  serialized_pb=_b('\n\x1cTestSuiteResultMessage.proto\x12\x0b\x61ndroid.vts\"\x84\x04\n\x16TestSuiteResultMessage\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x01 \x01(\t\x12\x13\n\x0bresult_path\x18\x02 \x01(\t\x12\x1a\n\x0c\x62oot_success\x18\x03 \x01(\x08:\x04true\x12\x0e\n\x06\x62ranch\x18\x0b \x02(\t\x12\x0e\n\x06target\x18\x0c \x02(\t\x12\x10\n\x08\x62uild_id\x18\r \x02(\t\x12\x12\n\nsuite_plan\x18\x15 \x01(\t\x12\x15\n\rsuite_version\x18\x16 \x01(\t\x12\x1a\n\x12suite_build_number\x18\x17 \x01(\t\x12\x12\n\nstart_time\x18\x18 \x01(\x03\x12\x10\n\x08\x65nd_time\x18\x19 \x01(\x03\x12\x11\n\thost_name\x18\x1a \x01(\t\x12\x12\n\nsuite_name\x18\x1b \x01(\t\x12 \n\x18\x62uild_system_fingerprint\x18\x1f \x01(\t\x12 \n\x18\x62uild_vendor_fingerprint\x18  \x01(\t\x12\x14\n\ttest_type\x18! \x01(\x05:\x01\x30\x12\x1e\n\x16passed_test_case_count\x18) \x01(\x05\x12\x1e\n\x16\x66\x61iled_test_case_count\x18* \x01(\x05\x12\x14\n\x0cmodules_done\x18+ \x01(\x05\x12\x15\n\rmodules_total\x18, \x01(\x05\x12\x16\n\x0einfra_log_path\x18\x33 \x01(\tB6\n\x15\x63om.android.vts.protoB\x1bTestSuiteResultMessageProtoP\x00')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -139,35 +139,42 @@ _TESTSUITERESULTMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='passed_test_case_count', full_name='android.vts.TestSuiteResultMessage.passed_test_case_count', index=15,
+      name='test_type', full_name='android.vts.TestSuiteResultMessage.test_type', index=15,
+      number=33, type=5, cpp_type=1, label=1,
+      has_default_value=True, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='passed_test_case_count', full_name='android.vts.TestSuiteResultMessage.passed_test_case_count', index=16,
       number=41, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='failed_test_case_count', full_name='android.vts.TestSuiteResultMessage.failed_test_case_count', index=16,
+      name='failed_test_case_count', full_name='android.vts.TestSuiteResultMessage.failed_test_case_count', index=17,
       number=42, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='modules_done', full_name='android.vts.TestSuiteResultMessage.modules_done', index=17,
+      name='modules_done', full_name='android.vts.TestSuiteResultMessage.modules_done', index=18,
       number=43, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='modules_total', full_name='android.vts.TestSuiteResultMessage.modules_total', index=18,
+      name='modules_total', full_name='android.vts.TestSuiteResultMessage.modules_total', index=19,
       number=44, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='infra_log_path', full_name='android.vts.TestSuiteResultMessage.infra_log_path', index=19,
+      name='infra_log_path', full_name='android.vts.TestSuiteResultMessage.infra_log_path', index=20,
       number=51, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -186,7 +193,7 @@ _TESTSUITERESULTMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=46,
-  serialized_end=540,
+  serialized_end=562,
 )
 
 DESCRIPTOR.message_types_by_name['TestSuiteResultMessage'] = _TESTSUITERESULTMESSAGE

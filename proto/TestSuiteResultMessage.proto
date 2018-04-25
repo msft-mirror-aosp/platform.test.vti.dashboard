@@ -48,6 +48,7 @@ message TestSuiteResultMessage {
   // attributes of Build tag
   optional string build_system_fingerprint = 31;
   optional string build_vendor_fingerprint = 32;
+  optional int32 test_type = 33  [default = 0];
 
   // attributes of Summary tag
   optional int32 passed_test_case_count = 41;
