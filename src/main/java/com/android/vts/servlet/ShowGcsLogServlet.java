@@ -117,9 +117,10 @@ public class ShowGcsLogServlet extends BaseServlet {
         } else {
             String pathInfo = request.getPathInfo();
             if (Objects.nonNull(pathInfo)) {
-                if (pathInfo.equalsIgnoreCase("download")) {
+                if (pathInfo.equalsIgnoreCase("/download")) {
                     downloadHandler(request, response);
                 } else {
+                    logger.log(Level.INFO, "Path Info => " + pathInfo);
                     logger.log(Level.WARNING, "Unknown path access!");
                 }
             } else {
