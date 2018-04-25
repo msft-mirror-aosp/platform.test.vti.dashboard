@@ -137,6 +137,11 @@
                                 ">
                                     <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
                                 </span>
+                                <c:if test="${!testSuiteResultEntity.bootSuccess}">
+                                <span class="indicator right center red">
+                                    Infra Error
+                                </span>
+                                </c:if>
                             </div>
                             <div class="col s5">
                                 <span class="suite-test-run-metadata">
@@ -153,18 +158,16 @@
                             <div class="col s12">
                                 <span class="suite-test-run-metadata">
                                     <b>Result Log Path: </b>
-                                        <c:set var="logPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
-                                        <a href="show_gcs_log?path=${logPath}">
-                                            <c:out value="${logPath}"></c:out>
-                                        </a>
+                                    <c:set var="logPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
+                                    <a href="show_gcs_log?path=${logPath}">
+                                        <c:out value="${logPath}"></c:out>
+                                    </a>
                                     <br>
                                     <b>Infra Log Path: </b>
-                                        <c:if test="${!testSuiteResultEntity.bootSuccess}">
-                                            <c:set var="infraLogPath" value="${fn:replace(testSuiteResultEntity.infraLogPath, 'gs://vts-report/', '')}"/>
-                                            <a href="show_gcs_log/download?file=${infraLogPath}">
-                                                <c:out value="${infraLogPath}"></c:out>
-                                            </a>
-                                        </c:if>
+                                    <c:set var="infraLogPath" value="${fn:replace(testSuiteResultEntity.infraLogPath, 'gs://vts-report/', '')}"/>
+                                    <a href="show_gcs_log/download?file=${infraLogPath}">
+                                        <c:out value="${infraLogPath}"></c:out>
+                                    </a>
                                     <br>
                                 </span>
                             </div>
