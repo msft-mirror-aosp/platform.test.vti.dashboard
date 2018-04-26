@@ -282,6 +282,15 @@ public final class TestSuiteResultMessageProto {
         getBuildVendorFingerprintBytes();
 
     /**
+     * <code>optional int32 test_type = 33 [default = 0];</code>
+     */
+    boolean hasTestType();
+    /**
+     * <code>optional int32 test_type = 33 [default = 0];</code>
+     */
+    int getTestType();
+
+    /**
      * <pre>
      * attributes of Summary tag
      * </pre>
@@ -382,6 +391,7 @@ public final class TestSuiteResultMessageProto {
       suiteName_ = "";
       buildSystemFingerprint_ = "";
       buildVendorFingerprint_ = "";
+      testType_ = 0;
       passedTestCaseCount_ = 0;
       failedTestCaseCount_ = 0;
       modulesDone_ = 0;
@@ -504,29 +514,34 @@ public final class TestSuiteResultMessageProto {
               buildVendorFingerprint_ = bs;
               break;
             }
-            case 328: {
+            case 264: {
               bitField0_ |= 0x00008000;
+              testType_ = input.readInt32();
+              break;
+            }
+            case 328: {
+              bitField0_ |= 0x00010000;
               passedTestCaseCount_ = input.readInt32();
               break;
             }
             case 336: {
-              bitField0_ |= 0x00010000;
+              bitField0_ |= 0x00020000;
               failedTestCaseCount_ = input.readInt32();
               break;
             }
             case 344: {
-              bitField0_ |= 0x00020000;
+              bitField0_ |= 0x00040000;
               modulesDone_ = input.readInt32();
               break;
             }
             case 352: {
-              bitField0_ |= 0x00040000;
+              bitField0_ |= 0x00080000;
               modulesTotal_ = input.readInt32();
               break;
             }
             case 410: {
               com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00080000;
+              bitField0_ |= 0x00100000;
               infraLogPath_ = bs;
               break;
             }
@@ -1172,6 +1187,21 @@ public final class TestSuiteResultMessageProto {
       }
     }
 
+    public static final int TEST_TYPE_FIELD_NUMBER = 33;
+    private int testType_;
+    /**
+     * <code>optional int32 test_type = 33 [default = 0];</code>
+     */
+    public boolean hasTestType() {
+      return ((bitField0_ & 0x00008000) == 0x00008000);
+    }
+    /**
+     * <code>optional int32 test_type = 33 [default = 0];</code>
+     */
+    public int getTestType() {
+      return testType_;
+    }
+
     public static final int PASSED_TEST_CASE_COUNT_FIELD_NUMBER = 41;
     private int passedTestCaseCount_;
     /**
@@ -1182,7 +1212,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 passed_test_case_count = 41;</code>
      */
     public boolean hasPassedTestCaseCount() {
-      return ((bitField0_ & 0x00008000) == 0x00008000);
+      return ((bitField0_ & 0x00010000) == 0x00010000);
     }
     /**
      * <pre>
@@ -1201,7 +1231,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 failed_test_case_count = 42;</code>
      */
     public boolean hasFailedTestCaseCount() {
-      return ((bitField0_ & 0x00010000) == 0x00010000);
+      return ((bitField0_ & 0x00020000) == 0x00020000);
     }
     /**
      * <code>optional int32 failed_test_case_count = 42;</code>
@@ -1216,7 +1246,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 modules_done = 43;</code>
      */
     public boolean hasModulesDone() {
-      return ((bitField0_ & 0x00020000) == 0x00020000);
+      return ((bitField0_ & 0x00040000) == 0x00040000);
     }
     /**
      * <code>optional int32 modules_done = 43;</code>
@@ -1231,7 +1261,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional int32 modules_total = 44;</code>
      */
     public boolean hasModulesTotal() {
-      return ((bitField0_ & 0x00040000) == 0x00040000);
+      return ((bitField0_ & 0x00080000) == 0x00080000);
     }
     /**
      * <code>optional int32 modules_total = 44;</code>
@@ -1250,7 +1280,7 @@ public final class TestSuiteResultMessageProto {
      * <code>optional string infra_log_path = 51;</code>
      */
     public boolean hasInfraLogPath() {
-      return ((bitField0_ & 0x00080000) == 0x00080000);
+      return ((bitField0_ & 0x00100000) == 0x00100000);
     }
     /**
      * <pre>
@@ -1364,18 +1394,21 @@ public final class TestSuiteResultMessageProto {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 32, buildVendorFingerprint_);
       }
       if (((bitField0_ & 0x00008000) == 0x00008000)) {
-        output.writeInt32(41, passedTestCaseCount_);
+        output.writeInt32(33, testType_);
       }
       if (((bitField0_ & 0x00010000) == 0x00010000)) {
-        output.writeInt32(42, failedTestCaseCount_);
+        output.writeInt32(41, passedTestCaseCount_);
       }
       if (((bitField0_ & 0x00020000) == 0x00020000)) {
-        output.writeInt32(43, modulesDone_);
+        output.writeInt32(42, failedTestCaseCount_);
       }
       if (((bitField0_ & 0x00040000) == 0x00040000)) {
-        output.writeInt32(44, modulesTotal_);
+        output.writeInt32(43, modulesDone_);
       }
       if (((bitField0_ & 0x00080000) == 0x00080000)) {
+        output.writeInt32(44, modulesTotal_);
+      }
+      if (((bitField0_ & 0x00100000) == 0x00100000)) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 51, infraLogPath_);
       }
       unknownFields.writeTo(output);
@@ -1436,21 +1469,25 @@ public final class TestSuiteResultMessageProto {
       }
       if (((bitField0_ & 0x00008000) == 0x00008000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(41, passedTestCaseCount_);
+          .computeInt32Size(33, testType_);
       }
       if (((bitField0_ & 0x00010000) == 0x00010000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(42, failedTestCaseCount_);
+          .computeInt32Size(41, passedTestCaseCount_);
       }
       if (((bitField0_ & 0x00020000) == 0x00020000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(43, modulesDone_);
+          .computeInt32Size(42, failedTestCaseCount_);
       }
       if (((bitField0_ & 0x00040000) == 0x00040000)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(44, modulesTotal_);
+          .computeInt32Size(43, modulesDone_);
       }
       if (((bitField0_ & 0x00080000) == 0x00080000)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(44, modulesTotal_);
+      }
+      if (((bitField0_ & 0x00100000) == 0x00100000)) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(51, infraLogPath_);
       }
       size += unknownFields.getSerializedSize();
@@ -1544,6 +1581,11 @@ public final class TestSuiteResultMessageProto {
       if (hasBuildVendorFingerprint()) {
         result = result && getBuildVendorFingerprint()
             .equals(other.getBuildVendorFingerprint());
+      }
+      result = result && (hasTestType() == other.hasTestType());
+      if (hasTestType()) {
+        result = result && (getTestType()
+            == other.getTestType());
       }
       result = result && (hasPassedTestCaseCount() == other.hasPassedTestCaseCount());
       if (hasPassedTestCaseCount()) {
@@ -1643,6 +1685,10 @@ public final class TestSuiteResultMessageProto {
       if (hasBuildVendorFingerprint()) {
         hash = (37 * hash) + BUILD_VENDOR_FINGERPRINT_FIELD_NUMBER;
         hash = (53 * hash) + getBuildVendorFingerprint().hashCode();
+      }
+      if (hasTestType()) {
+        hash = (37 * hash) + TEST_TYPE_FIELD_NUMBER;
+        hash = (53 * hash) + getTestType();
       }
       if (hasPassedTestCaseCount()) {
         hash = (37 * hash) + PASSED_TEST_CASE_COUNT_FIELD_NUMBER;
@@ -1816,16 +1862,18 @@ public final class TestSuiteResultMessageProto {
         bitField0_ = (bitField0_ & ~0x00002000);
         buildVendorFingerprint_ = "";
         bitField0_ = (bitField0_ & ~0x00004000);
-        passedTestCaseCount_ = 0;
+        testType_ = 0;
         bitField0_ = (bitField0_ & ~0x00008000);
-        failedTestCaseCount_ = 0;
+        passedTestCaseCount_ = 0;
         bitField0_ = (bitField0_ & ~0x00010000);
-        modulesDone_ = 0;
+        failedTestCaseCount_ = 0;
         bitField0_ = (bitField0_ & ~0x00020000);
-        modulesTotal_ = 0;
+        modulesDone_ = 0;
         bitField0_ = (bitField0_ & ~0x00040000);
-        infraLogPath_ = "";
+        modulesTotal_ = 0;
         bitField0_ = (bitField0_ & ~0x00080000);
+        infraLogPath_ = "";
+        bitField0_ = (bitField0_ & ~0x00100000);
         return this;
       }
 
@@ -1913,21 +1961,25 @@ public final class TestSuiteResultMessageProto {
         if (((from_bitField0_ & 0x00008000) == 0x00008000)) {
           to_bitField0_ |= 0x00008000;
         }
-        result.passedTestCaseCount_ = passedTestCaseCount_;
+        result.testType_ = testType_;
         if (((from_bitField0_ & 0x00010000) == 0x00010000)) {
           to_bitField0_ |= 0x00010000;
         }
-        result.failedTestCaseCount_ = failedTestCaseCount_;
+        result.passedTestCaseCount_ = passedTestCaseCount_;
         if (((from_bitField0_ & 0x00020000) == 0x00020000)) {
           to_bitField0_ |= 0x00020000;
         }
-        result.modulesDone_ = modulesDone_;
+        result.failedTestCaseCount_ = failedTestCaseCount_;
         if (((from_bitField0_ & 0x00040000) == 0x00040000)) {
           to_bitField0_ |= 0x00040000;
         }
-        result.modulesTotal_ = modulesTotal_;
+        result.modulesDone_ = modulesDone_;
         if (((from_bitField0_ & 0x00080000) == 0x00080000)) {
           to_bitField0_ |= 0x00080000;
+        }
+        result.modulesTotal_ = modulesTotal_;
+        if (((from_bitField0_ & 0x00100000) == 0x00100000)) {
+          to_bitField0_ |= 0x00100000;
         }
         result.infraLogPath_ = infraLogPath_;
         result.bitField0_ = to_bitField0_;
@@ -2041,6 +2093,9 @@ public final class TestSuiteResultMessageProto {
           buildVendorFingerprint_ = other.buildVendorFingerprint_;
           onChanged();
         }
+        if (other.hasTestType()) {
+          setTestType(other.getTestType());
+        }
         if (other.hasPassedTestCaseCount()) {
           setPassedTestCaseCount(other.getPassedTestCaseCount());
         }
@@ -2054,7 +2109,7 @@ public final class TestSuiteResultMessageProto {
           setModulesTotal(other.getModulesTotal());
         }
         if (other.hasInfraLogPath()) {
-          bitField0_ |= 0x00080000;
+          bitField0_ |= 0x00100000;
           infraLogPath_ = other.infraLogPath_;
           onChanged();
         }
@@ -3239,6 +3294,38 @@ public final class TestSuiteResultMessageProto {
         return this;
       }
 
+      private int testType_ ;
+      /**
+       * <code>optional int32 test_type = 33 [default = 0];</code>
+       */
+      public boolean hasTestType() {
+        return ((bitField0_ & 0x00008000) == 0x00008000);
+      }
+      /**
+       * <code>optional int32 test_type = 33 [default = 0];</code>
+       */
+      public int getTestType() {
+        return testType_;
+      }
+      /**
+       * <code>optional int32 test_type = 33 [default = 0];</code>
+       */
+      public Builder setTestType(int value) {
+        bitField0_ |= 0x00008000;
+        testType_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int32 test_type = 33 [default = 0];</code>
+       */
+      public Builder clearTestType() {
+        bitField0_ = (bitField0_ & ~0x00008000);
+        testType_ = 0;
+        onChanged();
+        return this;
+      }
+
       private int passedTestCaseCount_ ;
       /**
        * <pre>
@@ -3248,7 +3335,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 passed_test_case_count = 41;</code>
        */
       public boolean hasPassedTestCaseCount() {
-        return ((bitField0_ & 0x00008000) == 0x00008000);
+        return ((bitField0_ & 0x00010000) == 0x00010000);
       }
       /**
        * <pre>
@@ -3268,7 +3355,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 passed_test_case_count = 41;</code>
        */
       public Builder setPassedTestCaseCount(int value) {
-        bitField0_ |= 0x00008000;
+        bitField0_ |= 0x00010000;
         passedTestCaseCount_ = value;
         onChanged();
         return this;
@@ -3281,7 +3368,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 passed_test_case_count = 41;</code>
        */
       public Builder clearPassedTestCaseCount() {
-        bitField0_ = (bitField0_ & ~0x00008000);
+        bitField0_ = (bitField0_ & ~0x00010000);
         passedTestCaseCount_ = 0;
         onChanged();
         return this;
@@ -3292,7 +3379,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 failed_test_case_count = 42;</code>
        */
       public boolean hasFailedTestCaseCount() {
-        return ((bitField0_ & 0x00010000) == 0x00010000);
+        return ((bitField0_ & 0x00020000) == 0x00020000);
       }
       /**
        * <code>optional int32 failed_test_case_count = 42;</code>
@@ -3304,7 +3391,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 failed_test_case_count = 42;</code>
        */
       public Builder setFailedTestCaseCount(int value) {
-        bitField0_ |= 0x00010000;
+        bitField0_ |= 0x00020000;
         failedTestCaseCount_ = value;
         onChanged();
         return this;
@@ -3313,7 +3400,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 failed_test_case_count = 42;</code>
        */
       public Builder clearFailedTestCaseCount() {
-        bitField0_ = (bitField0_ & ~0x00010000);
+        bitField0_ = (bitField0_ & ~0x00020000);
         failedTestCaseCount_ = 0;
         onChanged();
         return this;
@@ -3324,7 +3411,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_done = 43;</code>
        */
       public boolean hasModulesDone() {
-        return ((bitField0_ & 0x00020000) == 0x00020000);
+        return ((bitField0_ & 0x00040000) == 0x00040000);
       }
       /**
        * <code>optional int32 modules_done = 43;</code>
@@ -3336,7 +3423,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_done = 43;</code>
        */
       public Builder setModulesDone(int value) {
-        bitField0_ |= 0x00020000;
+        bitField0_ |= 0x00040000;
         modulesDone_ = value;
         onChanged();
         return this;
@@ -3345,7 +3432,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_done = 43;</code>
        */
       public Builder clearModulesDone() {
-        bitField0_ = (bitField0_ & ~0x00020000);
+        bitField0_ = (bitField0_ & ~0x00040000);
         modulesDone_ = 0;
         onChanged();
         return this;
@@ -3356,7 +3443,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_total = 44;</code>
        */
       public boolean hasModulesTotal() {
-        return ((bitField0_ & 0x00040000) == 0x00040000);
+        return ((bitField0_ & 0x00080000) == 0x00080000);
       }
       /**
        * <code>optional int32 modules_total = 44;</code>
@@ -3368,7 +3455,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_total = 44;</code>
        */
       public Builder setModulesTotal(int value) {
-        bitField0_ |= 0x00040000;
+        bitField0_ |= 0x00080000;
         modulesTotal_ = value;
         onChanged();
         return this;
@@ -3377,7 +3464,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional int32 modules_total = 44;</code>
        */
       public Builder clearModulesTotal() {
-        bitField0_ = (bitField0_ & ~0x00040000);
+        bitField0_ = (bitField0_ & ~0x00080000);
         modulesTotal_ = 0;
         onChanged();
         return this;
@@ -3392,7 +3479,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string infra_log_path = 51;</code>
        */
       public boolean hasInfraLogPath() {
-        return ((bitField0_ & 0x00080000) == 0x00080000);
+        return ((bitField0_ & 0x00100000) == 0x00100000);
       }
       /**
        * <pre>
@@ -3447,7 +3534,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00080000;
+  bitField0_ |= 0x00100000;
         infraLogPath_ = value;
         onChanged();
         return this;
@@ -3460,7 +3547,7 @@ public final class TestSuiteResultMessageProto {
        * <code>optional string infra_log_path = 51;</code>
        */
       public Builder clearInfraLogPath() {
-        bitField0_ = (bitField0_ & ~0x00080000);
+        bitField0_ = (bitField0_ & ~0x00100000);
         infraLogPath_ = getDefaultInstance().getInfraLogPath();
         onChanged();
         return this;
@@ -3477,7 +3564,7 @@ public final class TestSuiteResultMessageProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00080000;
+  bitField0_ |= 0x00100000;
         infraLogPath_ = value;
         onChanged();
         return this;
@@ -3546,7 +3633,7 @@ public final class TestSuiteResultMessageProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\"proto/TestSuiteResultMessage.proto\022\013an" +
-      "droid.vts\"\356\003\n\026TestSuiteResultMessage\022\024\n\014" +
+      "droid.vts\"\204\004\n\026TestSuiteResultMessage\022\024\n\014" +
       "access_token\030\001 \001(\t\022\023\n\013result_path\030\002 \001(\t\022" +
       "\032\n\014boot_success\030\003 \001(\010:\004true\022\016\n\006branch\030\013 " +
       "\002(\t\022\016\n\006target\030\014 \002(\t\022\020\n\010build_id\030\r \002(\t\022\022\n" +
@@ -3555,12 +3642,12 @@ public final class TestSuiteResultMessageProto {
       "me\030\030 \001(\003\022\020\n\010end_time\030\031 \001(\003\022\021\n\thost_name\030" +
       "\032 \001(\t\022\022\n\nsuite_name\030\033 \001(\t\022 \n\030build_syste" +
       "m_fingerprint\030\037 \001(\t\022 \n\030build_vendor_fing",
-      "erprint\030  \001(\t\022\036\n\026passed_test_case_count\030" +
-      ") \001(\005\022\036\n\026failed_test_case_count\030* \001(\005\022\024\n" +
-      "\014modules_done\030+ \001(\005\022\025\n\rmodules_total\030, \001" +
-      "(\005\022\026\n\016infra_log_path\0303 \001(\tB6\n\025com.androi" +
-      "d.vts.protoB\033TestSuiteResultMessageProto" +
-      "P\000"
+      "erprint\030  \001(\t\022\024\n\ttest_type\030! \001(\005:\0010\022\036\n\026p" +
+      "assed_test_case_count\030) \001(\005\022\036\n\026failed_te" +
+      "st_case_count\030* \001(\005\022\024\n\014modules_done\030+ \001(" +
+      "\005\022\025\n\rmodules_total\030, \001(\005\022\026\n\016infra_log_pa" +
+      "th\0303 \001(\tB6\n\025com.android.vts.protoB\033TestS" +
+      "uiteResultMessageProtoP\000"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -3579,7 +3666,7 @@ public final class TestSuiteResultMessageProto {
     internal_static_android_vts_TestSuiteResultMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_android_vts_TestSuiteResultMessage_descriptor,
-        new java.lang.String[] { "AccessToken", "ResultPath", "BootSuccess", "Branch", "Target", "BuildId", "SuitePlan", "SuiteVersion", "SuiteBuildNumber", "StartTime", "EndTime", "HostName", "SuiteName", "BuildSystemFingerprint", "BuildVendorFingerprint", "PassedTestCaseCount", "FailedTestCaseCount", "ModulesDone", "ModulesTotal", "InfraLogPath", });
+        new java.lang.String[] { "AccessToken", "ResultPath", "BootSuccess", "Branch", "Target", "BuildId", "SuitePlan", "SuiteVersion", "SuiteBuildNumber", "StartTime", "EndTime", "HostName", "SuiteName", "BuildSystemFingerprint", "BuildVendorFingerprint", "TestType", "PassedTestCaseCount", "FailedTestCaseCount", "ModulesDone", "ModulesTotal", "InfraLogPath", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
