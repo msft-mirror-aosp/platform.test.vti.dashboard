@@ -28,12 +28,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
@@ -70,8 +72,11 @@ public class TestSuiteResultEntity {
     /** Test Suite infra log path field */
     @Getter @Setter String infraLogPath;
 
+    /** Test Suite device name field */
+    @Index @Getter @Setter String deviceName;
+
     /** Test Suite host name field */
-    @Getter @Setter String hostName;
+    @Index @Getter @Setter String hostName;
 
     /** Test Suite plan field */
     @Index @Getter @Setter String suitePlan;
@@ -168,6 +173,9 @@ public class TestSuiteResultEntity {
             this.passedTestCaseRatio = passedTestCaseCount / totalTestCaseCount * 100;
         }
 
+        if (!this.buildVendorFingerprint.isEmpty()) {
+            this.deviceName = this.getDeviceNameFromVendorFpt();
+        }
         this.groupType = this.getGroupType();
     }
 
@@ -179,6 +187,12 @@ public class TestSuiteResultEntity {
 
     public List<? extends TestSuiteResultEntity> getTestSuitePlans() {
         return ofy().load().type(this.getClass()).project("suitePlan").distinct(true).list();
+    }
+
+    public String getDeviceNameFromVendorFpt() {
+        String deviceName =
+                Stream.of(this.buildVendorFingerprint.split("/")).skip(1).findFirst().orElse("");
+        return deviceName;
     }
 
     private String getNormalizedVersion(String fingerprint) {

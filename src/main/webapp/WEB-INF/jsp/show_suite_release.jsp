@@ -138,15 +138,15 @@
                                     <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
                                 </span>
                                 <c:if test="${!testSuiteResultEntity.bootSuccess}">
-                                <span class="indicator right center red">
-                                    Infra Error
-                                </span>
+                                <span class="indicator right center" style="min-width: 0px; padding: 0 2px;"></span>
+                                <span class="indicator right center red">Boot Error</span>
                                 </c:if>
                             </div>
                             <div class="col s5">
                                 <span class="suite-test-run-metadata">
                                     <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
                                     <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
+                                    <b>Device Name: </b><c:out value="${testSuiteResultEntity.deviceName}"></c:out><br>
                                 </span>
                             </div>
                             <div class="col s7">
@@ -158,9 +158,9 @@
                             <div class="col s12">
                                 <span class="suite-test-run-metadata">
                                     <b>Result Log Path: </b>
-                                    <c:set var="logPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
-                                    <a href="show_gcs_log?path=${logPath}">
-                                        <c:out value="${logPath}"></c:out>
+                                    <c:set var="resultLogPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
+                                    <a href="show_gcs_log?path=${resultLogPath}">
+                                        <c:out value="${resultLogPath}"></c:out>
                                     </a>
                                     <br>
                                     <b>Infra Log Path: </b>
