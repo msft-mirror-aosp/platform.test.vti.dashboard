@@ -25,6 +25,7 @@
   <%@ include file='header.jsp' %>
   <link type='text/css' href='/css/show_test_runs_common.css' rel='stylesheet'>
   <link type='text/css' href='/css/test_results.css' rel='stylesheet'>
+  <link rel='stylesheet' href='/css/search_header.css'>
   <script type='text/javascript'>
       $(document).ready(function() {
           $("li.tab").each(function( index ) {
@@ -32,16 +33,67 @@
                   window.open($(this).children().attr("href"), '_self');
               });
           });
+
+          $(".search-icon-wrapper").click(function() {
+              console.log($(this));
+
+              $(".search-wrapper").slideToggle("fast", function() {
+                  // Animation complete.
+              });
+          });
       });
   </script>
   <body>
     <div class='wide container'>
 
-      <div class="row">
-        <div class="col s12">
-          <h4 id="test-suite-section-header">Test Suites</h4>
+        <div class="row card search-bar expanded">
+            <div class="header-wrapper">
+                <h5 class="section-header">
+                    <b>Plan: </b><span><c:out value="${plan}"></c:out></span>
+                </h5>
+                <div class="search-icon-wrapper">
+                    <i class="material-icons">search</i>
+                </div>
+            </div>
+            <div class="search-wrapper" style="display: none">
+                <div class="col s12">
+                    <div class="input-field col s4">
+                        <input class="filter-input ui-autocomplete-input" type="text" autocomplete="off" />
+                        <label>Device Branch</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input ui-autocomplete-input" type="text" autocomplete="off" />
+                        <label>Device Type</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input" type="text" />
+                        <label>Device Build ID</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input" type="text" />
+                        <label>Host</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input validate" type="text" pattern="(^)(<|>|<=|>=|=)?[ ]*?[0-9]+$" placeholder="e.g. 5, >0, <=10" />
+                        <label class="active">Passing Test Case Count</label>
+                    </div>
+                    <div class="input-field col s4">
+                        <input class="filter-input validate" type="text" pattern="(^)(<|>|<=|>=|=)?[ ]*?[0-9]+$" placeholder="e.g. 5, >0, <=10" />
+                        <label class="active">Non-Passing Test Case Count</label>
+                    </div>
+                </div>
+                <div class="col s12">
+                    <div class="run-type-wrapper col s9">
+
+                    </div>
+                    <div class="run-type-wrapper col s3">
+                        <a class="waves-effect waves-light btn">
+                            <i class="material-icons left">search</i>Apply
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
 
         <div class='row'>
             <div class='col s12'>
@@ -85,11 +137,16 @@
                                 ">
                                     <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
                                 </span>
+                                <c:if test="${!testSuiteResultEntity.bootSuccess}">
+                                <span class="indicator right center" style="min-width: 0px; padding: 0 2px;"></span>
+                                <span class="indicator right center red">Boot Error</span>
+                                </c:if>
                             </div>
                             <div class="col s5">
                                 <span class="suite-test-run-metadata">
                                     <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
                                     <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
+                                    <b>Device Name: </b><c:out value="${testSuiteResultEntity.deviceName}"></c:out><br>
                                 </span>
                             </div>
                             <div class="col s7">
@@ -101,18 +158,16 @@
                             <div class="col s12">
                                 <span class="suite-test-run-metadata">
                                     <b>Result Log Path: </b>
-                                        <c:set var="logPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
-                                        <a href="show_gcs_log?path=${logPath}">
-                                            <c:out value="${logPath}"></c:out>
-                                        </a>
+                                    <c:set var="resultLogPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
+                                    <a href="show_gcs_log?path=${resultLogPath}">
+                                        <c:out value="${resultLogPath}"></c:out>
+                                    </a>
                                     <br>
                                     <b>Infra Log Path: </b>
-                                        <c:if test="${!testSuiteResultEntity.bootSuccess}">
-                                            <c:set var="infraLogPath" value="${fn:replace(testSuiteResultEntity.infraLogPath, 'gs://vts-report/', '')}"/>
-                                            <a href="show_gcs_log/download?file=${infraLogPath}">
-                                                <c:out value="${infraLogPath}"></c:out>
-                                            </a>
-                                        </c:if>
+                                    <c:set var="infraLogPath" value="${fn:replace(testSuiteResultEntity.infraLogPath, 'gs://vts-report/', '')}"/>
+                                    <a href="show_gcs_log/download?file=${infraLogPath}">
+                                        <c:out value="${infraLogPath}"></c:out>
+                                    </a>
                                     <br>
                                 </span>
                             </div>
