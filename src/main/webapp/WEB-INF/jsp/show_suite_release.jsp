@@ -226,7 +226,7 @@
                 </c:otherwise>
             </c:choose>
             <c:forEach var="pageLoop" begin="${testSuiteResultEntityPagination.minPageRange}" end="${testSuiteResultEntityPagination.maxPageRange}">
-              <li class="waves-effect">
+              <li class="waves-effect<c:if test="${pageLoop eq page}"> active</c:if>">
                   <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=${groupType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
                       <c:out value="${pageLoop}" />
                   </a>
