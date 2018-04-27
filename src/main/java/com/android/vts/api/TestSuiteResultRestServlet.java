@@ -81,6 +81,7 @@ public class TestSuiteResultRestServlet extends HttpServlet {
                                 testSuiteFileParent,
                                 testSuiteResultMessage.getStartTime(),
                                 testSuiteResultMessage.getEndTime(),
+                                testSuiteResultMessage.getTestType(),
                                 testSuiteResultMessage.getBootSuccess(),
                                 testSuiteResultMessage.getResultPath(),
                                 testSuiteResultMessage.getInfraLogPath(),

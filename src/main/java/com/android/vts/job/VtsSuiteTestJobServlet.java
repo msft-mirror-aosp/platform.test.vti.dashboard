@@ -268,6 +268,7 @@ public class VtsSuiteTestJobServlet extends HttpServlet {
                                         testSuiteFileEntityKey,
                                         testSuiteResultMessage.getStartTime(),
                                         testSuiteResultMessage.getEndTime(),
+                                        testSuiteResultMessage.getTestType(),
                                         testSuiteResultMessage.getBootSuccess(),
                                         testSuiteResultMessage.getResultPath(),
                                         testSuiteResultMessage.getInfraLogPath(),
