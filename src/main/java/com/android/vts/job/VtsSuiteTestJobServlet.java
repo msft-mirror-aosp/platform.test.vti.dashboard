@@ -122,7 +122,7 @@ public class VtsSuiteTestJobServlet extends HttpServlet {
         super.init(servletConfig);
 
         this.keyFileInputStream =
-                this.getServletContext().getResourceAsStream("/WEB-INF/keys/" + GCS_KEY_FILE);
+                this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
 
         Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
         if (optionalStorage.isPresent()) {

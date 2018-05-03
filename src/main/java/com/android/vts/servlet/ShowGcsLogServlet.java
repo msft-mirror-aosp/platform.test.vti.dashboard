@@ -78,8 +78,7 @@ public class ShowGcsLogServlet extends BaseServlet {
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
 
-        this.keyFileInputStream =
-                this.getServletContext().getResourceAsStream("/WEB-INF/keys/" + GCS_KEY_FILE);
+        this.keyFileInputStream = this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
 
         Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
         if (optionalStorage.isPresent()) {
