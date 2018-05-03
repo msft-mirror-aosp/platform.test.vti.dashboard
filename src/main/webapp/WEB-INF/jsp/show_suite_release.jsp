@@ -100,13 +100,13 @@
 
                 <ul class="tabs">
                     <li class="tab col s6" id="totTabLink">
-                        <a class="${groupType == 'TOT' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=TOT">TOT</a>
+                        <a class="${testCategoryType == '1' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=1">TOT</a>
                     </li>
                     <li class="tab col s6" id="signedTabLink">
-                        <a class="${groupType == 'SIGNED' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=SIGNED">SIGNED</a>
+                        <a class="${testCategoryType == '4' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=4">SIGNED</a>
                     </li>
                     <li class="tab col s6" id="otaTabLink">
-                        <a class="${groupType == 'OTA' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&groupType=OTA">OTA</a>
+                        <a class="${testCategoryType == '2' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=2">OTA</a>
                     </li>
                 </ul>
 
