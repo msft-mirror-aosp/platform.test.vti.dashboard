@@ -46,10 +46,23 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @NoArgsConstructor
 public class TestSuiteResultEntity {
 
-    public enum GROUP_TYPE {
-        OTA,
-        SIGNED,
-        TOT
+    public enum TestType {
+        UNKNOWN(0),
+        TOT(1),
+        OTA(1 << 1),
+        SIGNED(1 << 2),
+        PRESUBMIT(1 << 3),
+        MANUAL(1 << 5);
+
+        public int value;
+
+        TestType(int value) {
+            this.value = value;
+        }
+
+        public int value() {
+            return value;
+        }
     }
 
     @Parent Key<TestSuiteFileEntity> testSuiteFileEntityKey;
@@ -60,8 +73,8 @@ public class TestSuiteResultEntity {
     /** Test Suite end time field */
     @Getter @Setter Long endTime;
 
-    /** Test Suite group type OTA, Signed, ToT field */
-    @Index @Getter @Setter GROUP_TYPE groupType;
+    /** Test Suite test type field */
+    @Index @Getter @Setter int testType;
 
     /** Test Suite bootup error field */
     @Getter @Setter Boolean bootSuccess;
@@ -128,6 +141,7 @@ public class TestSuiteResultEntity {
             Key<TestSuiteFileEntity> testSuiteFileEntityKey,
             Long startTime,
             Long endTime,
+            int testType,
             Boolean bootSuccess,
             String resultPath,
             String infraLogPath,
@@ -176,7 +190,8 @@ public class TestSuiteResultEntity {
         if (!this.buildVendorFingerprint.isEmpty()) {
             this.deviceName = this.getDeviceNameFromVendorFpt();
         }
-        this.groupType = this.getGroupType();
+
+        this.testType = this.getSuiteResultTestType(testType);
     }
 
     /** Saving function for the instance of this class */
@@ -224,14 +239,18 @@ public class TestSuiteResultEntity {
         return "unknown-version";
     }
 
-    public GROUP_TYPE getGroupType() {
-        if (this.getNormalizedVersion(this.buildSystemFingerprint)
-                != this.getNormalizedVersion(this.buildVendorFingerprint)) {
-            return GROUP_TYPE.OTA;
-        } else if (this.buildVendorFingerprint.endsWith("release-keys")) {
-            return GROUP_TYPE.SIGNED;
+    public int getSuiteResultTestType(int testType) {
+        if (testType == TestType.UNKNOWN.value()) {
+            if (this.getNormalizedVersion(this.buildSystemFingerprint)
+                    != this.getNormalizedVersion(this.buildVendorFingerprint)) {
+                return TestType.OTA.value();
+            } else if (this.buildVendorFingerprint.endsWith("release-keys")) {
+                return TestType.SIGNED.value();
+            } else {
+                return TestType.TOT.value();
+            }
         } else {
-            return GROUP_TYPE.TOT;
+            return testType;
         }
     }
 }
