@@ -285,10 +285,10 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_suite_release.jsp";
 
         String testPlan = request.getParameter("plan");
-        String groupType =
-                request.getParameter("groupType") == null
-                        ? "TOT"
-                        : request.getParameter("groupType");
+        String testCategoryType =
+                request.getParameter("testCategoryType") == null
+                        ? "1"
+                        : request.getParameter("testCategoryType");
         int page =
                 request.getParameter("page") == null
                         ? 1
@@ -302,7 +302,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 ofy().load()
                         .type(TestSuiteResultEntity.class)
                         .filter("suitePlan", testPlan)
-                        .filter("groupType", groupType)
+                        .filter("testType", testCategoryType)
                         .orderKey(true);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
@@ -334,10 +334,10 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         logger.log(Level.INFO, "page size => " + testSuiteResultEntityPagination.getPageSize());
         logger.log(Level.INFO, "total count => " + testSuiteResultEntityPagination.getTotalCount());
 
+        request.setAttribute("plan", testPlan);
         request.setAttribute("page", page);
         request.setAttribute("testType", "suite");
-        request.setAttribute("groupType", groupType);
-        request.setAttribute("plan", testPlan);
+        request.setAttribute("testCategoryType", testCategoryType);
         request.setAttribute("testSuiteResultEntityPagination", testSuiteResultEntityPagination);
         RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
         return dispatcher;
