@@ -302,7 +302,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 ofy().load()
                         .type(TestSuiteResultEntity.class)
                         .filter("suitePlan", testPlan)
-                        .filter("testType", testCategoryType)
+                        .filter("testType", Integer.parseInt(testCategoryType))
                         .orderKey(true);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
