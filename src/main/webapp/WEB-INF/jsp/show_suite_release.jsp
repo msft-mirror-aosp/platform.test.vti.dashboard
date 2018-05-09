@@ -149,11 +149,16 @@
                                     <b>Device Name: </b><c:out value="${testSuiteResultEntity.deviceName}"></c:out><br>
                                 </span>
                             </div>
-                            <div class="col s7">
+                            <div class="col s5">
                                 <span class="suite-test-run-metadata">
                                     <b>Host: </b><c:out value="${testSuiteResultEntity.hostName}"></c:out><br>
                                     <b>Modules: </b><c:out value="${testSuiteResultEntity.modulesDone}"></c:out>/<c:out value="${testSuiteResultEntity.modulesTotal}"></c:out><br>
                                 </span>
+                            </div>
+                            <div class="col s2" style="padding: 5px 12px;">
+                                <a href="<c:out value="${testSuiteResultEntity.buganizerLink}"></c:out>" class="waves-effect waves-light btn right blue-grey" style="padding: 0 15px;" target="_blank">
+                                    Buganizer
+                                </a>
                             </div>
                             <div class="col s12">
                                 <span class="suite-test-run-metadata">
