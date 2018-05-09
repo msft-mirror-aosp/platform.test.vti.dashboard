@@ -80,14 +80,16 @@ public class TestSuiteResultEntity {
 
             String bugTrackingSystem = systemConfigProp.getProperty("bug.tracking.system");
 
-            InputStream btsInputStream =
-                    TestSuiteResultEntity.class
-                            .getClassLoader()
-                            .getResourceAsStream(
-                                    "bug_tracking_system/"
-                                            + bugTrackingSystem
-                                            + "/config.properties");
-            bugTrackingSystemProp.load(btsInputStream);
+            if (!bugTrackingSystem.isEmpty()) {
+                InputStream btsInputStream =
+                        TestSuiteResultEntity.class
+                                .getClassLoader()
+                                .getResourceAsStream(
+                                        "bug_tracking_system/"
+                                                + bugTrackingSystem
+                                                + "/config.properties");
+                bugTrackingSystemProp.load(btsInputStream);
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -353,11 +355,14 @@ public class TestSuiteResultEntity {
 
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("suiteBuildNumber", suiteBuildNumber);
+        valuesMap.put("branch", branch);
+        valuesMap.put("target", target);
+        valuesMap.put("deviceName", deviceName);
         valuesMap.put("buildId", buildId);
+        valuesMap.put("suiteName", suiteName);
+        valuesMap.put("suitePlan", suitePlan);
         valuesMap.put("hostName", hostName);
         valuesMap.put("resultPath", resultPath);
-        valuesMap.put("buildVendorFingerprint", buildVendorFingerprint);
-        valuesMap.put("buildSystemFingerprint", buildSystemFingerprint);
 
         StrSubstitutor sub = new StrSubstitutor(valuesMap);
         String resolvedDescription = sub.replace(templateDescription);
