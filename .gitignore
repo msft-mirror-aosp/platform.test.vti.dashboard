@@ -2,7 +2,8 @@
 appengine-generated/
 
 # Secutiry Key file folder
-src/main/webapp/WEB-INF/keys
+src/main/resources/keys/
+src/main/resources/bug_tracking_system/**/*.tpl
 
 # Java
 *.class

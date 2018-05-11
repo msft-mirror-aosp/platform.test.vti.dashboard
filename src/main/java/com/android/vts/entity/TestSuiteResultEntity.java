@@ -26,13 +26,31 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.http.NameValuePair;
+import org.apache.http.ParseException;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 
+import javax.servlet.ServletContext;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -45,6 +63,39 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 public class TestSuiteResultEntity {
+
+    /** Bug Tracking System Property class */
+    private static Properties bugTrackingSystemProp = new Properties();
+
+    /** System Configuration Property class */
+    private static Properties systemConfigProp = new Properties();
+
+    static {
+        try {
+            InputStream defaultInputStream =
+                    TestSuiteResultEntity.class
+                            .getClassLoader()
+                            .getResourceAsStream("config.properties");
+            systemConfigProp.load(defaultInputStream);
+
+            String bugTrackingSystem = systemConfigProp.getProperty("bug.tracking.system");
+
+            if (!bugTrackingSystem.isEmpty()) {
+                InputStream btsInputStream =
+                        TestSuiteResultEntity.class
+                                .getClassLoader()
+                                .getResourceAsStream(
+                                        "bug_tracking_system/"
+                                                + bugTrackingSystem
+                                                + "/config.properties");
+                bugTrackingSystemProp.load(btsInputStream);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public enum TestType {
         UNKNOWN(0),
@@ -252,5 +303,112 @@ public class TestSuiteResultEntity {
         } else {
             return testType;
         }
+    }
+
+    private String getLabInfraIssueDescription() throws IOException {
+
+        String bugTrackingSystem = systemConfigProp.getProperty("bug.tracking.system");
+
+        String templateName =
+                bugTrackingSystemProp.getProperty(
+                        bugTrackingSystem + ".labInfraIssue.template.name");
+
+        InputStream inputStream =
+                this.getClass()
+                        .getClassLoader()
+                        .getResourceAsStream(
+                                "bug_tracking_system/" + bugTrackingSystem + "/" + templateName);
+
+        String templateDescription = IOUtils.toString(inputStream, "UTF-8");
+
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("suiteBuildNumber", suiteBuildNumber);
+        valuesMap.put("buildId", buildId);
+        valuesMap.put("modulesDone", Integer.toString(modulesDone));
+        valuesMap.put("modulesTotal", Integer.toString(modulesTotal));
+        valuesMap.put("hostName", hostName);
+        valuesMap.put("resultPath", resultPath);
+        valuesMap.put("buildVendorFingerprint", buildVendorFingerprint);
+        valuesMap.put("buildSystemFingerprint", buildSystemFingerprint);
+
+        StrSubstitutor sub = new StrSubstitutor(valuesMap);
+        String resolvedDescription = sub.replace(templateDescription);
+
+        return resolvedDescription;
+    }
+
+    private String getCrashSecurityDescription() throws IOException {
+
+        String bugTrackingSystem = systemConfigProp.getProperty("bug.tracking.system");
+
+        String templateName =
+                bugTrackingSystemProp.getProperty(
+                        bugTrackingSystem + ".crashSecurity.template.name");
+
+        InputStream inputStream =
+                this.getClass()
+                        .getClassLoader()
+                        .getResourceAsStream(
+                                "bug_tracking_system/" + bugTrackingSystem + "/" + templateName);
+
+        String templateDescription = IOUtils.toString(inputStream, "UTF-8");
+
+        Map<String, String> valuesMap = new HashMap<>();
+        valuesMap.put("suiteBuildNumber", suiteBuildNumber);
+        valuesMap.put("branch", branch);
+        valuesMap.put("target", target);
+        valuesMap.put("deviceName", deviceName);
+        valuesMap.put("buildId", buildId);
+        valuesMap.put("suiteName", suiteName);
+        valuesMap.put("suitePlan", suitePlan);
+        valuesMap.put("hostName", hostName);
+        valuesMap.put("resultPath", resultPath);
+
+        StrSubstitutor sub = new StrSubstitutor(valuesMap);
+        String resolvedDescription = sub.replace(templateDescription);
+
+        return resolvedDescription;
+    }
+
+    public String getBuganizerLink() throws IOException, ParseException, URISyntaxException {
+
+        String bugTrackingSystem = systemConfigProp.getProperty("bug.tracking.system");
+
+        List<NameValuePair> qparams = new ArrayList<NameValuePair>();
+        if (!this.bootSuccess || (this.passedTestCaseCount == 0 && this.failedTestCaseCount == 0)) {
+            qparams.add(
+                    new BasicNameValuePair(
+                            "component",
+                            this.bugTrackingSystemProp.getProperty(
+                                    bugTrackingSystem + ".labInfraIssue.component.id")));
+            qparams.add(
+                    new BasicNameValuePair(
+                            "template",
+                            this.bugTrackingSystemProp.getProperty(
+                                    bugTrackingSystem + ".labInfraIssue.template.id")));
+            qparams.add(new BasicNameValuePair("description", this.getLabInfraIssueDescription()));
+        } else {
+            qparams.add(
+                    new BasicNameValuePair(
+                            "component",
+                            this.bugTrackingSystemProp.getProperty(
+                                    bugTrackingSystem + ".crashSecurity.component.id")));
+            qparams.add(
+                    new BasicNameValuePair(
+                            "template",
+                            this.bugTrackingSystemProp.getProperty(
+                                    bugTrackingSystem + ".crashSecurity.template.id")));
+            qparams.add(new BasicNameValuePair("description", this.getCrashSecurityDescription()));
+        }
+
+        URI uri =
+                URIUtils.createURI(
+                        this.bugTrackingSystemProp.getProperty(bugTrackingSystem + ".uri.scheme"),
+                        this.bugTrackingSystemProp.getProperty(bugTrackingSystem + ".uri.host"),
+                        -1,
+                        this.bugTrackingSystemProp.getProperty(bugTrackingSystem + ".uri.path"),
+                        URLEncodedUtils.format(qparams, "UTF-8"),
+                        null);
+        return uri.toString();
     }
 }
