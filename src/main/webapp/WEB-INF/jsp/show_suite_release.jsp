@@ -99,13 +99,13 @@
             <div class='col s12'>
 
                 <ul class="tabs">
-                    <li class="tab col s6" id="totTabLink">
+                    <li class="tab col s4" id="totTabLink">
                         <a class="${testCategoryType == '1' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=1">TOT</a>
                     </li>
-                    <li class="tab col s6" id="signedTabLink">
+                    <li class="tab col s4" id="signedTabLink">
                         <a class="${testCategoryType == '4' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=4">SIGNED</a>
                     </li>
-                    <li class="tab col s6" id="otaTabLink">
+                    <li class="tab col s4" id="otaTabLink">
                         <a class="${testCategoryType == '2' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=2">OTA</a>
                     </li>
                 </ul>
