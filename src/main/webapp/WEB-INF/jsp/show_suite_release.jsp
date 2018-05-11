@@ -136,6 +136,16 @@
                                 </c:choose>
                                 ">
                                     <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
+                                    (
+                                    <c:choose>
+                                        <c:when test="${testSuiteResultEntity.passedTestCaseCount eq 0 and testSuiteResultEntity.failedTestCaseCount eq 0}">
+                                            <fmt:formatNumber type="percent" minFractionDigits="2" maxFractionDigits="2" value="0" />
+                                        </c:when>
+                                        <c:otherwise>
+                                            <fmt:formatNumber type="percent" minFractionDigits="2" maxFractionDigits="2" value="${testSuiteResultEntity.passedTestCaseCount / (testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount)}" />
+                                        </c:otherwise>
+                                    </c:choose>
+                                    )
                                 </span>
                                 <c:if test="${!testSuiteResultEntity.bootSuccess}">
                                 <span class="indicator right center" style="min-width: 0px; padding: 0 2px;"></span>
