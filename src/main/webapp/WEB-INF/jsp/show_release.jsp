@@ -39,7 +39,7 @@
               <a class="${testType == 'plan' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=plan">Test Plans</a>
             </li>
             <li class="tab col s6" id="suiteTabLink">
-              <a class="${testType == 'suite' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=suite">Suite Test Plans</a>
+              <a class="${testType == 'suite' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=suite">Test Suite Plans</a>
             </li>
           </ul>
 
