@@ -30,7 +30,7 @@
         var paraMap = {'path': '', 'entry': ''};
         $('.modal').modal({
           dismissible: true,  // Modal can be dismissed by clicking outside of the modal
-          opacity: .99,  // Opacity of modal background
+          opacity: .5,  // Opacity of modal background
           inDuration: 300,  // Transition in duration
           outDuration: 200,  // Transition out duration
           startingTop: '4%',  // Starting top style attribute
@@ -48,7 +48,7 @@
               $.get( url, function(data) {
                 var entryList = $(modal).find('#modal-entry-list');
                 $(data.entryList).each(function( index, element ) {
-                  entryList.append("<li class='collection-item'><a href='#logEntryViewModal'>" + element + "</a></li>");
+                  entryList.append("<li class='collection-item'><a href='#logEntryViewModal' class='modal-trigger'>" + element + "</a></li>");
                 });
               }).done(function() {
                   $('.loading-overlay').hide();
@@ -103,7 +103,7 @@
             <h4>File List</h4>
             <div class="collection">
             <c:forEach varStatus="fileLoop" var="fileName" items="${fileList}">
-              <a href="#logEntryListModal" class="collection-item">
+              <a href="#logEntryListModal" class="collection-item modal-trigger">
                 <c:out value="${fileName}"></c:out>
               </a>
               <c:if test="${!fileLoop.last}">
