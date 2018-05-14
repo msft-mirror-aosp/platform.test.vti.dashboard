@@ -108,7 +108,7 @@
   </datastore-index>
 
   <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
-    <property name="groupType" direction="asc"/>
+    <property name="testType" direction="asc"/>
     <property name="suitePlan" direction="asc"/>
     <property name="__key__" direction="desc"/>
   </datastore-index>

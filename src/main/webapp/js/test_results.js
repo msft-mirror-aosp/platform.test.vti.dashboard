@@ -174,9 +174,11 @@
    * @returns The jquery object for the indicator.
    */
   function createClickableIndicator(container, content, classes, click) {
-    var link = $('<a></a>');
-    link.addClass('indicator right center padded hoverable waves-effect');
-    link.addClass(classes)
+    var link = $('<span></span>');
+    link.addClass('indicator badge padded hoverable waves-effect');
+    link.addClass(classes);
+    link.css("color", "white");
+    link.css("margin-left", "1px");
     link.append(content);
     link.appendTo(container);
     link.click(click);
@@ -231,7 +233,8 @@
       span.append(timeString);
       var indicator = $('<span></span>');
       var color = metadata.testRun.failCount > 0 ? 'red' : 'green';
-      indicator.addClass('indicator right center ' + color);
+      indicator.addClass('indicator badge ' + color);
+      indicator.css("color", "white");
       indicator.append(
         metadata.testRun.passCount + '/' +
         (metadata.testRun.passCount + metadata.testRun.failCount));
