@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /** Helper class for pagination. */
@@ -81,7 +82,7 @@ public class Pagination<T> implements Iterable<T> {
 
         List<String> pageCountTokenList =
                 this.pageCountTokenSet.stream().collect(Collectors.toList());
-        if (pageCountTokenList.size() > 1) {
+        if (pageCountTokenList.size() > 0) {
             int foundIndex = pageCountTokenList.indexOf(startPageToken);
             if (foundIndex <= 0) {
                 this.previousPageCountToken = "";
@@ -111,7 +112,9 @@ public class Pagination<T> implements Iterable<T> {
                 this.list.add(resultIterator.next());
             else resultIterator.next();
             if (iteratorIndex == DEFAULT_PAGE_WINDOW * this.pageSize) {
-                this.nextPageCountToken = resultIterator.getCursor().toWebSafeString();
+                if ( Objects.nonNull(resultIterator) && Objects.nonNull(resultIterator.getCursor()) ) {
+                    this.nextPageCountToken = resultIterator.getCursor().toWebSafeString();
+                }
             }
             iteratorIndex++;
         }
