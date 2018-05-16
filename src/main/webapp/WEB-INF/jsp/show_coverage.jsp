@@ -145,18 +145,12 @@
                               '/content';
                     html += '<li url="' + url + '" index="' + i + '">' +
                             '<div class="collapsible-header">' +
-                            '<div class="row">' +
-                            '<div class="col s10">' +
                             '<i class="material-icons">library_books</i>' +
                             '<div class="truncate">' +
                             '<b>' + projects[i] + '/</b>' +
                             sourceFilenames[i] +
                             '</div>' +
-                            '</div>' +
-                            '<div class="col s2">' +
                             indicators[i] +
-                            '</div>' +
-                            '</div>' +
                             '</div>';
                     html += '<div class="collapsible-body row">' +
                             '<div class="html-container">' +
