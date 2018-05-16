@@ -16,10 +16,12 @@
 
 package com.android.vts.entity;
 
+import com.google.appengine.api.datastore.Query;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.Parent;
 import lombok.EqualsAndHashCode;
@@ -53,9 +55,67 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
+
+/** Embeded TestType Class for determining testType and search function */
+@Index
+@NoArgsConstructor
+class TestTypeIndex {
+
+    /** Embeded TOT field, search field name "testTypeIndex.TOT" */
+    private Boolean TOT;
+
+    /** Embeded OTA field, search field name "testTypeIndex.OTA" */
+    private Boolean OTA;
+
+    /** Embeded SIGNED field, search field name "testTypeIndex.SIGNED" */
+    private Boolean SIGNED;
+
+    /** Maximum bit size */
+    @Ignore private int bitSize = 6;
+
+    @Ignore
+    private List<Integer> totTypeList = this.getTypeList(TestSuiteResultEntity.TestType.TOT.value);
+
+    @Ignore
+    private List<Integer> otaTypeList = this.getTypeList(TestSuiteResultEntity.TestType.OTA.value);
+
+    @Ignore
+    private List<Integer> signedTypeList =
+            this.getTypeList(TestSuiteResultEntity.TestType.SIGNED.value);
+
+    /** Retrieving the list of integers for each category type */
+    private List<Integer> getTypeList(int typeNum) {
+        return IntStream.range(0, (1 << (bitSize - 1)))
+                .filter(i -> (i & typeNum) > 0)
+                .boxed()
+                .collect(Collectors.toList());
+    }
+
+    public TestTypeIndex(int testType) {
+        if (totTypeList.contains(testType)) {
+            this.TOT = true;
+        } else {
+            this.TOT = false;
+        }
+
+        if (otaTypeList.contains(testType)) {
+            this.OTA = true;
+        } else {
+            this.OTA = false;
+        }
+
+        if (signedTypeList.contains(testType)) {
+            this.SIGNED = true;
+        } else {
+            this.SIGNED = false;
+        }
+    }
+}
 
 /** Entity Class for saving Test Log Summary */
 @Cache
@@ -125,7 +185,10 @@ public class TestSuiteResultEntity {
     @Getter @Setter Long endTime;
 
     /** Test Suite test type field */
-    @Index @Getter @Setter int testType;
+    @Getter @Setter int testType;
+
+    /** Embeded test type field */
+    @Index @Getter @Setter TestTypeIndex testTypeIndex;
 
     /** Test Suite bootup error field */
     @Getter @Setter Boolean bootSuccess;
@@ -243,6 +306,7 @@ public class TestSuiteResultEntity {
         }
 
         this.testType = this.getSuiteResultTestType(testType);
+        this.testTypeIndex = new TestTypeIndex(this.testType);
     }
 
     /** Saving function for the instance of this class */
@@ -319,7 +383,7 @@ public class TestSuiteResultEntity {
                         .getResourceAsStream(
                                 "bug_tracking_system/" + bugTrackingSystem + "/" + templateName);
 
-        String templateDescription = IOUtils.toString(inputStream, "UTF-8");
+        String templateDescription = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
 
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("suiteBuildNumber", suiteBuildNumber);
@@ -351,7 +415,7 @@ public class TestSuiteResultEntity {
                         .getResourceAsStream(
                                 "bug_tracking_system/" + bugTrackingSystem + "/" + templateName);
 
-        String templateDescription = IOUtils.toString(inputStream, "UTF-8");
+        String templateDescription = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
 
         Map<String, String> valuesMap = new HashMap<>();
         valuesMap.put("suiteBuildNumber", suiteBuildNumber);
@@ -407,7 +471,7 @@ public class TestSuiteResultEntity {
                         this.bugTrackingSystemProp.getProperty(bugTrackingSystem + ".uri.host"),
                         -1,
                         this.bugTrackingSystemProp.getProperty(bugTrackingSystem + ".uri.path"),
-                        URLEncodedUtils.format(qparams, "UTF-8"),
+                        URLEncodedUtils.format(qparams, StandardCharsets.UTF_8.name()),
                         null);
         return uri.toString();
     }
