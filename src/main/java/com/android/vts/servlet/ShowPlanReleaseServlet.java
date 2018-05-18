@@ -17,6 +17,7 @@
 package com.android.vts.servlet;
 
 import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
@@ -64,7 +66,11 @@ public class ShowPlanReleaseServlet extends BaseServlet {
             links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
         } else {
             links.add(new Page(PageType.RELEASE, "TEST SUITES", "?type=" + testType, true));
-            links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName + "&type=" + testType));
+            links.add(
+                    new Page(
+                            PageType.PLAN_RELEASE,
+                            planName,
+                            "?plan=" + planName + "&type=" + testType));
         }
         return links;
     }
@@ -302,7 +308,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 ofy().load()
                         .type(TestSuiteResultEntity.class)
                         .filter("suitePlan", testPlan)
-                        .filter("testType", Integer.parseInt(testCategoryType))
+                        .filter(this.getTestTypeFieldName(testCategoryType), true)
                         .orderKey(true);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
@@ -341,5 +347,25 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         request.setAttribute("testSuiteResultEntityPagination", testSuiteResultEntityPagination);
         RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
         return dispatcher;
+    }
+
+
+    private String getTestTypeFieldName(String testCategoryType) {
+        String fieldName;
+        switch (testCategoryType) {
+            case "1":   // TOT
+                fieldName = "testTypeIndex.TOT";
+                break;
+            case "2":   // OTA
+                fieldName = "testTypeIndex.OTA";
+                break;
+            case "4":   // SIGNED
+                fieldName = "testTypeIndex.SIGNED";
+                break;
+            default:
+                fieldName = "testTypeIndex.TOT";
+                break;
+        }
+        return fieldName;
     }
 }
