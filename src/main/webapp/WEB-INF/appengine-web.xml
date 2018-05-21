@@ -13,11 +13,10 @@
 -->
 
 <appengine-web-app xmlns="http://appengine.google.com/ns/1.0">
-  <application>s~google.com:android-vts-staging</application>
-  <version>4</version>
   <threadsafe>true</threadsafe>
   <sessions-enabled>true</sessions-enabled>
   <runtime>java8</runtime>
+  <instance-class>F4_1G</instance-class>
 
   <system-properties>
     <property name="EMAIL_DOMAIN" value="${appengine.emailDomain}" />
@@ -28,6 +27,10 @@
     <property name="GERRIT_URI" value="${gerrit.uri}" />
     <property name="GERRIT_SCOPE" value="${gerrit.scope}" />
     <property name="ANALYTICS_ID" value="${analytics.id}" />
+    <property name="GCS_PROJECT_ID" value="${gcs.projectID}" />
+    <property name="GCS_KEY_FILE" value="${gcs.keyFile}" />
+    <property name="GCS_BUCKET_NAME" value="${gcs.bucketName}" />
+    <property name="GCS_SUITE_TEST_FOLDER_NAME" value="${gcs.suiteTestFolderName}" />
   </system-properties>
 
 </appengine-web-app>

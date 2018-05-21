@@ -17,39 +17,38 @@
 package com.android.vts.servlet;
 
 import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
+import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.FilterUtil;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Query;
+import com.android.vts.util.Pagination;
+import com.google.appengine.api.datastore.*;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.lang.StringUtils;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 public class ShowPlanReleaseServlet extends BaseServlet {
-    private static final String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_plan_release.jsp";
     private static final int MAX_RUNS_PER_PAGE = 90;
+
+    /** the previous cursor string token list where to start */
+    private static final LinkedHashSet<String> pageCountTokenSet = new LinkedHashSet<>();
 
     @Override
     public PageType getNavParentType() {
@@ -58,9 +57,21 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
     @Override
     public List<Page> getBreadcrumbLinks(HttpServletRequest request) {
+        String testType =
+                request.getParameter("type") == null ? "plan" : request.getParameter("type");
         List<Page> links = new ArrayList<>();
         String planName = request.getParameter("plan");
-        links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
+        if (testType.equals("plan")) {
+            links.add(new Page(PageType.RELEASE, "TEST PLANS", "?type=" + testType, true));
+            links.add(new Page(PageType.PLAN_RELEASE, planName, "?plan=" + planName));
+        } else {
+            links.add(new Page(PageType.RELEASE, "TEST SUITES", "?type=" + testType, true));
+            links.add(
+                    new Page(
+                            PageType.PLAN_RELEASE,
+                            planName,
+                            "?plan=" + planName + "&type=" + testType));
+        }
         return links;
     }
 
@@ -99,7 +110,31 @@ public class ShowPlanReleaseServlet extends BaseServlet {
     @Override
     public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
+        String testType =
+                request.getParameter("type") == null ? "plan" : request.getParameter("type");
+
+        RequestDispatcher dispatcher;
+        if (testType.equalsIgnoreCase("plan")) {
+            dispatcher = this.getTestPlanDispatcher(request, response);
+        } else {
+            dispatcher = this.getTestSuiteDispatcher(request, response);
+        }
+
+        try {
+            request.setAttribute("testType", testType);
+            response.setStatus(HttpServletResponse.SC_OK);
+            dispatcher.forward(request, response);
+        } catch (ServletException e) {
+            logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
+        }
+    }
+
+    private RequestDispatcher getTestPlanDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_plan_release.jsp";
+
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
         Long startTime = null; // time in microseconds
         Long endTime = null; // time in microseconds
         if (request.getParameter("startTime") != null) {
@@ -143,9 +178,8 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         Filter testPlanRunFilter =
                 FilterUtil.getTimeFilter(
                         testPlanKey, TestPlanRunEntity.KIND, startTime, endTime, typeFilter);
-        Map<String, Object> parameterMap = request.getParameterMap();
-        List<Filter> userTestFilters =
-                FilterUtil.getUserTestFilters(parameterMap);
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        List<Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap);
         userTestFilters.add(0, testPlanRunFilter);
         Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
 
@@ -247,12 +281,91 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         request.setAttribute("endTime", new Gson().toJson(endTime));
         request.setAttribute("branches", new Gson().toJson(DatastoreHelper.getAllBranches()));
         request.setAttribute("devices", new Gson().toJson(DatastoreHelper.getAllBuildFlavors()));
-        response.setStatus(HttpServletResponse.SC_OK);
+
         RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
-        try {
-            dispatcher.forward(request, response);
-        } catch (ServletException e) {
-            logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
+        return dispatcher;
+    }
+
+    private RequestDispatcher getTestSuiteDispatcher(
+            HttpServletRequest request, HttpServletResponse response) {
+        String PLAN_RELEASE_JSP = "WEB-INF/jsp/show_suite_release.jsp";
+
+        String testPlan = request.getParameter("plan");
+        String testCategoryType =
+                request.getParameter("testCategoryType") == null
+                        ? "1"
+                        : request.getParameter("testCategoryType");
+        int page =
+                request.getParameter("page") == null
+                        ? 1
+                        : Integer.valueOf(request.getParameter("page"));
+        String nextPageToken =
+                request.getParameter("nextPageToken") == null
+                        ? ""
+                        : request.getParameter("nextPageToken");
+
+        com.googlecode.objectify.cmd.Query<TestSuiteResultEntity> testSuiteResultEntityQuery =
+                ofy().load()
+                        .type(TestSuiteResultEntity.class)
+                        .filter("suitePlan", testPlan)
+                        .filter(this.getTestTypeFieldName(testCategoryType), true)
+                        .orderKey(true);
+
+        Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
+                new Pagination(
+                        testSuiteResultEntityQuery,
+                        page,
+                        Pagination.DEFAULT_PAGE_SIZE,
+                        nextPageToken,
+                        pageCountTokenSet);
+
+        String nextPageTokenPagination = testSuiteResultEntityPagination.getNextPageCountToken();
+        if (!nextPageTokenPagination.trim().isEmpty()) {
+            this.pageCountTokenSet.add(nextPageTokenPagination);
         }
+
+        logger.log(Level.INFO, "pageCountTokenSet => " + pageCountTokenSet);
+
+        logger.log(Level.INFO, "list => " + testSuiteResultEntityPagination.getList());
+        logger.log(
+                Level.INFO,
+                "next page count token => "
+                        + testSuiteResultEntityPagination.getNextPageCountToken());
+        logger.log(
+                Level.INFO,
+                "page min range => " + testSuiteResultEntityPagination.getMinPageRange());
+        logger.log(
+                Level.INFO,
+                "page max range => " + testSuiteResultEntityPagination.getMaxPageRange());
+        logger.log(Level.INFO, "page size => " + testSuiteResultEntityPagination.getPageSize());
+        logger.log(Level.INFO, "total count => " + testSuiteResultEntityPagination.getTotalCount());
+
+        request.setAttribute("plan", testPlan);
+        request.setAttribute("page", page);
+        request.setAttribute("testType", "suite");
+        request.setAttribute("testCategoryType", testCategoryType);
+        request.setAttribute("testSuiteResultEntityPagination", testSuiteResultEntityPagination);
+        RequestDispatcher dispatcher = request.getRequestDispatcher(PLAN_RELEASE_JSP);
+        return dispatcher;
+    }
+
+
+    private String getTestTypeFieldName(String testCategoryType) {
+        String fieldName;
+        switch (testCategoryType) {
+            case "1":   // TOT
+                fieldName = "testTypeIndex.TOT";
+                break;
+            case "2":   // OTA
+                fieldName = "testTypeIndex.OTA";
+                break;
+            case "4":   // SIGNED
+                fieldName = "testTypeIndex.SIGNED";
+                break;
+            default:
+                fieldName = "testTypeIndex.TOT";
+                break;
+        }
+        return fieldName;
     }
 }

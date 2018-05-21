@@ -133,6 +133,44 @@
             });
         }
 
+        var addFavoriteButton = function() {
+          var self = $(this);
+          var test = self.attr('test');
+
+          $.post('/api/favorites', { testName: test}).then(function(data) {
+            if (data.key) {
+              subscriptionMap[test] = data.key;
+
+              self.children().text("star");
+              self.switchClass("add-fav-button", "min-fav-button", 0);
+
+              self.off('click', addFavoriteButton);
+              self.on('click', removeFavoriteButton);
+            }
+          })
+          .fail(function() {
+            alert( "Error occurred on registering your favorite test case!" );
+          });
+        }
+
+        var removeFavoriteButton = function() {
+          var self = $(this);
+          var test = self.attr('test');
+
+          $.ajax({
+            url: '/api/favorites/' + subscriptionMap[test],
+            type: 'DELETE'
+          }).then(function() {
+            delete subscriptionMap[test];
+
+            self.children().text("star_border");
+            self.switchClass("min-fav-button", "add-fav-button", 0);
+
+            self.off('click', removeFavoriteButton);
+            self.on('click', addFavoriteButton);
+          });
+        }
+
         $.widget('custom.sizedAutocomplete', $.ui.autocomplete, {
             _resizeMenu: function() {
                 this.menu.element.outerWidth($('#input-box').width());
@@ -157,6 +195,10 @@
             $('.notification-button').click(toggleNotifications);
             $('#add-button').click(addFavorite);
 
+            $('.add-fav-button').click(addFavoriteButton);
+
+            $('.min-fav-button').click(removeFavoriteButton);
+
             $('#favoritesLink').click(function() {
                 window.open('/', '_self');
             });
@@ -169,6 +211,62 @@
         });
     </script>
     <div class='container wide'>
+
+      <c:if test="${!showAll}">
+        <ul id="guide_collapsible" class="collapsible" data-collapsible="accordion">
+          <li>
+            <div class="collapsible-header">
+              <i class="material-icons">library_books</i>
+              Notice
+              <span class="new badge right" style="position: inherit;">1</span>
+            </div>
+            <div class="collapsible-body">
+              <div class='row'>
+                <div class='col s12' style="margin: 15px 0px 0px 30px;">
+                  <c:choose>
+                    <c:when test="${fn:endsWith(serverName, 'googleplex.com')}">
+                      <c:set var="dataVersion" scope="page" value="new"/>
+                      <c:choose>
+                        <c:when test="${fn:startsWith(serverName, 'android-vts-internal')}">
+                          <c:set var="dataLink" scope="page" value="https://android-vts.appspot.com"/>
+                        </c:when>
+                        <c:when test="${fn:startsWith(serverName, 'android-vts-staging')}">
+                          <c:set var="dataLink" scope="page" value="https://android-vts-staging.appspot.com"/>
+                        </c:when>
+                        <c:otherwise>
+                          <c:set var="dataLink" scope="page" value="https://android-vts-staging.appspot.com"/>
+                        </c:otherwise>
+                      </c:choose>
+                    </c:when>
+                    <c:when test="${fn:endsWith(serverName, 'appspot.com')}">
+                      <c:set var="dataVersion" scope="page" value="previous"/>
+                      <c:choose>
+                        <c:when test="${fn:startsWith(serverName, 'android-vts-staging')}">
+                          <c:set var="dataLink" scope="page" value="https://android-vts-staging.googleplex.com"/>
+                        </c:when>
+                        <c:when test="${fn:startsWith(serverName, 'android-vts')}">
+                          <c:set var="dataLink" scope="page" value="https://android-vts-internal.googleplex.com"/>
+                        </c:when>
+                        <c:otherwise>
+                          <c:set var="dataLink" scope="page" value="https://android-vts-staging.googleplex.com"/>
+                        </c:otherwise>
+                      </c:choose>
+                    </c:when>
+                    <c:otherwise>
+                      <c:set var="dataVersion" scope="page" value="local dev"/>
+                      <c:set var="dataLink" scope="page" value="http://localhost"/>
+                    </c:otherwise>
+                  </c:choose>
+                  Recently, we launched new appspot servers for dashboard. Thus you will have two diffrent versions of server for each staging and production data.
+                  <br/>
+                  If you want to find the <c:out value = "${dataVersion}"/> test data, please visit the next url <a href="<c:out value = "${dataLink}"/>"><c:out value = "${dataLink}"/></a>.
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </c:if>
+
       <c:choose>
         <c:when test='${not empty error}'>
           <div id='error-container' class='row card'>
@@ -187,7 +285,7 @@
               </ul>
             </div>
           </div>
-          <c:set var='width' value='${showAll ? 12 : 11}' />
+          <c:set var='width' value='${showAll ? 11 : 11}' />
           <c:if test='${not showAll}'>
             <div class='row'>
               <div class='input-field col s8'>
@@ -207,23 +305,41 @@
                     <span class='entry valign'>${test.name}
                       <c:if test='${test.failCount >= 0 && test.passCount >= 0}'>
                         <c:set var='color' value='${test.failCount > 0 ? "red" : (test.passCount > 0 ? "green" : "grey")}' />
-                        <span class='indicator center ${color}'>
+                        <span class='indicator right center ${color}'>
                           ${test.passCount} / ${test.passCount + test.failCount}
                         </span>
                       </c:if>
                     </span>
                   </div>
                 </a>
-                <c:if test='${not showAll}'>
-                  <div class='col s1 center btn-container'>
-                    <a class='col s6 btn-flat notification-button ${test.muteNotifications ? "inactive" : "active"}' test='${test.name}' title='${test.muteNotifications ? "Enable" : "Disable"} notifications'>
-                      <i class='material-icons'>notifications_${test.muteNotifications ? "off" : "active"}</i>
-                    </a>
-                    <a class='col s6 btn-flat remove-button' test='${test.name}' title='Remove favorite'>
-                      <i class='material-icons'>clear</i>
-                    </a>
-                  </div>
-                </c:if>
+                <c:choose>
+                  <c:when test="${showAll}">
+                    <div class="col s1 center btn-container">
+                      <c:choose>
+                        <c:when test="${test.isFavorite}">
+                          <a class="col s6 btn-flat min-fav-button" test="${test.name}" title="Remove favorite">
+                            <i class="material-icons">star</i>
+                          </a>
+                        </c:when>
+                        <c:otherwise>
+                          <a class="col s6 btn-flat add-fav-button" test="${test.name}" title="Add favorite">
+                            <i class="material-icons">star_border</i>
+                          </a>
+                        </c:otherwise>
+                      </c:choose>
+                    </div>
+                  </c:when>
+                  <c:otherwise>
+                    <div class='col s1 center btn-container'>
+                      <a class='col s6 btn-flat notification-button ${test.muteNotifications ? "inactive" : "active"}' test='${test.name}' title='${test.muteNotifications ? "Enable" : "Disable"} notifications'>
+                        <i class='material-icons'>notifications_${test.muteNotifications ? "off" : "active"}</i>
+                      </a>
+                      <a class='col s6 btn-flat remove-button' test='${test.name}' title='Remove favorite'>
+                        <i class='material-icons'>clear</i>
+                      </a>
+                    </div>
+                  </c:otherwise>
+                </c:choose>
               </div>
             </c:forEach>
           </div>

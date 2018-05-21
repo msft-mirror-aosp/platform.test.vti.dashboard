@@ -23,7 +23,11 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,6 +35,8 @@ import javax.servlet.http.HttpSession;
 
 public abstract class BaseServlet extends HttpServlet {
     protected final Logger logger = Logger.getLogger(getClass().getName());
+
+    protected String ERROR_MESSAGE_JSP = "WEB-INF/jsp/error_msg.jsp";
 
     // Environment variables
     protected static final String GERRIT_URI = System.getProperty("GERRIT_URI");
@@ -41,7 +47,7 @@ public abstract class BaseServlet extends HttpServlet {
     protected static final String TREE_DEFAULT_PARAM = "treeDefault";
 
     public enum PageType {
-        TOT("Home", "/"),
+        TOT("Test", "/"),
         RELEASE("Release", "/show_release"),
         COVERAGE_OVERVIEW("Coverage", "/show_coverage_overview"),
         PROFILING_LIST("Profiling", "/show_profiling_list"),
@@ -77,6 +83,12 @@ public abstract class BaseServlet extends HttpServlet {
         public Page(PageType type, String name, String url) {
             this.type = type;
             this.name = type.defaultName + name;
+            this.url = type.defaultUrl + url;
+        }
+
+        public Page(PageType type, String name, String url, Boolean withoutDefault) {
+            this.type = type;
+            this.name = name;
             this.url = type.defaultUrl + url;
         }
 
@@ -121,44 +133,61 @@ public abstract class BaseServlet extends HttpServlet {
         // If the user is logged out, allow them to log back in and return to the page.
         // Set the logout URL to direct back to a login page that directs to the current request.
         UserService userService = UserServiceFactory.getUserService();
-        User currentUser = userService.getCurrentUser();
+        Optional<User> currentUser = Optional.ofNullable(userService.getCurrentUser());
+        String currentUserEmail =
+                currentUser.isPresent()
+                        ? currentUser.map(user -> user.getEmail().trim()).orElse("")
+                        : "";
         String requestUri = request.getRequestURI();
         String requestArgs = request.getQueryString();
         String loginURI = userService.createLoginURL(requestUri + '?' + requestArgs);
         String logoutURI = userService.createLogoutURL(loginURI);
-        if (currentUser == null || currentUser.getEmail() == null) {
-            response.sendRedirect(loginURI);
-            return;
-        }
+        if (currentUserEmail != "") {
 
-        int activeIndex;
-        switch (getNavParentType()) {
-            case PROFILING_LIST:
-                activeIndex = 3;
-                break;
-            case COVERAGE_OVERVIEW:
-                activeIndex = 2;
-                break;
-            case RELEASE:
-                activeIndex = 1;
-                break;
-            default:
-                activeIndex = 0;
-                break;
+            int activeIndex;
+            switch (getNavParentType()) {
+                case PROFILING_LIST:
+                    activeIndex = 3;
+                    break;
+                case COVERAGE_OVERVIEW:
+                    activeIndex = 2;
+                    break;
+                case RELEASE:
+                    activeIndex = 1;
+                    break;
+                default:
+                    activeIndex = 0;
+                    break;
+            }
+            if (request.getParameter(TREE_DEFAULT_PARAM) != null) {
+                HttpSession session = request.getSession(true);
+                boolean treeDefault = request.getParameter(TREE_DEFAULT_PARAM).equals("true");
+                session.setAttribute(TREE_DEFAULT_PARAM, treeDefault);
+            }
+
+            request.setAttribute("serverName", request.getServerName());
+            request.setAttribute("logoutURL", logoutURI);
+            request.setAttribute("email", currentUserEmail);
+            request.setAttribute("analyticsID", new Gson().toJson(ANALYTICS_ID));
+            request.setAttribute("breadcrumbLinks", getBreadcrumbLinks(request));
+            request.setAttribute("navbarLinks", navbarLinks);
+            request.setAttribute("activeIndex", activeIndex);
+            response.setContentType("text/html");
+
+            if (currentUserEmail.endsWith("@google.com")) {
+                doGetHandler(request, response);
+            } else {
+                RequestDispatcher dispatcher =
+                        request.getRequestDispatcher("WEB-INF/jsp/auth_error.jsp");
+                try {
+                    dispatcher.forward(request, response);
+                } catch (ServletException e) {
+                    logger.log(Level.SEVERE, "Servlet Exception caught : ", e);
+                }
+            }
+        } else {
+            response.sendRedirect(loginURI);
         }
-        if (request.getParameter(TREE_DEFAULT_PARAM) != null) {
-            HttpSession session = request.getSession(true);
-            boolean treeDefault = request.getParameter(TREE_DEFAULT_PARAM).equals("true");
-            session.setAttribute(TREE_DEFAULT_PARAM, treeDefault);
-        }
-        request.setAttribute("logoutURL", logoutURI);
-        request.setAttribute("email", currentUser.getEmail());
-        request.setAttribute("analyticsID", new Gson().toJson(ANALYTICS_ID));
-        request.setAttribute("breadcrumbLinks", getBreadcrumbLinks(request));
-        request.setAttribute("navbarLinks", navbarLinks);
-        request.setAttribute("activeIndex", activeIndex);
-        response.setContentType("text/html");
-        doGetHandler(request, response);
     }
 
     /**
