@@ -299,8 +299,10 @@ public class TestSuiteResultEntity {
         if (totalTestCaseCount.intValue() <= 0) {
             this.passedTestCaseRatio = 0;
         } else {
-            BigDecimal passedTestCaseCountDecimal= new BigDecimal(passedTestCaseCount);
-            BigDecimal result = passedTestCaseCountDecimal.divide(totalTestCaseCount, 10, BigDecimal.ROUND_FLOOR);
+            BigDecimal passedTestCaseCountDecimal = new BigDecimal(passedTestCaseCount);
+            BigDecimal result =
+                    passedTestCaseCountDecimal.divide(
+                            totalTestCaseCount, 10, BigDecimal.ROUND_FLOOR);
             this.passedTestCaseRatio = result.longValue() * 100;
         }
 
@@ -318,8 +320,44 @@ public class TestSuiteResultEntity {
         ofy().save().entity(this).now();
     }
 
-    public List<? extends TestSuiteResultEntity> getTestSuitePlans() {
-        return ofy().load().type(this.getClass()).project("suitePlan").distinct(true).list();
+    public static List<TestSuiteResultEntity> getTestSuitePlans() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("suitePlan")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getBranchDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("branch")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getBuildIdDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("buildId")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getTargetDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("target")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getHostNameDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("hostName")
+                .distinct(true)
+                .list();
     }
 
     public String getDeviceNameFromVendorFpt() {
