@@ -114,8 +114,8 @@ public class ShowCoverageServlet extends BaseServlet {
             if (total > 0) {
                 double pct = Math.round(covered * 10000d / total) / 100d;
                 String color = pct >= 70 ? "green" : "red";
-                indicator = "<div class=\"right indicator " + color + "\">" + pct + "%</div>"
-                        + "<span class=\"right total-count\">" + covered + "/" + total + "</span>";
+                indicator = "<div class=\"right total-count\">" + covered + "/" + total + "</div>"
+                            + "<div class=\"indicator " + color + "\">" + pct + "%</div>";
             }
             indicators.add(indicator);
         }
