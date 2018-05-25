@@ -28,6 +28,20 @@
   <link rel='stylesheet' href='/css/search_header.css'>
   <script type='text/javascript'>
       $(document).ready(function() {
+
+          $.deparam = $.deparam || function(uri){
+              if(uri === undefined){
+                  uri = window.location.search;
+              }
+              var queryString = {};
+              uri.replace(
+                  new RegExp(
+                      "([^?=&]+)(=([^&#]*))?", "g"),
+                  function($0, $1, $2, $3) { queryString[$1] = $3; }
+              );
+              return queryString;
+          };
+
           $("li.tab").each(function( index ) {
               $(this).click(function() {
                   window.open($(this).children().attr("href"), '_self');
@@ -35,12 +49,54 @@
           });
 
           $(".search-icon-wrapper").click(function() {
-              console.log($(this));
-
               $(".search-wrapper").slideToggle("fast", function() {
                   // Animation complete.
               });
           });
+
+          <c:if test="${not empty branch or not empty hostName or not empty buildId}">
+          $(".search-wrapper").slideToggle("fast");
+          </c:if>
+
+          $("#searchBtn").click(function(event) {
+              event.preventDefault();
+
+              var url = '<c:out value="${requestScope['javax.servlet.forward.servlet_path']}" escapeXml="false"></c:out>';
+              var params = $.deparam('<c:out value="${requestScope['javax.servlet.forward.query_string']}" escapeXml="false"></c:out>');
+
+              var branch = $("#deviceBranch").val().trim();
+              if (  branch.length > 0 ) {
+                  params['branch'] = branch;
+              } else {
+                  delete params['branch'];
+              }
+              var host = $("#host").val().trim();
+              if ( host.length > 0 ) {
+                  params['hostName'] = host;
+              } else {
+                  delete params['hostName'];
+              }
+              var buildId = $("#deviceBuildId").val().trim();
+              if ( buildId.length > 0 ) {
+                  params['buildId'] = buildId;
+              } else {
+                  delete params['buildId'];
+              }
+
+              $(location).prop('href', url + "?" + decodeURIComponent($.param(params)));
+              $(this).prop('href', url);
+          });
+
+          $("#deviceBranch").autocomplete({
+              source: [ "c++", "java", "php", "coldfusion", "javascript", "asp", "ruby" ],
+              open: function( event, ui ) {
+                  alert("open")
+              },
+              close: function( event, ui ) {
+                  alert("close")
+              }
+          });
+
       });
   </script>
   <body>
@@ -58,28 +114,16 @@
             <div class="search-wrapper" style="display: none">
                 <div class="col s12">
                     <div class="input-field col s4">
-                        <input class="filter-input ui-autocomplete-input" type="text" autocomplete="off" />
+                        <input id="deviceBranch" type="text" value="<c:out value="${branch}"></c:out>" autocomplete="off" />
                         <label>Device Branch</label>
                     </div>
                     <div class="input-field col s4">
-                        <input class="filter-input ui-autocomplete-input" type="text" autocomplete="off" />
-                        <label>Device Type</label>
-                    </div>
-                    <div class="input-field col s4">
-                        <input class="filter-input" type="text" />
-                        <label>Device Build ID</label>
-                    </div>
-                    <div class="input-field col s4">
-                        <input class="filter-input" type="text" />
+                        <input id="host" type="text" value="<c:out value="${hostName}"></c:out>" autocomplete="off" />
                         <label>Host</label>
                     </div>
                     <div class="input-field col s4">
-                        <input class="filter-input validate" type="text" pattern="(^)(<|>|<=|>=|=)?[ ]*?[0-9]+$" placeholder="e.g. 5, >0, <=10" />
-                        <label class="active">Passing Test Case Count</label>
-                    </div>
-                    <div class="input-field col s4">
-                        <input class="filter-input validate" type="text" pattern="(^)(<|>|<=|>=|=)?[ ]*?[0-9]+$" placeholder="e.g. 5, >0, <=10" />
-                        <label class="active">Non-Passing Test Case Count</label>
+                        <input id="deviceBuildId" type="text" value="<c:out value="${buildId}"></c:out>" autocomplete="off" />
+                        <label>Device Build ID</label>
                     </div>
                 </div>
                 <div class="col s12">
@@ -87,7 +131,7 @@
 
                     </div>
                     <div class="run-type-wrapper col s3">
-                        <a class="waves-effect waves-light btn">
+                        <a class="waves-effect waves-light btn" id="searchBtn">
                             <i class="material-icons left">search</i>Apply
                         </a>
                     </div>
@@ -100,13 +144,13 @@
 
                 <ul class="tabs">
                     <li class="tab col s4" id="totTabLink">
-                        <a class="${testCategoryType == '1' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=1">TOT</a>
+                        <a class="<c:out value="${testCategoryType == '1' ? 'active' : 'inactive'}"></c:out>" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=1">TOT</a>
                     </li>
                     <li class="tab col s4" id="signedTabLink">
-                        <a class="${testCategoryType == '4' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=4">SIGNED</a>
+                        <a class="<c:out value="${testCategoryType == '4' ? 'active' : 'inactive'}"></c:out>" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=4">SIGNED</a>
                     </li>
                     <li class="tab col s4" id="otaTabLink">
-                        <a class="${testCategoryType == '2' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=2">OTA</a>
+                        <a class="<c:out value="${testCategoryType == '2' ? 'active' : 'inactive'}"></c:out>" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=2">OTA</a>
                     </li>
                 </ul>
 
@@ -164,7 +208,6 @@
                             <div class="col s5">
                                 <span class="suite-test-run-metadata">
                                     <b>Suite Build Number: </b><c:out value="${testSuiteResultEntity.suiteBuildNumber}"></c:out><br>
-                                    <b>VTS Build: </b><c:out value="${testSuiteResultEntity.buildId}"></c:out><br>
                                     <b>Device Name: </b><c:out value="${testSuiteResultEntity.deviceName}"></c:out><br>
                                 </span>
                             </div>
@@ -235,12 +278,22 @@
       </div>
 
       <div class="row">
+          <c:set var="searchQueryString" value="" />
+          <c:if test="${not empty branch}">
+              <c:set var="searchQueryString" value="${searchQueryString}&branch=${branch}" />
+          </c:if>
+          <c:if test="${not empty hostName}">
+              <c:set var="searchQueryString" value="${searchQueryString}&hostName=${hostName}" />
+          </c:if>
+          <c:if test="${not empty buildId}">
+              <c:set var="searchQueryString" value="${searchQueryString}&buildId=${buildId}" />
+          </c:if>
         <div class="col s12 center-align">
           <ul class="pagination">
             <c:choose>
                 <c:when test="${testSuiteResultEntityPagination.minPageRange gt testSuiteResultEntityPagination.pageSize}">
                     <li class="waves-effect">
-                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=${testCategoryType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=${testCategoryType}&page=${testSuiteResultEntityPagination.minPageRange - 1}&nextPageToken=${testSuiteResultEntityPagination.previousPageCountToken}${searchQueryString}">
                             <i class="material-icons">chevron_left</i>
                         </a>
                     </li>
@@ -251,7 +304,7 @@
             </c:choose>
             <c:forEach var="pageLoop" begin="${testSuiteResultEntityPagination.minPageRange}" end="${testSuiteResultEntityPagination.maxPageRange}">
               <li class="waves-effect<c:if test="${pageLoop eq page}"> active</c:if>">
-                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=${testCategoryType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>">
+                  <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=${testCategoryType}&page=${pageLoop}<c:if test="${testSuiteResultEntityPagination.currentPageCountToken ne ''}">&nextPageToken=${testSuiteResultEntityPagination.currentPageCountToken}</c:if>${searchQueryString}">
                       <c:out value="${pageLoop}" />
                   </a>
               </li>
@@ -259,7 +312,7 @@
             <c:choose>
                 <c:when test="${testSuiteResultEntityPagination.maxPages gt testSuiteResultEntityPagination.pageSize}">
                     <li class="waves-effect">
-                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=${testCategoryType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}">
+                        <a href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=${testCategoryType}&page=${testSuiteResultEntityPagination.maxPageRange + 1}&nextPageToken=${testSuiteResultEntityPagination.nextPageCountToken}${searchQueryString}">
                             <i class="material-icons">chevron_right</i>
                         </a>
                     </li>
