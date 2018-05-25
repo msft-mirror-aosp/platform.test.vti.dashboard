@@ -16,8 +16,8 @@
 
 package com.android.vts.util;
 
-import com.google.appengine.api.datastore.Cursor;
-import com.google.appengine.api.datastore.QueryResultIterator;
+import com.google.cloud.datastore.Cursor;
+import com.google.cloud.datastore.QueryResults;
 import com.googlecode.objectify.cmd.Query;
 
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ public class Pagination<T> implements Iterable<T> {
         if (startPageToken.equals("")) {
             this.totalCount = query.count();
         } else {
-            query = query.startAt(Cursor.fromWebSafeString(startPageToken));
+            query = query.startAt(Cursor.fromUrlSafe(startPageToken));
             this.totalCount = query.count();
         }
 
@@ -106,14 +106,14 @@ public class Pagination<T> implements Iterable<T> {
         int iteratorIndex = 0;
         int startIndex = (page % pageSize == 0 ? 9 : page % pageSize - 1) * pageSize;
 
-        QueryResultIterator<T> resultIterator = query.iterator();
+        QueryResults<T> resultIterator = query.iterator();
         while (resultIterator.hasNext()) {
             if (startIndex <= iteratorIndex && iteratorIndex < startIndex + this.pageSize)
                 this.list.add(resultIterator.next());
             else resultIterator.next();
             if (iteratorIndex == DEFAULT_PAGE_WINDOW * this.pageSize) {
-                if ( Objects.nonNull(resultIterator) && Objects.nonNull(resultIterator.getCursor()) ) {
-                    this.nextPageCountToken = resultIterator.getCursor().toWebSafeString();
+                if ( Objects.nonNull(resultIterator) && Objects.nonNull(resultIterator.getCursorAfter()) ) {
+                    this.nextPageCountToken = resultIterator.getCursorAfter().toUrlSafe();
                 }
             }
             iteratorIndex++;

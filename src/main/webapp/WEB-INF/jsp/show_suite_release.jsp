@@ -137,12 +137,21 @@
                                 ">
                                     <c:out value="${testSuiteResultEntity.passedTestCaseCount}"></c:out>/<c:out value="${testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount}"></c:out>
                                     (
+                                    <c:set var="integerVal" value="${fn:substringBefore(testSuiteResultEntity.passedTestCaseRatio, '.')}" />
                                     <c:choose>
-                                        <c:when test="${testSuiteResultEntity.passedTestCaseCount eq 0 and testSuiteResultEntity.failedTestCaseCount eq 0}">
-                                            <fmt:formatNumber type="percent" minFractionDigits="2" maxFractionDigits="2" value="0" />
+                                        <c:when test="${integerVal eq '100'}">
+                                            100%
                                         </c:when>
                                         <c:otherwise>
-                                            <fmt:formatNumber type="percent" minFractionDigits="2" maxFractionDigits="2" value="${testSuiteResultEntity.passedTestCaseCount / (testSuiteResultEntity.passedTestCaseCount + testSuiteResultEntity.failedTestCaseCount)}" />
+                                            <c:set var="decimalVal" value="${fn:substring(fn:substringAfter(testSuiteResultEntity.passedTestCaseRatio, '.'), 0, 2)}" />
+                                            <c:choose>
+                                                <c:when test="${decimalVal eq '00'}">
+                                                    <c:out value="${integerVal}"></c:out>%
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:out value="${integerVal}"></c:out>.<c:out value="${decimalVal}"></c:out>%
+                                                </c:otherwise>
+                                            </c:choose>
                                         </c:otherwise>
                                     </c:choose>
                                     )

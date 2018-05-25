@@ -43,10 +43,11 @@ public class ObjectifyListener implements ServletContextListener {
      */
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
-        ObjectifyFactory objectifyFactory = ObjectifyService.factory();
-        objectifyFactory.register(TestSuiteFileEntity.class);
-        objectifyFactory.register(TestSuiteResultEntity.class);
-        objectifyFactory.begin();
+        ObjectifyService.init();
+        // ObjectifyFactory objectifyFactory = ObjectifyService.factory();
+        ObjectifyService.register(TestSuiteFileEntity.class);
+        ObjectifyService.register(TestSuiteResultEntity.class);
+        ObjectifyService.begin();
         logger.log(Level.INFO, "Value Initialized from context.");
     }
 
