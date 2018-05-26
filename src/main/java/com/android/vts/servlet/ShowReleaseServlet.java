@@ -99,12 +99,7 @@ public class ShowReleaseServlet extends BaseServlet {
             HttpServletRequest request, HttpServletResponse response) {
         String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
 
-        List<TestSuiteResultEntity> suiteResultEntityList =
-                ofy().load()
-                        .type(TestSuiteResultEntity.class)
-                        .project("suitePlan")
-                        .distinct(true)
-                        .list();
+        List<TestSuiteResultEntity> suiteResultEntityList = TestSuiteResultEntity.getTestSuitePlans();
 
         List<String> plans =
                 suiteResultEntityList
