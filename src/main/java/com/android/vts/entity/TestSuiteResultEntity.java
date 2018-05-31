@@ -303,7 +303,7 @@ public class TestSuiteResultEntity {
             BigDecimal result =
                     passedTestCaseCountDecimal.divide(
                             totalTestCaseCount, 10, BigDecimal.ROUND_FLOOR);
-            this.passedTestCaseRatio = result.longValue() * 100;
+            this.passedTestCaseRatio = result.floatValue() * 100;
         }
 
         if (!this.buildVendorFingerprint.isEmpty()) {
