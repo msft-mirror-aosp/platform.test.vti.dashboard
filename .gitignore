@@ -5,6 +5,10 @@ appengine-generated/
 src/main/resources/keys/
 src/main/resources/bug_tracking_system/**/*.tpl
 
+# Gradle
+.gradle/
+build/
+
 # Java
 *.class
 

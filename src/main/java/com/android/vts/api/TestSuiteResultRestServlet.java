@@ -19,6 +19,7 @@ package com.android.vts.api;
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.proto.TestSuiteResultMessageProto.TestSuiteResultMessage;
+import com.android.vts.servlet.BaseServlet;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson.JacksonFactory;
@@ -31,21 +32,48 @@ import org.apache.commons.codec.binary.Base64;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 
 /** REST endpoint for posting test suite data to the Dashboard. */
 public class TestSuiteResultRestServlet extends HttpServlet {
-    private static final String SERVICE_CLIENT_ID = System.getProperty("SERVICE_CLIENT_ID");
+    private static String SERVICE_CLIENT_ID;
     private static final String SERVICE_NAME = "VTS Dashboard";
     private static final Logger logger =
             Logger.getLogger(TestSuiteResultRestServlet.class.getName());
+
+    /** System Configuration Property class */
+    protected Properties systemConfigProp = new Properties();
+
+    @Override
+    public void init(ServletConfig cfg) throws ServletException {
+        super.init(cfg);
+
+        try {
+            InputStream defaultInputStream =
+                    TestSuiteResultRestServlet.class
+                            .getClassLoader()
+                            .getResourceAsStream("config.properties");
+            systemConfigProp.load(defaultInputStream);
+
+            SERVICE_CLIENT_ID = systemConfigProp.getProperty("appengine.serviceClientID");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -75,7 +103,8 @@ public class TestSuiteResultRestServlet extends HttpServlet {
             Tokeninfo tokenInfo = oauth2.tokeninfo().setAccessToken(accessToken).execute();
 
             if (tokenInfo.getIssuedTo().equals(SERVICE_CLIENT_ID)) {
-                Key<TestSuiteFileEntity> testSuiteFileParent = Key.create(TestSuiteFileEntity.class, "suite_result/2019/04/06/132343.bin");
+                Key<TestSuiteFileEntity> testSuiteFileParent =
+                        Key.create(TestSuiteFileEntity.class, "suite_result/2019/04/06/132343.bin");
                 TestSuiteResultEntity testSuiteResultEntity =
                         new TestSuiteResultEntity(
                                 testSuiteFileParent,

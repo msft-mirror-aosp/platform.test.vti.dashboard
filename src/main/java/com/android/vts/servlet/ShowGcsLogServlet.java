@@ -56,9 +56,9 @@ public class ShowGcsLogServlet extends BaseServlet {
     private static final String GCS_LOG_JSP = "WEB-INF/jsp/show_gcs_log.jsp";
 
     /** Google Cloud Storage project's key file to access the storage */
-    private static final String GCS_KEY_FILE = System.getProperty("GCS_KEY_FILE");
+    private static String GCS_KEY_FILE;
     /** Google Cloud Storage project's default bucket name for vtslab log files */
-    private static final String GCS_BUCKET_NAME = System.getProperty("GCS_BUCKET_NAME");
+    private static String GCS_BUCKET_NAME;
 
     /**
      * This is the key file to access vtslab-gcs project. It will allow the dashboard to have a full
@@ -78,6 +78,9 @@ public class ShowGcsLogServlet extends BaseServlet {
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
+
+        GCS_KEY_FILE = systemConfigProp.getProperty("gcs.keyFile");
+        GCS_BUCKET_NAME = systemConfigProp.getProperty("gcs.bucketName");
 
         this.keyFileInputStream =
                 this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);

@@ -16,7 +16,11 @@ public class GcsHelper {
     private static final Logger logger = Logger.getLogger(GcsHelper.class.getName());
 
     /** Google Cloud Storage project ID */
-    private static final String GCS_PROJECT_ID = System.getProperty("GCS_PROJECT_ID");
+    private static String GCS_PROJECT_ID;
+
+    public static void setGcsProjectId(String gcsProjectId) {
+        GCS_PROJECT_ID = gcsProjectId;
+    }
 
     public static Optional<Storage> getStorage(InputStream keyFileInputStream) {
 

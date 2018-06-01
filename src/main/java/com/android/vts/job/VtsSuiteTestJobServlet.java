@@ -16,26 +16,12 @@
 
 package com.android.vts.job;
 
-import com.android.vts.entity.TestEntity;
-import com.android.vts.entity.TestRunEntity;
-import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.proto.TestSuiteResultMessageProto;
-import com.android.vts.util.EmailHelper;
-import com.android.vts.util.FilterUtil;
 import com.android.vts.util.GcsHelper;
 import com.android.vts.util.TaskQueueHelper;
 import com.android.vts.util.TimeUtil;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson.JacksonFactory;
-import com.google.api.services.oauth2.Oauth2;
-import com.google.api.services.oauth2.model.Tokeninfo;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Query.Filter;
-import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.memcache.ErrorHandlers;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
@@ -46,36 +32,26 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.googlecode.objectify.Key;
-import com.googlecode.objectify.Result;
-import org.apache.commons.codec.binary.Base64;
-
-import javax.mail.Message;
-import javax.mail.MessagingException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -88,18 +64,16 @@ public class VtsSuiteTestJobServlet extends HttpServlet {
 
     private static final String SUITE_TEST_URL = "/cron/test_suite_report_gcs_monitor";
 
-    private static final String SERVICE_CLIENT_ID = System.getProperty("SERVICE_CLIENT_ID");
     private static final String SERVICE_NAME = "VTS Dashboard";
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
     /** Google Cloud Storage project's key file to access the storage */
-    private static final String GCS_KEY_FILE = System.getProperty("GCS_KEY_FILE");
+    private static String GCS_KEY_FILE;
     /** Google Cloud Storage project's default bucket name for vtslab log files */
-    private static final String GCS_BUCKET_NAME = System.getProperty("GCS_BUCKET_NAME");
+    private static String GCS_BUCKET_NAME;
     /** Google Cloud Storage project's default directory name for suite test result files */
-    private static final String GCS_SUITE_TEST_FOLDER_NAME =
-            System.getProperty("GCS_SUITE_TEST_FOLDER_NAME");
+    private static String GCS_SUITE_TEST_FOLDER_NAME;
 
     public static final String QUEUE = "suiteTestQueue";
 
@@ -115,23 +89,40 @@ public class VtsSuiteTestJobServlet extends HttpServlet {
     /** This is the instance of App Engine memcache service java library */
     private MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
 
-    private final DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    /** System Configuration Property class */
+    protected Properties systemConfigProp = new Properties();
 
     @Override
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
 
-        this.keyFileInputStream =
-                this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
+        try {
+            InputStream defaultInputStream =
+                    VtsSuiteTestJobServlet.class
+                            .getClassLoader()
+                            .getResourceAsStream("config.properties");
+            systemConfigProp.load(defaultInputStream);
 
-        Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
-        if (optionalStorage.isPresent()) {
-            this.storage = optionalStorage.get();
-        } else {
-            logger.log(Level.SEVERE, "Error on getting storage instance!");
-            throw new ServletException("Creating storage instance exception!");
+            GCS_KEY_FILE = systemConfigProp.getProperty("gcs.keyFile");
+            GCS_BUCKET_NAME = systemConfigProp.getProperty("gcs.bucketName");
+            GCS_SUITE_TEST_FOLDER_NAME = systemConfigProp.getProperty("gcs.suiteTestFolderName");
+
+            this.keyFileInputStream =
+                    this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
+
+            Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
+            if (optionalStorage.isPresent()) {
+                this.storage = optionalStorage.get();
+            } else {
+                logger.log(Level.SEVERE, "Error on getting storage instance!");
+                throw new ServletException("Creating storage instance exception!");
+            }
+            syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
     }
 
     @Override
