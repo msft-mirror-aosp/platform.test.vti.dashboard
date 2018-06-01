@@ -32,6 +32,8 @@ import com.android.vts.entity.TestStatusEntity;
 
 import com.android.vts.entity.TestRunEntity.TestRunType;
 import com.android.vts.entity.TestStatusEntity.TestCaseReference;
+import com.android.vts.servlet.BaseServlet;
+import com.android.vts.util.EmailHelper;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -48,7 +50,10 @@ import com.google.appengine.api.users.UserServiceFactory;
 import com.google.appengine.api.utils.SystemProperty;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.file.FileSystems;
@@ -63,11 +68,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -78,8 +85,7 @@ public class TestDataForDevServlet extends HttpServlet {
     protected static final Logger logger = Logger.getLogger(TestDataForDevServlet.class.getName());
 
     /** Google Cloud Storage project's default directory name for suite test result files */
-    private static final String GCS_SUITE_TEST_FOLDER_NAME =
-            System.getProperty("GCS_SUITE_TEST_FOLDER_NAME");
+    private static String GCS_SUITE_TEST_FOLDER_NAME;
 
     /** datastore instance to save the test data into datastore through datastore library. */
     private DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -88,6 +94,28 @@ public class TestDataForDevServlet extends HttpServlet {
      * representation. It can also be used to convert a JSON string to an equivalent Java object.
      */
     private Gson gson = new GsonBuilder().create();
+
+    /** System Configuration Property class */
+    protected Properties systemConfigProp = new Properties();
+
+    @Override
+    public void init(ServletConfig cfg) throws ServletException {
+        super.init(cfg);
+
+        try {
+            InputStream defaultInputStream =
+                    TestDataForDevServlet.class
+                            .getClassLoader()
+                            .getResourceAsStream("config.properties");
+            systemConfigProp.load(defaultInputStream);
+
+            GCS_SUITE_TEST_FOLDER_NAME = systemConfigProp.getProperty("gcs.suiteTestFolderName");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * TestReportData class for mapping test-report-data.json. This internal class's each fields
@@ -205,93 +233,117 @@ public class TestDataForDevServlet extends HttpServlet {
                         "aosp_arm_a-userdebug");
         branchList.forEach(
                 branch ->
-                    targetList.forEach(
-                            target ->
-                                IntStream.range(0, 10)
-                                        .forEach(
-                                                idx -> {
-                                                    String year = String.format("%04d", 2010 + idx);
-                                                    String month =
-                                                            String.format("%02d", rand.nextInt(12));
-                                                    String day =
-                                                            String.format("%02d", rand.nextInt(30));
-                                                    String fileName =
-                                                            String.format(
-                                                                    "%02d%02d%02d.bin",
-                                                                    rand.nextInt(23) + 1,
-                                                                    rand.nextInt(59) + 1,
-                                                                    rand.nextInt(59) + 1);
+                        targetList.forEach(
+                                target ->
+                                        IntStream.range(0, 10)
+                                                .forEach(
+                                                        idx -> {
+                                                            String year =
+                                                                    String.format(
+                                                                            "%04d", 2010 + idx);
+                                                            String month =
+                                                                    String.format(
+                                                                            "%02d",
+                                                                            rand.nextInt(12));
+                                                            String day =
+                                                                    String.format(
+                                                                            "%02d",
+                                                                            rand.nextInt(30));
+                                                            String fileName =
+                                                                    String.format(
+                                                                            "%02d%02d%02d.bin",
+                                                                            rand.nextInt(23) + 1,
+                                                                            rand.nextInt(59) + 1,
+                                                                            rand.nextInt(59) + 1);
 
-                                                    List<String> pathList =
-                                                            Arrays.asList(
-                                                                    GCS_SUITE_TEST_FOLDER_NAME == ""
-                                                                            ? "suite_result"
-                                                                            : GCS_SUITE_TEST_FOLDER_NAME,
-                                                                    year,
-                                                                    month,
-                                                                    day,
-                                                                    fileName);
+                                                            List<String> pathList =
+                                                                    Arrays.asList(
+                                                                            GCS_SUITE_TEST_FOLDER_NAME
+                                                                                            == ""
+                                                                                    ? "suite_result"
+                                                                                    : GCS_SUITE_TEST_FOLDER_NAME,
+                                                                            year,
+                                                                            month,
+                                                                            day,
+                                                                            fileName);
 
-                                                    Path pathInfo =
-                                                            Paths.get(
-                                                                    String.join(
-                                                                            fileSeparator,
-                                                                            pathList));
+                                                            Path pathInfo =
+                                                                    Paths.get(
+                                                                            String.join(
+                                                                                    fileSeparator,
+                                                                                    pathList));
 
-                                                    TestSuiteFileEntity newTestSuiteFileEntity =
-                                                            new TestSuiteFileEntity(
-                                                                    pathInfo.toString());
-                                                    newTestSuiteFileEntity.save();
+                                                            TestSuiteFileEntity
+                                                                    newTestSuiteFileEntity =
+                                                                            new TestSuiteFileEntity(
+                                                                                    pathInfo
+                                                                                            .toString());
+                                                            newTestSuiteFileEntity.save();
 
-                                                    com.googlecode.objectify.Key<
-                                                                    TestSuiteFileEntity>
-                                                            testSuiteFileParent =
-                                                                    com.googlecode.objectify.Key
-                                                                            .create(
+                                                            com.googlecode.objectify.Key<
+                                                                            TestSuiteFileEntity>
+                                                                    testSuiteFileParent =
+                                                                            com.googlecode.objectify
+                                                                                    .Key.create(
                                                                                     TestSuiteFileEntity
                                                                                             .class,
                                                                                     newTestSuiteFileEntity
                                                                                             .getFilePath());
-                                                    TestSuiteResultEntity testSuiteResultEntity =
-                                                            new TestSuiteResultEntity(
-                                                                    testSuiteFileParent,
-                                                                    Instant.now()
-                                                                            .minus(
-                                                                                    rand.nextInt(
-                                                                                            100),
-                                                                                    ChronoUnit.DAYS)
-                                                                            .getEpochSecond(),
-                                                                    Instant.now()
-                                                                            .minus(
-                                                                                    rand.nextInt(
-                                                                                            100),
-                                                                                    ChronoUnit.DAYS)
-                                                                            .getEpochSecond(),
-                                                                    1,
-                                                                    idx / 2 == 0 ? false : true,
-                                                                    pathInfo.toString(),
-                                                                    idx / 2 == 0 ? "/error/infra/log" : "",
-                                                                    "Test Place Name -" + idx,
-                                                                    "Suite Test Plan",
-                                                                    "Suite Version " + idx,
-                                                                    "Suite Test Name",
-                                                                    "Suite Build Number " + idx,
-                                                                    rand.nextInt(),
-                                                                    rand.nextInt(),
-                                                                    branch,
-                                                                    target,
-                                                                    Long.toString(Math.abs(rand.nextLong())),
-                                                                    "Build System Fingerprint "
-                                                                            + idx,
-                                                                    "Build Vendor Fingerprint "
-                                                                            + idx,
-                                                                    rand.nextInt(),
-                                                                    rand.nextInt());
+                                                            TestSuiteResultEntity
+                                                                    testSuiteResultEntity =
+                                                                            new TestSuiteResultEntity(
+                                                                                    testSuiteFileParent,
+                                                                                    Instant.now()
+                                                                                            .minus(
+                                                                                                    rand
+                                                                                                            .nextInt(
+                                                                                                                    100),
+                                                                                                    ChronoUnit
+                                                                                                            .DAYS)
+                                                                                            .getEpochSecond(),
+                                                                                    Instant.now()
+                                                                                            .minus(
+                                                                                                    rand
+                                                                                                            .nextInt(
+                                                                                                                    100),
+                                                                                                    ChronoUnit
+                                                                                                            .DAYS)
+                                                                                            .getEpochSecond(),
+                                                                                    1,
+                                                                                    idx / 2 == 0
+                                                                                            ? false
+                                                                                            : true,
+                                                                                    pathInfo
+                                                                                            .toString(),
+                                                                                    idx / 2 == 0
+                                                                                            ? "/error/infra/log"
+                                                                                            : "",
+                                                                                    "Test Place Name -"
+                                                                                            + idx,
+                                                                                    "Suite Test Plan",
+                                                                                    "Suite Version "
+                                                                                            + idx,
+                                                                                    "Suite Test Name",
+                                                                                    "Suite Build Number "
+                                                                                            + idx,
+                                                                                    rand.nextInt(),
+                                                                                    rand.nextInt(),
+                                                                                    branch,
+                                                                                    target,
+                                                                                    Long.toString(
+                                                                                            Math
+                                                                                                    .abs(
+                                                                                                            rand
+                                                                                                                    .nextLong())),
+                                                                                    "Build System Fingerprint "
+                                                                                            + idx,
+                                                                                    "Build Vendor Fingerprint "
+                                                                                            + idx,
+                                                                                    rand.nextInt(),
+                                                                                    rand.nextInt());
 
-                                                    testSuiteResultEntity.save();
-                                                })
-                            )
-                );
+                                                            testSuiteResultEntity.save();
+                                                        })));
         resultMap.put("result", "successfully generated!");
         return resultMap;
     }
