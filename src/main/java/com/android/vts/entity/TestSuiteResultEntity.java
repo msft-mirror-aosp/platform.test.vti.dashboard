@@ -131,33 +131,6 @@ public class TestSuiteResultEntity {
     /** System Configuration Property class */
     private static Properties systemConfigProp = new Properties();
 
-    static {
-        try {
-            InputStream defaultInputStream =
-                    TestSuiteResultEntity.class
-                            .getClassLoader()
-                            .getResourceAsStream("config.properties");
-            systemConfigProp.load(defaultInputStream);
-
-            String bugTrackingSystem = systemConfigProp.getProperty("bug.tracking.system");
-
-            if (!bugTrackingSystem.isEmpty()) {
-                InputStream btsInputStream =
-                        TestSuiteResultEntity.class
-                                .getClassLoader()
-                                .getResourceAsStream(
-                                        "bug_tracking_system/"
-                                                + bugTrackingSystem
-                                                + "/config.properties");
-                bugTrackingSystemProp.load(btsInputStream);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public enum TestType {
         UNKNOWN(0),
         TOT(1),
@@ -318,6 +291,35 @@ public class TestSuiteResultEntity {
     public void save() {
         this.updated = new Date();
         ofy().save().entity(this).now();
+    }
+
+    public static void setPropertyValues(Properties newSystemConfigProp) {
+        systemConfigProp = newSystemConfigProp;
+        bugTrackingSystemProp = getBugTrackingSystemProp(newSystemConfigProp);
+    }
+
+    private static Properties getBugTrackingSystemProp(Properties newSystemConfigProp) {
+        Properties newBugTrackingSystemProp = new Properties();
+        try {
+            String bugTrackingSystem = newSystemConfigProp.getProperty("bug.tracking.system");
+
+            if (!bugTrackingSystem.isEmpty()) {
+                InputStream btsInputStream =
+                        TestSuiteResultEntity.class
+                                .getClassLoader()
+                                .getResourceAsStream(
+                                        "bug_tracking_system/"
+                                                + bugTrackingSystem
+                                                + "/config.properties");
+                newBugTrackingSystemProp.load(btsInputStream);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            return newBugTrackingSystemProp;
+        }
     }
 
     public static List<TestSuiteResultEntity> getTestSuitePlans() {
