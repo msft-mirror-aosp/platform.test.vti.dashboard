@@ -18,8 +18,10 @@ package com.android.vts.config;
 
 import com.googlecode.objectify.ObjectifyFilter;
 
+import javax.servlet.annotation.WebFilter;
+
 /** Annotation used to declare a servlet filter. */
-// @WebFilter(urlPatterns = {"/*"})
+@WebFilter(urlPatterns = {"/*"})
 /**
  * Servlet filter for objectify library. Objectify requires a filter to clean up any thread-local
  * transaction contexts and pending asynchronous operations that remain at the end of a request.

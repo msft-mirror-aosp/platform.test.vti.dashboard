@@ -18,17 +18,26 @@ package com.android.vts.config;
 
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
-import com.googlecode.objectify.ObjectifyFactory;
+import com.android.vts.entity.UserEntity;
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.ObjectifyService;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.servlet.annotation.WebListener;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.googlecode.objectify.ObjectifyService.ofy;
+
 /** The @WebListener annotation for registering a class as a listener of a web application. */
-// @WebListener
+@WebListener
 /**
  * Initializing Objectify Service at the container start up before any web components like servlet
  * get initialized.
@@ -44,11 +53,41 @@ public class ObjectifyListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         ObjectifyService.init();
-        // ObjectifyFactory objectifyFactory = ObjectifyService.factory();
         ObjectifyService.register(TestSuiteFileEntity.class);
         ObjectifyService.register(TestSuiteResultEntity.class);
+        ObjectifyService.register(UserEntity.class);
         ObjectifyService.begin();
         logger.log(Level.INFO, "Value Initialized from context.");
+
+        Properties systemConfigProp = new Properties();
+
+        try {
+            InputStream defaultInputStream =
+                    ObjectifyListener.class
+                            .getClassLoader()
+                            .getResourceAsStream("config.properties");
+
+            systemConfigProp.load(defaultInputStream);
+
+            String adminEmail = systemConfigProp.getProperty("user.adminEmail");
+            if (adminEmail.isEmpty()) {
+                logger.log(Level.WARNING, "Admin email is not properly set. Check config file");
+            } else {
+                String adminName = systemConfigProp.getProperty("user.adminName");
+                String adminCompany = systemConfigProp.getProperty("user.adminCompany");
+
+                if (UserEntity.getAdminUserList(adminEmail).size() == 0) {
+                    UserEntity userEntity = new UserEntity(adminEmail, adminName, adminCompany);
+                    userEntity.setIsAdmin(true);
+                    userEntity.save();
+                    logger.log(Level.INFO, "The user is saved successfully.");
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /** Receives notification that the ServletContext is about to be shut down. */
