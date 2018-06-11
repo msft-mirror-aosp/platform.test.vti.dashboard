@@ -58,4 +58,7 @@ message TestSuiteResultMessage {
 
   // GCS path to the corresponding infra log file.
   optional string infra_log_path = 51;
+
+  // GCS path to the repacked device[+GSI] image set.
+  repeated string repacked_image_path = 52;
 }
