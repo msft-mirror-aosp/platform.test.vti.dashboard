@@ -325,6 +325,11 @@ public class ShowPlanReleaseServlet extends BaseServlet {
             testSuiteResultEntityQuery =
                     testSuiteResultEntityQuery.filter("buildId", request.getParameter("buildId"));
         }
+        if (Objects.nonNull(request.getParameter("deviceName"))) {
+            request.setAttribute("deviceName", request.getParameter("deviceName"));
+            testSuiteResultEntityQuery =
+                testSuiteResultEntityQuery.filter("deviceName", request.getParameter("deviceName"));
+        }
         testSuiteResultEntityQuery = testSuiteResultEntityQuery.orderKey(true);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =

@@ -54,7 +54,7 @@
               });
           });
 
-          <c:if test="${not empty branch or not empty hostName or not empty buildId}">
+          <c:if test="${not empty branch or not empty hostName or not empty buildId or not empty deviceName}">
           $(".search-wrapper").slideToggle("fast");
           </c:if>
 
@@ -81,6 +81,12 @@
                   params['buildId'] = buildId;
               } else {
                   delete params['buildId'];
+              }
+              var deviceName = $("#deviceName").val().trim();
+              if ( deviceName.length > 0 ) {
+                params['deviceName'] = deviceName;
+              } else {
+                delete params['deviceName'];
               }
 
               $(location).prop('href', url + "?" + decodeURIComponent($.param(params)));
@@ -127,10 +133,14 @@
                     </div>
                 </div>
                 <div class="col s12">
-                    <div class="run-type-wrapper col s9">
+                    <div class="input-field col s4">
+                        <input id="deviceName" type="text" value="<c:out value="${deviceName}"></c:out>" autocomplete="off" />
+                        <label>Device Name</label>
+                    </div>
+                    <div class="input-field col s4">
 
                     </div>
-                    <div class="run-type-wrapper col s3">
+                    <div class="run-type-wrapper col s4 right-align">
                         <a class="waves-effect waves-light btn" id="searchBtn">
                             <i class="material-icons left">search</i>Apply
                         </a>
@@ -287,6 +297,9 @@
           </c:if>
           <c:if test="${not empty buildId}">
               <c:set var="searchQueryString" value="${searchQueryString}&buildId=${buildId}" />
+          </c:if>
+          <c:if test="${not empty deviceName}">
+              <c:set var="searchQueryString" value="${searchQueryString}&deviceName=${deviceName}" />
           </c:if>
         <div class="col s12 center-align">
           <ul class="pagination">
