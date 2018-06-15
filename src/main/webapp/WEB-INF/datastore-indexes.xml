@@ -123,6 +123,11 @@
   </datastore-index>
 
   <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
+    <property name="deviceName" direction="asc"/>
+    <property name="__key__" direction="desc"/>
+  </datastore-index>
+
+  <datastore-index kind="TestSuiteResultEntity" ancestor="false" source="manual">
     <property name="testType" direction="asc"/>
     <property name="suitePlan" direction="asc"/>
     <property name="__key__" direction="desc"/>
