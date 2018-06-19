@@ -96,7 +96,6 @@ appengine {  // App Engine tasks configuration
         port = 8080
         jvmFlags = [
                 "-Xdebug",
-                "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005",
                 "-Dappengine.fullscan.seconds=5"
         ]
     }
