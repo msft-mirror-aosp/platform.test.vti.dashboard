@@ -15,5 +15,5 @@
 # limitations under the License.
 
 pushd ${ANDROID_BUILD_TOP}/test
-protoc --proto_path=. --java_out=vti/dashboard/src/main/java vti/dashboard/proto/TestSuiteResultMessage.proto vti/test_serving/proto/TestScheduleConfigMessage.proto
+protoc --proto_path=. --python_out=. vti/dashboard/proto/TestSuiteResultMessage.proto vti/test_serving/proto/TestScheduleConfigMessage.proto
 popd
