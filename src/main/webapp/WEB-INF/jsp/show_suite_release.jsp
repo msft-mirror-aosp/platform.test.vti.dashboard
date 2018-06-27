@@ -103,6 +103,16 @@
               }
           });
 
+          $("#reproduceCommandButton").click(function() {
+              var el = document.getElementById("reproduceCommand");
+              var range = document.createRange();
+              range.selectNodeContents(el);
+              var sel = window.getSelection();
+              sel.removeAllRanges();
+              sel.addRange(range);
+              document.execCommand('copy');
+              alert("Reproduce Command copied to clipboard.");
+          });
       });
   </script>
   <body>
@@ -277,6 +287,17 @@
                                 </h5>
                                 <div class="test-case-container">
                                     <c:out value="${testSuiteResultEntity.buildSystemFingerprint}"></c:out>
+                                </div>
+                            </div>
+                            <div class="col test-col grey lighten-5 s12 left-most right-most">
+                                <h5 class="test-result-label white" style="text-transform: capitalize;">
+                                    Reproduce Command
+                                </h5>
+                                <div class="test-case-container">
+                                    <span id="reproduceCommand">
+                                        reproduce --report_path=gs://vts-report/<c:out value="${testSuiteResultEntity.getTestSuiteFileEntityKey().getName()}"></c:out>
+                                    </span>
+                                    <a id="reproduceCommandButton" class="waves-effect waves-light btn right"><i class="material-icons left">content_copy</i>Copy</a>
                                 </div>
                             </div>
                         </div>
