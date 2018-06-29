@@ -150,7 +150,7 @@ public class TestSuiteResultEntity {
         }
     }
 
-    @Parent Key<TestSuiteFileEntity> testSuiteFileEntityKey;
+    @Parent @Getter Key<TestSuiteFileEntity> testSuiteFileEntityKey;
 
     /** Test Suite start time field */
     @Id @Getter @Setter Long startTime;
