@@ -16,6 +16,7 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.entity.UserEntity;
 import com.android.vts.util.EmailHelper;
@@ -158,6 +159,7 @@ public abstract class BaseServlet extends HttpServlet {
       CLIENT_ID = systemConfigProp.getProperty("appengine.clientID");
       ANALYTICS_ID = systemConfigProp.getProperty("analytics.id");
 
+      CoverageEntity.setPropertyValues(systemConfigProp);
       TestSuiteResultEntity.setPropertyValues(systemConfigProp);
       EmailHelper.setPropertyValues(systemConfigProp);
       GcsHelper.setGcsProjectId(systemConfigProp.getProperty("gcs.projectID"));

@@ -40,11 +40,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /** Represents the servlet that is invoked on loading the first page of dashboard. */
 public class DashboardMainServlet extends BaseServlet {
@@ -165,7 +168,6 @@ public class DashboardMainServlet extends BaseServlet {
         }
 
         List<TestDisplay> displayedTests = new ArrayList<>();
-        List<String> allTestNames = new ArrayList<>();
         List<Key> unprocessedTestKeys = new ArrayList<>();
 
         Map<Key, TestDisplay> testMap = new HashMap<>(); // map from table key to TestDisplay
@@ -174,10 +176,7 @@ public class DashboardMainServlet extends BaseServlet {
         boolean showAll = request.getParameter("showAll") != null;
         String error = null;
 
-        Query query = new Query(TestEntity.KIND).setKeysOnly();
-        for (Entity test : datastore.prepare(query).asIterable()) {
-            allTestNames.add(test.getKey().getName());
-        }
+        List<String> allTestNames = TestEntity.getAllTestNames();
 
         List<Key> favoriteKeyList = new ArrayList<Key>();
         Filter userFilter =
@@ -191,7 +190,7 @@ public class DashboardMainServlet extends BaseServlet {
             subscriptionMap.put(testKey.getName(), KeyFactory.keyToString(fe.getKey()));
         });
 
-        query =
+        Query query =
                 new Query(TestStatusEntity.KIND)
                         .addProjection(
                                 new PropertyProjection(TestStatusEntity.PASS_COUNT, Long.class))
