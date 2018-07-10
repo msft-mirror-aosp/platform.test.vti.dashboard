@@ -253,7 +253,7 @@ public class VtsAlertJobServlet extends HttpServlet {
                 mostRecentRun = testRun;
             }
             List<Key> testCaseKeys = new ArrayList<>();
-            for (long testCaseId : testRun.testCaseIds) {
+            for (long testCaseId : testRun.getTestCaseIds()) {
                 testCaseKeys.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
             }
             Map<Key, Entity> entityMap = datastore.get(testCaseKeys);
@@ -302,7 +302,7 @@ public class VtsAlertJobServlet extends HttpServlet {
 
         Set<String> buildIdList = new HashSet<>();
         List<DeviceInfoEntity> devices = new ArrayList<>();
-        Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(mostRecentRun.key);
+        Query deviceQuery = new Query(DeviceInfoEntity.KIND).setAncestor(mostRecentRun.getKey());
         for (Entity device : datastore.prepare(deviceQuery).asIterable()) {
             DeviceInfoEntity deviceEntity = DeviceInfoEntity.fromEntity(device);
             if (deviceEntity == null) {
@@ -411,8 +411,8 @@ public class VtsAlertJobServlet extends HttpServlet {
             }
         }
 
-        String testName = mostRecentRun.key.getParent().getName();
-        String uploadDateString = TimeUtil.getDateString(mostRecentRun.startTimestamp);
+        String testName = mostRecentRun.getKey().getParent().getName();
+        String uploadDateString = TimeUtil.getDateString(mostRecentRun.getStartTimestamp());
         String subject = "VTS Test Alert: " + testName + " @ " + uploadDateString;
         if (newTestcaseFailures.size() > 0) {
             String body =
@@ -474,7 +474,7 @@ public class VtsAlertJobServlet extends HttpServlet {
         }
         return new TestStatusEntity(
                 testName,
-                mostRecentRun.startTimestamp,
+                mostRecentRun.getStartTimestamp(),
                 passingTestcaseCount,
                 failingTestCases.size(),
                 failingTestCases);

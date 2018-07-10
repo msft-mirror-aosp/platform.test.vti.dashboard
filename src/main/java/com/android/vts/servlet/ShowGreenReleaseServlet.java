@@ -325,8 +325,8 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                     List<String> passBuildIdList =
                                             testPlanRunEntityList
                                                     .stream()
-                                                    .filter(entity -> entity.failCount == 0L)
-                                                    .map(entity -> entity.testBuildId)
+                                                    .filter(entity -> entity.getFailCount() == 0L)
+                                                    .map(entity -> entity.getTestBuildId())
                                                     .collect(Collectors.toList());
                                     allPassIdLists.add(passBuildIdList);
                                     logger.log(Level.INFO, "passBuildIdList => " + passBuildIdList);
@@ -334,11 +334,11 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                     // The logic for candidate build ID is starting from here
                                     Comparator<TestPlanRunEntity> byPassing =
                                             Comparator.comparingLong(
-                                                    elemFirst -> elemFirst.passCount);
+                                                    elemFirst -> elemFirst.getPassCount());
 
                                     Comparator<TestPlanRunEntity> byNonPassing =
                                             Comparator.comparingLong(
-                                                    elemFirst -> elemFirst.failCount);
+                                                    elemFirst -> elemFirst.getFailCount());
 
                                     // This will get the TestPlanRunEntity having maximum number of
                                     // passing and minimum number of fail
@@ -353,14 +353,14 @@ public class ShowGreenReleaseServlet extends BaseServlet {
 
                                     String buildId =
                                             testPlanRunEntity
-                                                    .map(entity -> entity.testBuildId)
+                                                    .map(entity -> entity.getTestBuildId())
                                                     .orElse("");
                                     deviceBuildInfo.setCandidateBuildId(buildId);
                                     Long buildIdTimestamp =
                                             testPlanRunEntity
                                                     .map(
                                                             entity -> {
-                                                                return entity.startTimestamp;
+                                                                return entity.getStartTimestamp();
                                                             })
                                                     .orElse(0L);
                                     deviceBuildInfo.setCandidateBuildIdTimestamp(buildIdTimestamp);
@@ -385,8 +385,8 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                                     .stream()
                                                     .filter(
                                                             entity ->
-                                                                    entity.failCount == 0L
-                                                                            && entity.testBuildId
+                                                                    entity.getFailCount() == 0L
+                                                                            && entity.getTestBuildId()
                                                                                     .equalsIgnoreCase(
                                                                                             greenBuildId))
                                                     .findFirst();
@@ -395,7 +395,7 @@ public class ShowGreenReleaseServlet extends BaseServlet {
                                     deviceBuildInfo.setGreenBuildId(greenBuildId);
                                     Long buildIdTimestamp =
                                             testPlanRunEntity
-                                                    .map(entity -> entity.startTimestamp)
+                                                    .map(entity -> entity.getStartTimestamp())
                                                     .orElse(0L);
                                     deviceBuildInfo.setGreenBuildIdTimestamp(buildIdTimestamp);
                                 });

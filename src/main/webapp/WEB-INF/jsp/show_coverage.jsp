@@ -20,10 +20,12 @@
 <html>
   <%@ include file="header.jsp" %>
   <link rel="stylesheet" href="/css/show_coverage.css">
-  <script src="https://apis.google.com/js/api.js" type="text/javascript"></script>
+  <script async defer src="https://apis.google.com/js/api.js"
+          onload="this.onload=function(){};handleClientLoad()"
+          onreadystatechange="if (this.readyState === 'complete') this.onload()">
+  </script>
   <body>
     <script type="text/javascript">
-        var coverageVectors = ${coverageVectors};
         $(document).ready(function() {
             // Initialize AJAX for CORS
             $.ajaxSetup({
@@ -32,15 +34,56 @@
                 }
             });
 
-            // Initialize auth2 client and scope for requests to Gerrit
-            gapi.load('auth2', function() {
-                var auth2 = gapi.auth2.init({
-                    client_id: ${clientId},
-                    scope: ${gerritScope}
-                });
-                auth2.then(displayEntries);
+            $('.collapsible.popout').collapsible({
+              accordion : true
+            }).find('.collapsible-header').click(onClick);
+
+
+            $("div.collapsible-header > span.indicator.waves-effect").click(function(evt) {
+              evt.preventDefault();
+
+              $("#loader-indicator").show();
+
+              var cmd = $(evt.target).text();
+              var testRunId = $(evt.target).data("id");
+              var postData = { coverageId: testRunId, testName: "${testName}", testRunId: "${startTime}", cmd: cmd};
+              $.post("/api/coverage", postData, function() {
+                // success
+                console.log("success");
+                var detachedLi = $(evt.target).parent().parent().detach();
+                if (cmd == "enable") {
+                  $(evt.target).text("disable");
+                  $(evt.target).parent().removeClass("grey");
+                  $('ul.collapsible.popout').prepend(detachedLi);
+                } else {
+                  $(evt.target).text("enable");
+                  $(evt.target).parent().addClass("grey");
+                  $('ul.collapsible.popout').append(detachedLi);
+                }
+              })
+              .done(function() {
+                // Done
+                $("#loader-indicator").fadeOut("slow");
+              })
+              .fail(function() {
+                alert( "Error occurred during changing the status" );
+              });
             });
         });
+
+        function handleClientLoad() {
+          // Load the API client and auth2 library
+          gapi.load('client:auth2', initClient);
+        }
+
+        function initClient() {
+          gapi.client.init({
+            client_id: ${clientId},
+            scope: ${gerritScope}
+          }).then(function () {
+            // displayEntries();
+          });
+        }
 
         /* Open a window to Gerrit so that user can login.
            Minimize the previously clicked entry.
@@ -122,57 +165,46 @@
                 });
             }
         }
-
-        /* Appends a row to the display with test name and aggregated coverage
-           information. On expansion, source code is loaded with coverage
-           highlighted by calling 'onClick'.
-        */
-        var displayEntries = function() {
-            var sourceFilenames = ${sourceFiles};
-            var sectionMap = ${sectionMap};
-            var gerritURI = ${gerritURI};
-            var projects = ${projects};
-            var commits = ${commits};
-            var indicators = ${indicators};
-            Object.keys(sectionMap).forEach(function(section) {
-                var indices = sectionMap[section];
-                var html = String();
-                indices.forEach(function(i) {
-                    var url = gerritURI + '/projects/' +
-                              encodeURIComponent(projects[i]) + '/commits/' +
-                              encodeURIComponent(commits[i]) + '/files/' +
-                              encodeURIComponent(sourceFilenames[i]) +
-                              '/content';
-                    html += '<li url="' + url + '" index="' + i + '">' +
-                            '<div class="collapsible-header">' +
-                            '<i class="material-icons">library_books</i>' +
-                            '<div class="truncate">' +
-                            '<b>' + projects[i] + '/</b>' +
-                            sourceFilenames[i] +
-                            '</div>' +
-                            indicators[i] +
-                            '</div>';
-                    html += '<div class="collapsible-body row">' +
-                            '<div class="html-container">' +
-                            '<div class="table-container"></div>' +
-                            '</div>' +
-                            '</div>' +
-                            '</li>';
-                });
-                if (html) {
-                    html = '<h4 class="section-title"><b>Coverage:</b> ' +
-                           section + '</h4><ul class="collapsible popout" ' +
-                           'data-collapsible="accordion">' + html + '</ul>';
-                    $('#coverage-container').append(html);
-                }
-            });
-            $('.collapsible.popout').collapsible({
-               accordion : true
-            }).find('.collapsible-header').click(onClick);
-        }
     </script>
     <div id='coverage-container' class='wide container'>
+      <h4 class="section-title"><b>Coverage:</b> </h4>
+      <ul class="collapsible popout" data-collapsible="accordion">
+        <c:forEach var="coverageEntity" items="${coverageEntityList}" varStatus="loop">
+          <li url="<c:url value="${coverageEntity.gerritUrl}"/>" data-index="${loop.index}">
+          <div class="collapsible-header <c:out value='${coverageEntity.isIgnored ? "grey" : ""}'/>">
+            <i class="material-icons">library_books</i>
+            <div class="truncate"><b>${coverageEntity.projectName}</b>${coverageEntity.filePath}</div>
+            <div class="right total-count">${coverageEntity.coveredCount}/${coverageEntity.totalCount}</div>
+            <div class="indicator ${coverageEntity.percentage >= 70 ? "green" : "red"}">${coverageEntity.percentage}%</div>
+            <c:if test="${isModerator}">
+              <span data-id="${coverageEntity.ID}" class="indicator waves-effect blue lighten-1" style="margin-left: 5px;"><c:out value='${coverageEntity.isIgnored ? "enable" : "disable"}'/></span>
+            </c:if>
+          </div>
+          <div class="collapsible-body row">
+            <div class="html-container">
+              <div class="table-container"></div>
+            </div>
+          </div>
+          </li>
+        </c:forEach>
+      </ul>
     </div>
+
+      <div id="loader-indicator" class="loader-background" style="display: none">
+          <div class="preloader-wrapper big active">
+              <div class="spinner-layer spinner-blue-only">
+                  <div class="circle-clipper left">
+                      <div class="circle"></div>
+                  </div>
+                  <div class="gap-patch">
+                      <div class="circle"></div>
+                  </div>
+                  <div class="circle-clipper right">
+                      <div class="circle"></div>
+                  </div>
+              </div>
+          </div>
+      </div>
     <%@ include file="footer.jsp" %>
   </body>
 </html>

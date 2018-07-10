@@ -22,120 +22,197 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.googlecode.objectify.annotation.Cache;
+import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Index;
+import com.googlecode.objectify.annotation.Parent;
+import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@com.googlecode.objectify.annotation.Entity(name = "TestPlanRun")
+@Cache
+@Data
+@NoArgsConstructor
 /** Entity describing test plan run information. */
-public class TestPlanRunEntity implements DashboardEntity {
-    protected static final Logger logger = Logger.getLogger(TestPlanRunEntity.class.getName());
+public class TestPlanRunEntity implements Serializable {
 
-    public static final String KIND = "TestPlanRun";
+  protected static final Logger logger = Logger.getLogger(TestPlanRunEntity.class.getName());
 
-    // Property keys
-    public static final String TEST_PLAN_NAME = "testPlanName";
-    public static final String TYPE = "type";
-    public static final String START_TIMESTAMP = "startTimestamp";
-    public static final String END_TIMESTAMP = "endTimestamp";
-    public static final String TEST_BUILD_ID = "testBuildId";
-    public static final String PASS_COUNT = "passCount";
-    public static final String FAIL_COUNT = "failCount";
-    public static final String TEST_RUNS = "testRuns";
+  public static final String KIND = "TestPlanRun";
 
-    public final Key key;
-    public final String testPlanName;
-    public final TestRunType type;
-    public final long startTimestamp;
-    public final long endTimestamp;
-    public final String testBuildId;
-    public final long passCount;
-    public final long failCount;
-    public final List<Key> testRuns;
+  // Property keys
+  public static final String TEST_PLAN_NAME = "testPlanName";
+  public static final String TYPE = "type";
+  public static final String START_TIMESTAMP = "startTimestamp";
+  public static final String END_TIMESTAMP = "endTimestamp";
+  public static final String TEST_BUILD_ID = "testBuildId";
+  public static final String PASS_COUNT = "passCount";
+  public static final String FAIL_COUNT = "failCount";
+  public static final String TEST_RUNS = "testRuns";
 
-    /**
-     * Create a TestPlanRunEntity object describing a test plan run.
-     *
-     * @param parentKey The key for the parent entity in the database.
-     * @param type The test run type (e.g. presubmit, postsubmit, other)
-     * @param startTimestamp The time in microseconds when the test plan run started.
-     * @param endTimestamp The time in microseconds when the test plan run ended.
-     * @param testBuildId The build ID of the VTS test build.
-     * @param passCount The number of passing test cases in the run.
-     * @param failCount The number of failing test cases in the run.
-     * @param testRuns A list of keys to the TestRunEntity objects for the plan run run.
-     */
-    public TestPlanRunEntity(Key parentKey, String testPlanName, TestRunType type,
-            long startTimestamp, long endTimestamp, String testBuildId, long passCount,
-            long failCount, List<Key> testRuns) {
-        this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
-        this.testPlanName = testPlanName;
-        this.type = type;
-        this.startTimestamp = startTimestamp;
-        this.endTimestamp = endTimestamp;
-        this.testBuildId = testBuildId;
-        this.passCount = passCount;
-        this.failCount = failCount;
-        this.testRuns = testRuns;
+  @Ignore
+  public Key key;
+
+  @Id
+  @Getter
+  @Setter
+  private Long ID;
+
+  @Parent
+  @Getter
+  @Setter
+  private com.googlecode.objectify.Key<?> testParent;
+
+  @Index
+  @Getter
+  @Setter
+  private String testPlanName;
+
+  @Index
+  @Getter
+  @Setter
+  private TestRunType type;
+
+  @Index
+  @Getter
+  @Setter
+  private long startTimestamp;
+
+  @Index
+  @Getter
+  @Setter
+  private long endTimestamp;
+
+  @Index
+  @Getter
+  @Setter
+  private String testBuildId;
+
+  @Index
+  @Getter
+  @Setter
+  private long passCount;
+
+  @Index
+  @Getter
+  @Setter
+  private long failCount;
+
+  @Getter
+  @Setter
+  private List<Key> testRuns;
+
+  @Ignore
+  @Getter
+  @Setter
+  private List<com.googlecode.objectify.Key<?>> ofyTestRuns;
+
+  /**
+   * Create a TestPlanRunEntity object describing a test plan run.
+   *
+   * @param parentKey The key for the parent entity in the database.
+   * @param type The test run type (e.g. presubmit, postsubmit, other)
+   * @param startTimestamp The time in microseconds when the test plan run started.
+   * @param endTimestamp The time in microseconds when the test plan run ended.
+   * @param testBuildId The build ID of the VTS test build.
+   * @param passCount The number of passing test cases in the run.
+   * @param failCount The number of failing test cases in the run.
+   * @param testRuns A list of keys to the TestRunEntity objects for the plan run run.
+   */
+  public TestPlanRunEntity(Key parentKey, String testPlanName, TestRunType type,
+      long startTimestamp, long endTimestamp, String testBuildId, long passCount,
+      long failCount, List<Key> testRuns) {
+    this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
+    this.testPlanName = testPlanName;
+    this.type = type;
+    this.startTimestamp = startTimestamp;
+    this.endTimestamp = endTimestamp;
+    this.testBuildId = testBuildId;
+    this.passCount = passCount;
+    this.failCount = failCount;
+    this.testRuns = testRuns;
+    this.ofyTestRuns = testRuns.stream().map(testRun -> {
+      com.googlecode.objectify.Key testParentKey = com.googlecode.objectify.Key
+          .create(TestEntity.class, testRun.getParent().getName());
+      return com.googlecode.objectify.Key
+          .create(testParentKey, TestRunEntity.class, testRun.getId());
+    }).collect(Collectors.toList());
+
+  }
+
+  public Entity toEntity() {
+    Entity planRun = new Entity(this.key);
+    planRun.setProperty(TEST_PLAN_NAME, this.testPlanName);
+    planRun.setProperty(TYPE, this.type.getNumber());
+    planRun.setProperty(START_TIMESTAMP, this.startTimestamp);
+    planRun.setProperty(END_TIMESTAMP, this.endTimestamp);
+    planRun.setProperty(TEST_BUILD_ID, this.testBuildId.toLowerCase());
+    planRun.setProperty(PASS_COUNT, this.passCount);
+    planRun.setProperty(FAIL_COUNT, this.failCount);
+    if (this.testRuns != null && this.testRuns.size() > 0) {
+      planRun.setUnindexedProperty(TEST_RUNS, this.testRuns);
     }
+    return planRun;
+  }
 
-    @Override
-    public Entity toEntity() {
-        Entity planRun = new Entity(this.key);
-        planRun.setProperty(TEST_PLAN_NAME, this.testPlanName);
-        planRun.setProperty(TYPE, this.type.getNumber());
-        planRun.setProperty(START_TIMESTAMP, this.startTimestamp);
-        planRun.setProperty(END_TIMESTAMP, this.endTimestamp);
-        planRun.setProperty(TEST_BUILD_ID, this.testBuildId.toLowerCase());
-        planRun.setProperty(PASS_COUNT, this.passCount);
-        planRun.setProperty(FAIL_COUNT, this.failCount);
-        if (this.testRuns != null && this.testRuns.size() > 0) {
-            planRun.setUnindexedProperty(TEST_RUNS, this.testRuns);
-        }
-        return planRun;
-    }
+  /**
+   * Get key info from appengine based library.
+   *
+   * @param parentKey parent key.
+   */
+  public Key getOldKey(Key parentKey) {
+    return KeyFactory.createKey(parentKey, KIND, startTimestamp);
+  }
 
-    /**
-     * Convert an Entity object to a TestPlanRunEntity.
-     *
-     * @param e The entity to process.
-     * @return TestPlanRunEntity object with the properties from e processed, or null if
-     * incompatible.
-     */
-    @SuppressWarnings("unchecked")
-    public static TestPlanRunEntity fromEntity(Entity e) {
-        if (!e.getKind().equals(KIND) || !e.hasProperty(TEST_PLAN_NAME) || !e.hasProperty(TYPE)
-                || !e.hasProperty(START_TIMESTAMP) || !e.hasProperty(END_TIMESTAMP)
-                || !e.hasProperty(TEST_BUILD_ID) || !e.hasProperty(PASS_COUNT)
-                || !e.hasProperty(FAIL_COUNT) || !e.hasProperty(TEST_RUNS)) {
-            logger.log(Level.WARNING, "Missing test run attributes in entity: " + e.toString());
-            return null;
-        }
-        try {
-            String testPlanName = (String) e.getProperty(TEST_PLAN_NAME);
-            TestRunType type = TestRunType.fromNumber((int) (long) e.getProperty(TYPE));
-            long startTimestamp = (long) e.getProperty(START_TIMESTAMP);
-            long endTimestamp = (long) e.getProperty(END_TIMESTAMP);
-            String testBuildId = (String) e.getProperty(TEST_BUILD_ID);
-            long passCount = (long) e.getProperty(PASS_COUNT);
-            long failCount = (long) e.getProperty(FAIL_COUNT);
-            List<Key> testRuns = (List<Key>) e.getProperty(TEST_RUNS);
-            return new TestPlanRunEntity(e.getKey().getParent(), testPlanName, type, startTimestamp,
-                    endTimestamp, testBuildId, passCount, failCount, testRuns);
-        } catch (ClassCastException exception) {
-            // Invalid cast
-            logger.log(Level.WARNING, "Error parsing test plan run entity.", exception);
-        }
-        return null;
+  /**
+   * Convert an Entity object to a TestPlanRunEntity.
+   *
+   * @param e The entity to process.
+   * @return TestPlanRunEntity object with the properties from e processed, or null if incompatible.
+   */
+  @SuppressWarnings("unchecked")
+  public static TestPlanRunEntity fromEntity(Entity e) {
+    if (!e.getKind().equals(KIND) || !e.hasProperty(TEST_PLAN_NAME) || !e.hasProperty(TYPE)
+        || !e.hasProperty(START_TIMESTAMP) || !e.hasProperty(END_TIMESTAMP)
+        || !e.hasProperty(TEST_BUILD_ID) || !e.hasProperty(PASS_COUNT)
+        || !e.hasProperty(FAIL_COUNT) || !e.hasProperty(TEST_RUNS)) {
+      logger.log(Level.WARNING, "Missing test run attributes in entity: " + e.toString());
+      return null;
     }
+    try {
+      String testPlanName = (String) e.getProperty(TEST_PLAN_NAME);
+      TestRunType type = TestRunType.fromNumber((int) (long) e.getProperty(TYPE));
+      long startTimestamp = (long) e.getProperty(START_TIMESTAMP);
+      long endTimestamp = (long) e.getProperty(END_TIMESTAMP);
+      String testBuildId = (String) e.getProperty(TEST_BUILD_ID);
+      long passCount = (long) e.getProperty(PASS_COUNT);
+      long failCount = (long) e.getProperty(FAIL_COUNT);
+      List<Key> testRuns = (List<Key>) e.getProperty(TEST_RUNS);
+      return new TestPlanRunEntity(e.getKey().getParent(), testPlanName, type, startTimestamp,
+          endTimestamp, testBuildId, passCount, failCount, testRuns);
+    } catch (ClassCastException exception) {
+      // Invalid cast
+      logger.log(Level.WARNING, "Error parsing test plan run entity.", exception);
+    }
+    return null;
+  }
 
-    public JsonObject toJson() {
-        JsonObject json = new JsonObject();
-        json.add(TEST_PLAN_NAME, new JsonPrimitive(this.testPlanName));
-        json.add(TEST_BUILD_ID, new JsonPrimitive(this.testBuildId));
-        json.add(PASS_COUNT, new JsonPrimitive(this.passCount));
-        json.add(FAIL_COUNT, new JsonPrimitive(this.failCount));
-        json.add(START_TIMESTAMP, new JsonPrimitive(this.startTimestamp));
-        json.add(END_TIMESTAMP, new JsonPrimitive(this.endTimestamp));
-        return json;
-    }
+  public JsonObject toJson() {
+    JsonObject json = new JsonObject();
+    json.add(TEST_PLAN_NAME, new JsonPrimitive(this.testPlanName));
+    json.add(TEST_BUILD_ID, new JsonPrimitive(this.testBuildId));
+    json.add(PASS_COUNT, new JsonPrimitive(this.passCount));
+    json.add(FAIL_COUNT, new JsonPrimitive(this.failCount));
+    json.add(START_TIMESTAMP, new JsonPrimitive(this.startTimestamp));
+    json.add(END_TIMESTAMP, new JsonPrimitive(this.endTimestamp));
+    return json;
+  }
 }

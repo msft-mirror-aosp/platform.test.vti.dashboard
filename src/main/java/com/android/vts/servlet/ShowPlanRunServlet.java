@@ -101,15 +101,15 @@ public class ShowPlanRunServlet extends BaseServlet {
         try {
             Entity testPlanRunEntity = datastore.get(planRunKey);
             TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(testPlanRunEntity);
-            Map<Key, Entity> testRuns = datastore.get(testPlanRun.testRuns);
-            testBuildId = testPlanRun.testBuildId;
-            passCount = (int) testPlanRun.passCount;
-            failCount = (int) testPlanRun.failCount;
-            startTime = testPlanRun.startTimestamp;
-            endTime = testPlanRun.endTimestamp;
-            moduleCount = testPlanRun.testRuns.size();
+            Map<Key, Entity> testRuns = datastore.get(testPlanRun.getTestRuns());
+            testBuildId = testPlanRun.getTestBuildId();
+            passCount = (int) testPlanRun.getPassCount();
+            failCount = (int) testPlanRun.getFailCount();
+            startTime = testPlanRun.getStartTimestamp();
+            endTime = testPlanRun.getEndTimestamp();
+            moduleCount = testPlanRun.getTestRuns().size();
 
-            for (Key key : testPlanRun.testRuns) {
+            for (Key key : testPlanRun.getTestRuns()) {
                 if (!testRuns.containsKey(key)) continue;
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRuns.get(key));
                 if (testRunEntity == null) continue;
@@ -122,7 +122,7 @@ public class ShowPlanRunServlet extends BaseServlet {
                 }
                 TestRunMetadata metadata =
                         new TestRunMetadata(key.getParent().getName(), testRunEntity, devices);
-                if (metadata.testRun.failCount > 0) {
+                if (metadata.testRun.getFailCount() > 0) {
                     failingTestObjects.add(metadata.toJson());
                 } else {
                     passingTestObjects.add(metadata.toJson());
