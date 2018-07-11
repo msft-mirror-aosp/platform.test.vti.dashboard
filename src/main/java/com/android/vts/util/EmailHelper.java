@@ -74,9 +74,9 @@ public class EmailHelper {
         }
 
         if (testRun != null) {
-            sb.append("VTS Build ID: " + testRun.testBuildId + "<br>");
-            sb.append("Start Time: " + TimeUtil.getDateTimeString(testRun.startTimestamp));
-            sb.append("<br>End Time: " + TimeUtil.getDateTimeString(testRun.endTimestamp));
+            sb.append("VTS Build ID: " + testRun.getTestBuildId() + "<br>");
+            sb.append("Start Time: " + TimeUtil.getDateTimeString(testRun.getStartTimestamp()));
+            sb.append("<br>End Time: " + TimeUtil.getDateTimeString(testRun.getEndTimestamp()));
         }
         sb.append(
                 "<br><br>For details, visit the"

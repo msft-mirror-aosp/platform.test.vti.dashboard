@@ -25,13 +25,27 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.googlecode.objectify.annotation.Cache;
+import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Index;
+import com.googlecode.objectify.annotation.Parent;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@com.googlecode.objectify.annotation.Entity(name="TestRun")
+@Cache
+@Data
+@NoArgsConstructor
 /** Entity describing test run information. */
-public class TestRunEntity implements DashboardEntity {
+public class TestRunEntity implements Serializable {
     protected static final Logger logger = Logger.getLogger(TestRunEntity.class.getName());
 
     /** Enum for classifying test run types. */
@@ -116,19 +130,81 @@ public class TestRunEntity implements DashboardEntity {
     public static final String TOTAL_LINE_COUNT = "totalLineCount";
     public static final String COVERED_LINE_COUNT = "coveredLineCount";
 
-    public final Key key;
-    public final TestRunType type;
-    public final long startTimestamp;
-    public final long endTimestamp;
-    public final String testBuildId;
-    public final String hostName;
-    public final long passCount;
-    public final long failCount;
-    public final boolean hasCoverage;
-    public final long coveredLineCount;
-    public final long totalLineCount;
-    public final List<Long> testCaseIds;
-    public final List<String> links;
+    @Ignore
+    private Key key;
+
+    @Id
+    @Getter
+    @Setter
+    private Long ID;
+
+    @Parent
+    @Getter
+    @Setter
+    private com.googlecode.objectify.Key<?> testParent;
+
+    @Index
+    @Getter
+    @Setter
+    private TestRunType type;
+
+    @Index
+    @Getter
+    @Setter
+    private long startTimestamp;
+
+    @Index
+    @Getter
+    @Setter
+    private long endTimestamp;
+
+    @Index
+    @Getter
+    @Setter
+    private String testBuildId;
+
+    @Index
+    @Getter
+    @Setter
+    private String testName;
+
+    @Index
+    @Getter
+    @Setter
+    private String hostName;
+
+    @Index
+    @Getter
+    @Setter
+    private long passCount;
+
+    @Index
+    @Getter
+    @Setter
+    private long failCount;
+
+    @Index
+    @Getter
+    @Setter
+    private boolean hasCoverage;
+
+    @Index
+    @Getter
+    @Setter
+    private long coveredLineCount;
+
+    @Index
+    @Getter
+    @Setter
+    private long totalLineCount;
+
+    @Getter
+    @Setter
+    private List<Long> testCaseIds;
+
+    @Getter
+    @Setter
+    private List<String> links;
 
     /**
      * Create a TestRunEntity object describing a test run.
@@ -186,7 +262,6 @@ public class TestRunEntity implements DashboardEntity {
                 failCount, testCaseIds, links, 0, 0);
     }
 
-    @Override
     public Entity toEntity() {
         Entity testRunEntity = new Entity(this.key);
         testRunEntity.setProperty(TEST_NAME, this.key.getParent().getName());
@@ -208,6 +283,15 @@ public class TestRunEntity implements DashboardEntity {
             testRunEntity.setUnindexedProperty(LOG_LINKS, this.links);
         }
         return testRunEntity;
+    }
+
+    /**
+     * Get key info from appengine based library.
+     *
+     * @param parentKey parent key.
+     */
+    public Key getOldKey(Key parentKey) {
+        return KeyFactory.createKey(parentKey, KIND, startTimestamp);
     }
 
     /**

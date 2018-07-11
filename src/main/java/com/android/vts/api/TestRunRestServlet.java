@@ -77,7 +77,7 @@ public class TestRunRestServlet extends HttpServlet {
         }
         TestRunDetails details = new TestRunDetails();
         List<Key> gets = new ArrayList<>();
-        for (long testCaseId : testRunEntity.testCaseIds) {
+        for (long testCaseId : testRunEntity.getTestCaseIds()) {
             gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
         }
         Map<Key, Entity> entityMap = datastore.get(gets);
@@ -115,7 +115,7 @@ public class TestRunRestServlet extends HttpServlet {
         TestRunDetails details = new TestRunDetails();
 
         List<Key> gets = new ArrayList<>();
-        for (long testCaseId : testRun.testCaseIds) {
+        for (long testCaseId : testRun.getTestCaseIds()) {
             gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
         }
         Map<Key, Entity> entityMap = datastore.get(gets);
