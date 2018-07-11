@@ -39,76 +39,73 @@ import java.util.stream.Collectors;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
-/** Represents the servlet that is invoked on loading the release page. */
+/**
+ * Represents the servlet that is invoked on loading the release page.
+ */
 public class ShowReleaseServlet extends BaseServlet {
 
-    @Override
-    public PageType getNavParentType() {
-        return PageType.RELEASE;
+  @Override
+  public PageType getNavParentType() {
+    return PageType.RELEASE;
+  }
+
+  @Override
+  public List<Page> getBreadcrumbLinks(HttpServletRequest request) {
+    return null;
+  }
+
+  @Override
+  public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
+      throws IOException {
+    String testType =
+        request.getParameter("type") == null ? "plan" : request.getParameter("type");
+
+    RequestDispatcher dispatcher;
+    if (testType.equalsIgnoreCase("plan")) {
+      dispatcher = this.getTestPlanDispatcher(request, response);
+    } else {
+      dispatcher = this.getTestSuiteDispatcher(request, response);
     }
 
-    @Override
-    public List<Page> getBreadcrumbLinks(HttpServletRequest request) {
-        return null;
+    try {
+      request.setAttribute("testType", testType);
+      response.setStatus(HttpServletResponse.SC_OK);
+      dispatcher.forward(request, response);
+    } catch (ServletException e) {
+      logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
     }
+  }
 
-    @Override
-    public void doGetHandler(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        String testType =
-                request.getParameter("type") == null ? "plan" : request.getParameter("type");
+  private RequestDispatcher getTestPlanDispatcher(
+      HttpServletRequest request, HttpServletResponse response) {
+    String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
 
-        RequestDispatcher dispatcher;
-        if (testType.equalsIgnoreCase("plan")) {
-            dispatcher = this.getTestPlanDispatcher(request, response);
-        } else {
-            dispatcher = this.getTestSuiteDispatcher(request, response);
-        }
+    List<TestPlanEntity> testPlanEntityList = ofy().load().type(TestPlanEntity.class).list();
 
-        try {
-            request.setAttribute("testType", testType);
-            response.setStatus(HttpServletResponse.SC_OK);
-            dispatcher.forward(request, response);
-        } catch (ServletException e) {
-            logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
-        }
-    }
+    List<String> plans = testPlanEntityList.stream()
+        .sorted(Comparator.comparing(TestPlanEntity::getTestPlanName))
+        .map(te -> te.getTestPlanName()).collect(Collectors.toList());
 
-    private RequestDispatcher getTestPlanDispatcher(
-            HttpServletRequest request, HttpServletResponse response) {
-        String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    request.setAttribute("isAdmin", UserServiceFactory.getUserService().isUserAdmin());
+    request.setAttribute("planNames", plans);
+    RequestDispatcher dispatcher = request.getRequestDispatcher(RELEASE_JSP);
+    return dispatcher;
+  }
 
-        Set<String> planSet = new HashSet<>();
+  private RequestDispatcher getTestSuiteDispatcher(
+      HttpServletRequest request, HttpServletResponse response) {
+    String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
 
-        Query q = new Query(TestPlanEntity.KIND).setKeysOnly();
-        for (Entity testPlanEntity : datastore.prepare(q).asIterable()) {
-            planSet.add(testPlanEntity.getKey().getName());
-        }
+    List<TestSuiteResultEntity> suiteResultEntityList = TestSuiteResultEntity.getTestSuitePlans();
 
-        List<String> plans = new ArrayList<>(planSet);
-        plans.sort(Comparator.naturalOrder());
-
-        request.setAttribute("isAdmin", UserServiceFactory.getUserService().isUserAdmin());
-        request.setAttribute("planNames", plans);
-        RequestDispatcher dispatcher = request.getRequestDispatcher(RELEASE_JSP);
-        return dispatcher;
-    }
-
-    private RequestDispatcher getTestSuiteDispatcher(
-            HttpServletRequest request, HttpServletResponse response) {
-        String RELEASE_JSP = "WEB-INF/jsp/show_release.jsp";
-
-        List<TestSuiteResultEntity> suiteResultEntityList = TestSuiteResultEntity.getTestSuitePlans();
-
-        List<String> plans =
-                suiteResultEntityList
-                        .stream()
-                        .map(suiteEntity -> suiteEntity.getSuitePlan())
-                        .collect(Collectors.toList());
-        request.setAttribute("isAdmin", UserServiceFactory.getUserService().isUserAdmin());
-        request.setAttribute("planNames", plans);
-        RequestDispatcher dispatcher = request.getRequestDispatcher(RELEASE_JSP);
-        return dispatcher;
-    }
+    List<String> plans =
+        suiteResultEntityList
+            .stream()
+            .map(suiteEntity -> suiteEntity.getSuitePlan())
+            .collect(Collectors.toList());
+    request.setAttribute("isAdmin", UserServiceFactory.getUserService().isUserAdmin());
+    request.setAttribute("planNames", plans);
+    RequestDispatcher dispatcher = request.getRequestDispatcher(RELEASE_JSP);
+    return dispatcher;
+  }
 }

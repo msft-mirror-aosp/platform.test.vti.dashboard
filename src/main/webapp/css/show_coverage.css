@@ -100,3 +100,18 @@ td {
     margin-top: -25px;
     padding-left: 45px;
 }
+
+.loader-background {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000;
+
+    position: fixed;
+    z-index: 100;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.5;
+}

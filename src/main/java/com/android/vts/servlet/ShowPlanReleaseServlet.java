@@ -102,8 +102,8 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         @Override
         public int compareTo(TestPlanRunMetadata o) {
-            return new Long(o.testPlanRun.startTimestamp)
-                    .compareTo(this.testPlanRun.startTimestamp);
+            return new Long(o.testPlanRun.getStartTimestamp())
+                    .compareTo(this.testPlanRun.getStartTimestamp());
         }
     }
 
@@ -246,10 +246,10 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         if (testPlanRuns.size() > 0) {
             TestPlanRunMetadata firstRun = testPlanRuns.get(0);
-            endTime = firstRun.testPlanRun.startTimestamp;
+            endTime = firstRun.testPlanRun.getStartTimestamp();
 
             TestPlanRunMetadata lastRun = testPlanRuns.get(testPlanRuns.size() - 1);
-            startTime = lastRun.testPlanRun.startTimestamp;
+            startTime = lastRun.testPlanRun.getStartTimestamp();
         }
 
         List<JsonObject> testPlanRunObjects = new ArrayList<>();
