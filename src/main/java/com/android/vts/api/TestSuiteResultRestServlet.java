@@ -47,32 +47,17 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
 /** REST endpoint for posting test suite data to the Dashboard. */
-public class TestSuiteResultRestServlet extends HttpServlet {
+public class TestSuiteResultRestServlet extends BaseApiServlet {
     private static String SERVICE_CLIENT_ID;
     private static final String SERVICE_NAME = "VTS Dashboard";
     private static final Logger logger =
             Logger.getLogger(TestSuiteResultRestServlet.class.getName());
 
-    /** System Configuration Property class */
-    protected Properties systemConfigProp = new Properties();
-
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
 
-        try {
-            InputStream defaultInputStream =
-                    TestSuiteResultRestServlet.class
-                            .getClassLoader()
-                            .getResourceAsStream("config.properties");
-            systemConfigProp.load(defaultInputStream);
-
-            SERVICE_CLIENT_ID = systemConfigProp.getProperty("appengine.serviceClientID");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        SERVICE_CLIENT_ID = systemConfigProp.getProperty("appengine.serviceClientID");
     }
 
     @Override

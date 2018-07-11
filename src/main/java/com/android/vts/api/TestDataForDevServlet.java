@@ -402,7 +402,7 @@ public class TestDataForDevServlet extends HttpServlet {
 
                                         Key testRunKey =
                                                 KeyFactory.createKey(
-                                                        testEntity.key,
+                                                        testEntity.getOldKey(),
                                                         TestRunEntity.KIND,
                                                         testRun.startTimestamp);
 
@@ -504,7 +504,7 @@ public class TestDataForDevServlet extends HttpServlet {
 
                                         TestRunEntity testRunEntity =
                                                 new TestRunEntity(
-                                                        testEntity.key,
+                                                        testEntity.getOldKey(),
                                                         TestRunType.fromNumber(testRun.type),
                                                         testRun.startTimestamp,
                                                         testRun.endTimestamp,
@@ -524,7 +524,7 @@ public class TestDataForDevServlet extends HttpServlet {
                                         try {
                                             // Check if test already exists in the datastore
                                             try {
-                                                Entity oldTest = datastore.get(testEntity.key);
+                                                Entity oldTest = datastore.get(testEntity.getOldKey());
                                                 TestEntity oldTestEntity =
                                                         TestEntity.fromEntity(oldTest);
                                                 if (oldTestEntity == null
@@ -548,7 +548,7 @@ public class TestDataForDevServlet extends HttpServlet {
                                                 logger.log(
                                                         Level.WARNING,
                                                         "Transaction rollback forced for run: "
-                                                                + testRunEntity.key);
+                                                                + testRunEntity.getKey());
                                                 txn.rollback();
                                             }
                                         }
@@ -584,20 +584,20 @@ public class TestDataForDevServlet extends HttpServlet {
                                 if (testRun == null) {
                                     continue; // not a valid test run
                                 }
-                                passCount += testRun.passCount;
-                                failCount += testRun.failCount;
+                                passCount += testRun.getPassCount();
+                                failCount += testRun.getFailCount();
                                 if (startTimestamp < 0 || testRunKey.getId() < startTimestamp) {
                                     startTimestamp = testRunKey.getId();
                                 }
-                                if (endTimestamp < 0 || testRun.endTimestamp > endTimestamp) {
-                                    endTimestamp = testRun.endTimestamp;
+                                if (endTimestamp < 0 || testRun.getEndTimestamp() > endTimestamp) {
+                                    endTimestamp = testRun.getEndTimestamp();
                                 }
                                 if (type == null) {
-                                    type = testRun.type;
-                                } else if (type != testRun.type) {
+                                    type = testRun.getType();
+                                } else if (type != testRun.getType()) {
                                     type = TestRunType.OTHER;
                                 }
-                                testBuildId = testRun.testBuildId;
+                                testBuildId = testRun.getTestBuildId();
                                 Query deviceInfoQuery =
                                         new Query(DeviceInfoEntity.KIND).setAncestor(testRunKey);
                                 for (Entity deviceInfoEntity :

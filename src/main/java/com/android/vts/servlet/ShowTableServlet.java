@@ -70,7 +70,7 @@ public class ShowTableServlet extends BaseServlet {
 
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         List<Key> gets = new ArrayList<>();
-        for (long testCaseId : testRunEntity.testCaseIds) {
+        for (long testCaseId : testRunEntity.getTestCaseIds()) {
             gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
         }
 

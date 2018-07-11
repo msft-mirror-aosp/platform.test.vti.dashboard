@@ -17,10 +17,13 @@
 package com.android.vts.entity;
 
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.Ref;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
+import com.googlecode.objectify.annotation.Load;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -33,7 +36,7 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 /** Entity Class for User */
 @Cache
 @Entity
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = "email")
 @NoArgsConstructor
 public class UserEntity {
 
@@ -55,16 +58,24 @@ public class UserEntity {
     /** When this record was created or updated */
     @Index @Getter Date updated;
 
-    /** Construction function for UserEntity Class */
+    @Load
+    @Getter
+    List<Ref<RoleEntity>> roles;
+
+    /** Constructor function for UserEntity Class */
     public UserEntity(
             String email,
             String name,
-            String company) {
+            String company,
+            String roleName) {
+        RoleEntity role = ofy().load().type(RoleEntity.class).id(roleName).now();
+
         this.email = email;
         this.name = name;
         this.enable = true;
         this.isAdmin = false;
         this.company = company;
+        this.roles.add(Ref.create(role));
     }
 
     /** Saving function for the instance of this class */
@@ -73,16 +84,19 @@ public class UserEntity {
         ofy().save().entity(this).now();
     }
 
-    public static List<UserEntity> getAdminUserList(String adminEmail) {
+    /** Get admin user list by admin email */
+    public static UserEntity getAdminUser(String adminEmail) {
         Key key = Key.create(UserEntity.class, adminEmail);
         return ofy().load()
             .type(UserEntity.class)
             .filterKey(key)
             .filter("enable", true)
             .filter("isAdmin", true)
-            .list();
+            .first()
+            .now();
     }
 
+    /** Get all admin user list */
     public static List<UserEntity> getAdminUserList() {
         return ofy().load()
             .type(UserEntity.class)
@@ -91,11 +105,23 @@ public class UserEntity {
             .list();
     }
 
+    /** Get normal user list */
     public static List<UserEntity> getUserList() {
         return ofy().load()
             .type(UserEntity.class)
             .filter("enable", true)
             .filter("isAdmin", false)
             .list();
+    }
+
+    /** Get user by email */
+    public static UserEntity getUser(String email) {
+        Key key = Key.create(UserEntity.class, email);
+        return ofy().load()
+            .type(UserEntity.class)
+            .filterKey(key)
+            .filter("enable", true)
+            .first()
+            .now();
     }
 }
