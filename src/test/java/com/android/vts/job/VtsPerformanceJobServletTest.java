@@ -239,7 +239,6 @@ public class VtsPerformanceJobServletTest {
         String output =
                 VtsPerformanceJobServlet.getPerformanceSummary(
                         "test", dailySummaries, legendLabels);
-        System.out.println(output);
         compareToBaseline(output, "performanceSummary3.html");
     }
 
