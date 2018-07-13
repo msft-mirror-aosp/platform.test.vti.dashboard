@@ -266,6 +266,19 @@
             return false;
           });
       }
+      if ($('#coverageModalGraph').length) {
+        createClickableIndicator(
+            div, 'Graph', 'grey lighten-1',
+            function(evt) {
+              $('#coverageModalGraph').data("testname", test);
+              $('#coverageModalGraph').modal('open');
+              $(evt.target).removeClass("grey");
+              $(evt.target).addClass("blue");
+              return false;
+            }
+        );
+      }
+
       var expand = $('<i></i>');
       expand.addClass('material-icons expand-arrow')
       expand.text('expand_more');
