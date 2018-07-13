@@ -74,6 +74,14 @@ li.test-run-container.active {
     padding: 4px 15px;
     margin: 0;
 }
+.loaders {
+    position: absolute;
+    left:0;
+    right:0;
+    top:0;
+    bottom:0;
+    margin:auto;
+}
 .indicator {
     color: white;
     font-size: 12px;
