@@ -57,6 +57,138 @@
           }, ${nonpassing});
           search.addRunTypeCheckboxes(${showPresubmit}, ${showPostsubmit});
           search.display();
+
+          var no_data_msg = "NO DATA";
+
+          $('#coverageModalGraph').modal({
+                width: '75%',
+                dismissible: true, // Modal can be dismissed by clicking outside of the modal
+                opacity: .5, // Opacity of modal background
+                inDuration: 300, // Transition in duration
+                outDuration: 200, // Transition out duration
+                startingTop: '4%', // Starting top style attribute
+                endingTop: '10%', // Ending top style attribute
+                ready: function(modal, trigger) { // Callback for Modal open. Modal and trigger parameters available.
+                  var testname = modal.data('testname');
+                  $('#coverageModalTitle').text("Code Coverage Chart : " + testname);
+                  var query = new google.visualization.Query('show_coverage_overview?pageType=datatable&testName=' + testname);
+                  // Send the query with a callback function.
+                  query.send(handleQueryResponse);
+                },
+                complete: function() {
+                  $('#coverage_combo_chart_div').empty();
+                  $('#coverage_line_chart_div').empty();
+                  $('#coverage_table_chart_div').empty();
+
+                  $("div.valign-wrapper > h2.center-align:contains('" + no_data_msg + "')").each(function(index){
+                    $(this).parent().remove();
+                  });
+                  $("span.indicator.badge.blue:contains('Graph')").each(function( index ) {
+                    $(this).removeClass('blue');
+                    $(this).addClass('grey');
+                  });
+
+                  $('#dataTableLoading').show("slow");
+                } // Callback for Modal close
+              }
+          );
+
+          // Handle the query response.
+          function handleQueryResponse(response) {
+            $('#dataTableLoading').hide("slow");
+            if (response.isError()) {
+              alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+              return;
+            }
+            // Draw the visualization.
+            var data = response.getDataTable();
+            if (data.getNumberOfRows() == 0) {
+              var blankData = '<div class="valign-wrapper" style="height: 90%;">'
+                            + '<h2 class="center-align" style="width: 100%;">' + no_data_msg + '</h2>'
+                            + '</div>';
+              $('#coverageModalTitle').after(blankData);
+              return;
+            }
+            data.sort([{column: 0}]);
+
+            var date_formatter = new google.visualization.DateFormat({ pattern: "yyyy-MM-dd" });
+            date_formatter.format(data, 0);
+
+            var dataView = new google.visualization.DataView(data);
+
+            // Disable coveredLine and totalLine
+            dataView.hideColumns([1,2]);
+
+            var lineOptions = {
+              title: 'Source Code Line Coverage',
+              width: '100%',
+              height: 450,
+              curveType: 'function',
+              intervals: { 'color' : 'series-color' },
+              interval: {
+                'fill': {
+                  'style': 'area',
+                  'curveType': 'function',
+                  'fillOpacity': 0.2
+                },
+                'bar': {
+                  'style': 'bars',
+                  'barWidth': 0,
+                  'lineWidth': 1,
+                  'pointSize': 3,
+                  'fillOpacity': 1
+                }},
+              legend: { position: 'bottom' },
+              tooltip: { isHtml: true },
+              fontName: 'Roboto',
+              titleTextStyle: {
+                color: '#757575',
+                fontSize: 16,
+                bold: false
+              },
+              pointsVisible: true,
+              vAxis:{
+                title: 'Code Coverage Ratio (%)',
+                titleTextStyle: {
+                  color: '#424242',
+                  fontSize: 12,
+                  italic: false
+                },
+                textStyle: {
+                  fontSize: 12,
+                  color: '#757575'
+                },
+              },
+              hAxis: {
+                title: 'Date',
+                format: 'yyyy-MM-dd',
+                minTextSpacing: 0,
+                showTextEvery: 1,
+                slantedText: true,
+                slantedTextAngle: 45,
+                textStyle: {
+                  fontSize: 12,
+                  color: '#757575'
+                },
+                titleTextStyle: {
+                  color: '#424242',
+                  fontSize: 12,
+                  italic: false
+                }
+              },
+            };
+            var lineChart = new google.visualization.LineChart(document.getElementById('coverage_line_chart_div'));
+            lineChart.draw(dataView, lineOptions);
+
+            var tableOptions = {
+              title: 'Covered/Total Source Code Line Count (SLOC)',
+              width: '95%',
+              // height: 350,
+              is3D: true
+            };
+            var tableChart = new google.visualization.Table(document.getElementById('coverage_table_chart_div'));
+            tableChart.draw(data, tableOptions);
+          }
       });
 
       // draw test statistics chart
@@ -195,9 +327,39 @@
           </div>
         </div>
       </div>
-      <div class='col s12' id='test-results-container'>
+      <div class='col s12' id='test-results-container'></div>
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="coverageModalGraph" class="modal modal-fixed-footer" style="width: 75%;">
+      <div class="modal-content">
+        <h4 id="coverageModalTitle">Code Coverage Chart</h4>
+
+        <div class="preloader-wrapper big active loaders">
+          <div id="dataTableLoading" class="spinner-layer spinner-blue-only">
+            <div class="circle-clipper left">
+              <div class="circle"></div>
+            </div>
+            <div class="gap-patch">
+              <div class="circle"></div>
+            </div>
+            <div class="circle-clipper right">
+              <div class="circle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!--Div that will hold the visualization graph -->
+        <div id="coverage_line_chart_div"></div>
+        <p></p>
+        <p></p>
+        <div id="coverage_table_chart_div" class="center-align"></div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Close</a>
       </div>
     </div>
+
     <%@ include file="footer.jsp" %>
   </body>
 </html>
