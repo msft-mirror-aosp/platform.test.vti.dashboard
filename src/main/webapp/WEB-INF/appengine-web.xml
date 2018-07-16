@@ -18,10 +18,6 @@
   <runtime>java8</runtime>
   <instance-class>F4_1G</instance-class>
 
-  <staging>
-      <enable-jar-classes>true</enable-jar-classes>
-  </staging>
-
   <system-properties>
   </system-properties>
 
