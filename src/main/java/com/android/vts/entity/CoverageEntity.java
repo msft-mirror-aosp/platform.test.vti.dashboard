@@ -268,8 +268,8 @@ public class CoverageEntity implements Serializable {
     List<Long> lineCoverage = null;
     if (coverage.getLineCoverageVectorCount() > 0) {
       lineCoverage = new ArrayList<>();
-      for (int count : coverage.getLineCoverageVectorList()) {
-        lineCoverage.add((long) count);
+      for (Long count : coverage.getLineCoverageVectorList()) {
+        lineCoverage.add(count);
       }
     }
     return new CoverageEntity(parentKey, group, coveredLineCount, totalLineCount, filePath,
