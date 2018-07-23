@@ -103,15 +103,12 @@
               }
           });
 
-          $("#reproduceCommandButton").click(function() {
-              var el = document.getElementById("reproduceCommand");
-              var range = document.createRange();
-              range.selectNodeContents(el);
-              var sel = window.getSelection();
-              sel.removeAllRanges();
-              sel.addRange(range);
-              document.execCommand('copy');
-              alert("Reproduce Command copied to clipboard.");
+          $( "div.test-case-container > div.input-field > a.btn" ).each(function() {
+              $( this ).click(function() {
+                $(this).parent().prev().children().select();
+                document.execCommand('copy');
+                alert("Reproduce Command copied to clipboard.");
+              });
           });
       });
   </script>
@@ -293,11 +290,13 @@
                                 <h5 class="test-result-label white" style="text-transform: capitalize;">
                                     Reproduce Command
                                 </h5>
-                                <div class="test-case-container">
-                                    <span id="reproduceCommand">
-                                        reproduce --report_path=gs://vts-report/<c:out value="${testSuiteResultEntity.getTestSuiteFileEntityKey().getName()}"></c:out>
-                                    </span>
-                                    <a id="reproduceCommandButton" class="waves-effect waves-light btn right"><i class="material-icons left">content_copy</i>Copy</a>
+                                <div class="row test-case-container">
+                                    <div class="input-field col s9">
+                                        <input type="text" class="validate" readonly="true" onclick="this.select()" value="reproduce --report_path=gs://vts-report/<c:out value="${testSuiteResultEntity.getTestSuiteFileEntityKey().getName()}"></c:out> --suite=<c:out value="${fn:toLowerCase(testSuiteResultEntity.getSuiteName())}"></c:out>" />
+                                    </div>
+                                    <div class="input-field col s3">
+                                        <a class="waves-effect waves-light btn right"><i class="material-icons left">content_copy</i>Copy</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

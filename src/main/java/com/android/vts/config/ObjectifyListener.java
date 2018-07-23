@@ -129,12 +129,12 @@ public class ObjectifyListener implements ServletContextListener {
     Optional<UserEntity> adminUserEntityOptional = Optional
         .ofNullable(UserEntity.getAdminUser(email));
     if (adminUserEntityOptional.isPresent()) {
+      logger.log(Level.INFO, "The user is already registered.");
+    } else {
       UserEntity userEntity = new UserEntity(email, name, company, role);
       userEntity.setIsAdmin(true);
       userEntity.save();
       logger.log(Level.INFO, "The user is saved successfully.");
-    } else {
-      logger.log(Level.INFO, "The user is already registered.");
     }
   }
 }

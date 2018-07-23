@@ -8,6 +8,7 @@ buildscript {
         googleCloudVersion = '0.47.0-alpha'
         googleJavaFormatVersion = '0.7-SNAPSHOT'
         googleHttpClientVersion = '1.23.0'
+        appGradlePluginVersion = '1.3.5'
     }
     repositories {
         jcenter()
@@ -17,7 +18,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.google.cloud.tools:appengine-gradle-plugin:+'    // latest App Engine Gradle tasks
+        classpath "com.google.cloud.tools:appengine-gradle-plugin:${appGradlePluginVersion}"    // latest App Engine Gradle tasks
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
         classpath "com.github.sherter.googlejavaformatgradleplugin:google-java-format-gradle-plugin:${googleJavaFormatVersion}"
     }
@@ -129,7 +130,8 @@ tasks.addRule("Pattern: vtsGaeDeploy<ID>") { String taskName ->
     if (taskName.startsWith("vtsGaeDeploy-")) {
 
         def projectId = taskName.replace("vtsGaeDeploy-", "")
-        appengine.deploy.project = projectId
+        def version = project.property("appEngineVersion")
+
         project.ext.projectId = projectId
 
         def gcsConfigCopy = task("gcsConfigCopy${projectId}") {
@@ -178,8 +180,8 @@ tasks.addRule("Pattern: vtsGaeDeploy<ID>") { String taskName ->
 
             doFirst {
                 println "--------------> setting project id <-------------"
-                appengine.deploy.project = projectId
-                project.appengine.deploy.version = project.ext.props.getProperty("appengine.version")
+                project.appengine.deploy.project = projectId
+                project.appengine.deploy.version = version
             }
 
             doLast {
