@@ -44,10 +44,16 @@ import org.apache.commons.lang.StringUtils;
 /** EmailHelper, a helper class for building and sending emails. */
 public class EmailHelper {
     protected static final Logger logger = Logger.getLogger(EmailHelper.class.getName());
-    protected static final String DEFAULT_EMAIL = System.getProperty("DEFAULT_EMAIL");
-    protected static final String EMAIL_DOMAIN = System.getProperty("EMAIL_DOMAIN");
-    protected static final String SENDER_EMAIL = System.getProperty("SENDER_EMAIL");
+    protected static String DEFAULT_EMAIL;
+    protected static String EMAIL_DOMAIN;
+    protected static String SENDER_EMAIL;
     private static final String VTS_EMAIL_NAME = "VTS Alert Bot";
+
+    public static void setPropertyValues(Properties systemConfigProp) {
+        DEFAULT_EMAIL = systemConfigProp.getProperty("appengine.defaultEmail");
+        EMAIL_DOMAIN = systemConfigProp.getProperty("appengine.emailDomain");
+        SENDER_EMAIL = systemConfigProp.getProperty("appengine.senderEmail");
+    }
 
     /**
      * Create an email footer with the information from the test run.
@@ -68,9 +74,9 @@ public class EmailHelper {
         }
 
         if (testRun != null) {
-            sb.append("VTS Build ID: " + testRun.testBuildId + "<br>");
-            sb.append("Start Time: " + TimeUtil.getDateTimeString(testRun.startTimestamp));
-            sb.append("<br>End Time: " + TimeUtil.getDateTimeString(testRun.endTimestamp));
+            sb.append("VTS Build ID: " + testRun.getTestBuildId() + "<br>");
+            sb.append("Start Time: " + TimeUtil.getDateTimeString(testRun.getStartTimestamp()));
+            sb.append("<br>End Time: " + TimeUtil.getDateTimeString(testRun.getEndTimestamp()));
         }
         sb.append(
                 "<br><br>For details, visit the"

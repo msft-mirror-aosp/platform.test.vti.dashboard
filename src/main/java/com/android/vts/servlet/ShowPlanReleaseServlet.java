@@ -102,8 +102,8 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         @Override
         public int compareTo(TestPlanRunMetadata o) {
-            return new Long(o.testPlanRun.startTimestamp)
-                    .compareTo(this.testPlanRun.startTimestamp);
+            return new Long(o.testPlanRun.getStartTimestamp())
+                    .compareTo(this.testPlanRun.getStartTimestamp());
         }
     }
 
@@ -246,10 +246,10 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         if (testPlanRuns.size() > 0) {
             TestPlanRunMetadata firstRun = testPlanRuns.get(0);
-            endTime = firstRun.testPlanRun.startTimestamp;
+            endTime = firstRun.testPlanRun.getStartTimestamp();
 
             TestPlanRunMetadata lastRun = testPlanRuns.get(testPlanRuns.size() - 1);
-            startTime = lastRun.testPlanRun.startTimestamp;
+            startTime = lastRun.testPlanRun.getStartTimestamp();
         }
 
         List<JsonObject> testPlanRunObjects = new ArrayList<>();
@@ -292,15 +292,15 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         String testPlan = request.getParameter("plan");
         String testCategoryType =
-                request.getParameter("testCategoryType") == null
+                Objects.isNull(request.getParameter("testCategoryType"))
                         ? "1"
                         : request.getParameter("testCategoryType");
         int page =
-                request.getParameter("page") == null
+                Objects.isNull(request.getParameter("page"))
                         ? 1
                         : Integer.valueOf(request.getParameter("page"));
         String nextPageToken =
-                request.getParameter("nextPageToken") == null
+                Objects.isNull(request.getParameter("nextPageToken"))
                         ? ""
                         : request.getParameter("nextPageToken");
 
@@ -308,8 +308,29 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                 ofy().load()
                         .type(TestSuiteResultEntity.class)
                         .filter("suitePlan", testPlan)
-                        .filter(this.getTestTypeFieldName(testCategoryType), true)
-                        .orderKey(true);
+                        .filter(this.getTestTypeFieldName(testCategoryType), true);
+
+        if (Objects.nonNull(request.getParameter("branch"))) {
+            request.setAttribute("branch", request.getParameter("branch"));
+            testSuiteResultEntityQuery =
+                    testSuiteResultEntityQuery.filter("branch", request.getParameter("branch"));
+        }
+        if (Objects.nonNull(request.getParameter("hostName"))) {
+            request.setAttribute("hostName", request.getParameter("hostName"));
+            testSuiteResultEntityQuery =
+                    testSuiteResultEntityQuery.filter("hostName", request.getParameter("hostName"));
+        }
+        if (Objects.nonNull(request.getParameter("buildId"))) {
+            request.setAttribute("buildId", request.getParameter("buildId"));
+            testSuiteResultEntityQuery =
+                    testSuiteResultEntityQuery.filter("buildId", request.getParameter("buildId"));
+        }
+        if (Objects.nonNull(request.getParameter("deviceName"))) {
+            request.setAttribute("deviceName", request.getParameter("deviceName"));
+            testSuiteResultEntityQuery =
+                testSuiteResultEntityQuery.filter("deviceName", request.getParameter("deviceName"));
+        }
+        testSuiteResultEntityQuery = testSuiteResultEntityQuery.orderKey(true);
 
         Pagination<TestSuiteResultEntity> testSuiteResultEntityPagination =
                 new Pagination(
@@ -349,17 +370,16 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         return dispatcher;
     }
 
-
     private String getTestTypeFieldName(String testCategoryType) {
         String fieldName;
         switch (testCategoryType) {
-            case "1":   // TOT
+            case "1": // TOT
                 fieldName = "testTypeIndex.TOT";
                 break;
-            case "2":   // OTA
+            case "2": // OTA
                 fieldName = "testTypeIndex.OTA";
                 break;
-            case "4":   // SIGNED
+            case "4": // SIGNED
                 fieldName = "testTypeIndex.SIGNED";
                 break;
             default:

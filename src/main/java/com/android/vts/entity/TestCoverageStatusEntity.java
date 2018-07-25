@@ -16,82 +16,187 @@
 
 package com.android.vts.entity;
 
+import static com.googlecode.objectify.ObjectifyService.ofy;
+
 import com.google.appengine.api.datastore.Entity;
+import com.googlecode.objectify.annotation.Cache;
+import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Index;
+import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Cache
+@com.googlecode.objectify.annotation.Entity(name = "TestCoverageStatus")
+@EqualsAndHashCode(of = "testName")
+@NoArgsConstructor
 /** Entity describing test coverage status. */
-public class TestCoverageStatusEntity implements DashboardEntity {
-    protected static final Logger logger =
-            Logger.getLogger(TestCoverageStatusEntity.class.getName());
+public class TestCoverageStatusEntity implements Serializable {
 
-    public static final String KIND = "TestCoverageStatus";
+  protected static final Logger logger =
+      Logger.getLogger(TestCoverageStatusEntity.class.getName());
 
-    // Property keys
-    public static final String TOTAL_LINE_COUNT = "totalLineCount";
-    public static final String COVERED_LINE_COUNT = "coveredLineCount";
-    public static final String UPDATED_TIMESTAMP = "updatedTimestamp";
+  public static final String KIND = "TestCoverageStatus";
 
-    public final String testName;
-    public final long coveredLineCount;
-    public final long totalLineCount;
-    public final long timestamp;
+  // Property keys
+  public static final String TOTAL_LINE_COUNT = "totalLineCount";
+  public static final String COVERED_LINE_COUNT = "coveredLineCount";
+  public static final String UPDATED_TIMESTAMP = "updatedTimestamp";
 
-    /**
-     * Create a TestCoverageStatusEntity object with status metadata.
-     *
-     * @param testName The name of the test.
-     * @param timestamp The timestamp indicating the most recent test run event in the test state.
-     * @param coveredLineCount The number of lines covered.
-     * @param totalLineCount The total number of lines.
-     */
-    public TestCoverageStatusEntity(
-            String testName, long timestamp, long coveredLineCount, long totalLineCount) {
-        this.testName = testName;
-        this.timestamp = timestamp;
-        this.coveredLineCount = coveredLineCount;
-        this.totalLineCount = totalLineCount;
+  /**
+   * TestCoverageStatusEntity name field
+   */
+  @Id
+  @Getter
+  @Setter
+  String testName;
+
+  /**
+   * TestCoverageStatusEntity coveredLineCount field
+   */
+  @Index
+  @Getter
+  @Setter
+  long coveredLineCount;
+
+  /**
+   * TestCoverageStatusEntity totalLineCount field
+   */
+  @Index
+  @Getter
+  @Setter
+  long totalLineCount;
+
+  /**
+   * TestCoverageStatusEntity updatedTimestamp field
+   */
+  @Index
+  @Getter
+  @Setter
+  long updatedTimestamp;
+
+  /**
+   * TestCoverageStatusEntity updatedCoveredLineCount field
+   */
+  @Index
+  @Getter
+  @Setter
+  long updatedCoveredLineCount;
+
+  /**
+   * TestCoverageStatusEntity updatedTotalLineCount field
+   */
+  @Index
+  @Getter
+  @Setter
+  long updatedTotalLineCount;
+
+  /**
+   * TestCoverageStatusEntity updatedDate field
+   */
+  @Index
+  @Getter
+  @Setter
+  Date updatedDate;
+
+  /**
+   * Create a TestCoverageStatusEntity object with status metadata.
+   *
+   * @param testName The name of the test.
+   * @param timestamp The timestamp indicating the most recent test run event in the test state.
+   * @param coveredLineCount The number of lines covered.
+   * @param totalLineCount The total number of lines.
+   */
+  public TestCoverageStatusEntity(
+      String testName, long timestamp, long coveredLineCount, long totalLineCount) {
+    this.testName = testName;
+    this.updatedTimestamp = timestamp;
+    this.coveredLineCount = coveredLineCount;
+    this.totalLineCount = totalLineCount;
+  }
+
+  /**
+   * find TestCoverageStatus entity by ID
+   */
+  public static TestCoverageStatusEntity findById(String testName) {
+    return ofy().load().type(TestCoverageStatusEntity.class).id(testName).now();
+  }
+
+  /**
+   * Get all TestCoverageStatusEntity List
+   */
+  public static Map<String, TestCoverageStatusEntity> getTestCoverageStatusMap() {
+    List<TestCoverageStatusEntity> testCoverageStatusEntityList = getAllTestCoverage();
+
+    Map<String, TestCoverageStatusEntity> testCoverageStatusMap = testCoverageStatusEntityList
+        .stream()
+        .collect(
+            Collectors.toMap(t -> t.getTestName(), t -> t)
+        );
+    return testCoverageStatusMap;
+  }
+
+  /**
+   * Get all TestCoverageStatusEntity List
+   */
+  public static List<TestCoverageStatusEntity> getAllTestCoverage() {
+    return ofy().load().type(TestCoverageStatusEntity.class).list();
+  }
+
+  /**
+   * Saving function for the instance of this class
+   */
+  public void save() {
+    this.updatedDate = new Date();
+    ofy().save().entity(this).now();
+  }
+
+  public Entity toEntity() {
+    Entity testEntity = new Entity(KIND, this.testName);
+    testEntity.setProperty(UPDATED_TIMESTAMP, this.updatedTimestamp);
+    testEntity.setProperty(COVERED_LINE_COUNT, this.coveredLineCount);
+    testEntity.setProperty(TOTAL_LINE_COUNT, this.totalLineCount);
+    return testEntity;
+  }
+
+  /**
+   * Convert an Entity object to a TestCoverageStatusEntity.
+   *
+   * @param e The entity to process.
+   * @return TestCoverageStatusEntity object with the properties from e processed, or null if
+   * incompatible.
+   */
+  @SuppressWarnings("unchecked")
+  public static TestCoverageStatusEntity fromEntity(Entity e) {
+    if (!e.getKind().equals(KIND)
+        || e.getKey().getName() == null
+        || !e.hasProperty(UPDATED_TIMESTAMP)
+        || !e.hasProperty(COVERED_LINE_COUNT)
+        || !e.hasProperty(TOTAL_LINE_COUNT)) {
+      logger.log(Level.WARNING, "Missing test attributes in entity: " + e.toString());
+      return null;
     }
-
-    @Override
-    public Entity toEntity() {
-        Entity testEntity = new Entity(KIND, this.testName);
-        testEntity.setProperty(UPDATED_TIMESTAMP, this.timestamp);
-        testEntity.setProperty(COVERED_LINE_COUNT, this.coveredLineCount);
-        testEntity.setProperty(TOTAL_LINE_COUNT, this.totalLineCount);
-        return testEntity;
+    String testName = e.getKey().getName();
+    long timestamp = 0;
+    long coveredLineCount = -1;
+    long totalLineCount = -1;
+    try {
+      timestamp = (long) e.getProperty(UPDATED_TIMESTAMP);
+      coveredLineCount = (Long) e.getProperty(COVERED_LINE_COUNT);
+      totalLineCount = (Long) e.getProperty(TOTAL_LINE_COUNT);
+    } catch (ClassCastException exception) {
+      // Invalid contents or null values
+      logger.log(Level.WARNING, "Error parsing test entity.", exception);
+      return null;
     }
-
-    /**
-     * Convert an Entity object to a TestCoverageStatusEntity.
-     *
-     * @param e The entity to process.
-     * @return TestCoverageStatusEntity object with the properties from e processed, or null if
-     *     incompatible.
-     */
-    @SuppressWarnings("unchecked")
-    public static TestCoverageStatusEntity fromEntity(Entity e) {
-        if (!e.getKind().equals(KIND)
-                || e.getKey().getName() == null
-                || !e.hasProperty(UPDATED_TIMESTAMP)
-                || !e.hasProperty(COVERED_LINE_COUNT)
-                || !e.hasProperty(TOTAL_LINE_COUNT)) {
-            logger.log(Level.WARNING, "Missing test attributes in entity: " + e.toString());
-            return null;
-        }
-        String testName = e.getKey().getName();
-        long timestamp = 0;
-        long coveredLineCount = -1;
-        long totalLineCount = -1;
-        try {
-            timestamp = (long) e.getProperty(UPDATED_TIMESTAMP);
-            coveredLineCount = (Long) e.getProperty(COVERED_LINE_COUNT);
-            totalLineCount = (Long) e.getProperty(TOTAL_LINE_COUNT);
-        } catch (ClassCastException exception) {
-            // Invalid contents or null values
-            logger.log(Level.WARNING, "Error parsing test entity.", exception);
-            return null;
-        }
-        return new TestCoverageStatusEntity(testName, timestamp, coveredLineCount, totalLineCount);
-    }
+    return new TestCoverageStatusEntity(testName, timestamp, coveredLineCount, totalLineCount);
+  }
 }

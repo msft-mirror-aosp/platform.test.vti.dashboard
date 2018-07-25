@@ -16,7 +16,6 @@
 
 package com.android.vts.entity;
 
-import com.google.appengine.api.datastore.Query;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
@@ -41,6 +40,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -130,33 +131,6 @@ public class TestSuiteResultEntity {
     /** System Configuration Property class */
     private static Properties systemConfigProp = new Properties();
 
-    static {
-        try {
-            InputStream defaultInputStream =
-                    TestSuiteResultEntity.class
-                            .getClassLoader()
-                            .getResourceAsStream("config.properties");
-            systemConfigProp.load(defaultInputStream);
-
-            String bugTrackingSystem = systemConfigProp.getProperty("bug.tracking.system");
-
-            if (!bugTrackingSystem.isEmpty()) {
-                InputStream btsInputStream =
-                        TestSuiteResultEntity.class
-                                .getClassLoader()
-                                .getResourceAsStream(
-                                        "bug_tracking_system/"
-                                                + bugTrackingSystem
-                                                + "/config.properties");
-                bugTrackingSystemProp.load(btsInputStream);
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public enum TestType {
         UNKNOWN(0),
         TOT(1),
@@ -176,7 +150,7 @@ public class TestSuiteResultEntity {
         }
     }
 
-    @Parent Key<TestSuiteFileEntity> testSuiteFileEntityKey;
+    @Parent @Getter Key<TestSuiteFileEntity> testSuiteFileEntityKey;
 
     /** Test Suite start time field */
     @Id @Getter @Setter Long startTime;
@@ -245,7 +219,7 @@ public class TestSuiteResultEntity {
     @Index @Getter @Setter int failedTestCaseCount;
 
     /** Test Suite ratio of success to find candidate build */
-    @Index @Getter @Setter int passedTestCaseRatio;
+    @Index @Getter @Setter float passedTestCaseRatio;
 
     /** When this record was created or updated */
     @Index @Getter Date updated;
@@ -294,11 +268,15 @@ public class TestSuiteResultEntity {
         this.passedTestCaseCount = passedTestCaseCount;
         this.failedTestCaseCount = failedTestCaseCount;
 
-        int totalTestCaseCount = passedTestCaseCount + failedTestCaseCount;
-        if (totalTestCaseCount <= 0) {
+        BigDecimal totalTestCaseCount = new BigDecimal(passedTestCaseCount + failedTestCaseCount);
+        if (totalTestCaseCount.intValue() <= 0) {
             this.passedTestCaseRatio = 0;
         } else {
-            this.passedTestCaseRatio = passedTestCaseCount / totalTestCaseCount * 100;
+            BigDecimal passedTestCaseCountDecimal = new BigDecimal(passedTestCaseCount);
+            BigDecimal result =
+                    passedTestCaseCountDecimal.divide(
+                            totalTestCaseCount, 10, BigDecimal.ROUND_FLOOR);
+            this.passedTestCaseRatio = result.floatValue() * 100;
         }
 
         if (!this.buildVendorFingerprint.isEmpty()) {
@@ -315,8 +293,73 @@ public class TestSuiteResultEntity {
         ofy().save().entity(this).now();
     }
 
-    public List<? extends TestSuiteResultEntity> getTestSuitePlans() {
-        return ofy().load().type(this.getClass()).project("suitePlan").distinct(true).list();
+    public static void setPropertyValues(Properties newSystemConfigProp) {
+        systemConfigProp = newSystemConfigProp;
+        bugTrackingSystemProp = getBugTrackingSystemProp(newSystemConfigProp);
+    }
+
+    private static Properties getBugTrackingSystemProp(Properties newSystemConfigProp) {
+        Properties newBugTrackingSystemProp = new Properties();
+        try {
+            String bugTrackingSystem = newSystemConfigProp.getProperty("bug.tracking.system");
+
+            if (!bugTrackingSystem.isEmpty()) {
+                InputStream btsInputStream =
+                        TestSuiteResultEntity.class
+                                .getClassLoader()
+                                .getResourceAsStream(
+                                        "bug_tracking_system/"
+                                                + bugTrackingSystem
+                                                + "/config.properties");
+                newBugTrackingSystemProp.load(btsInputStream);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            return newBugTrackingSystemProp;
+        }
+    }
+
+    public static List<TestSuiteResultEntity> getTestSuitePlans() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("suitePlan")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getBranchDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("branch")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getBuildIdDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("buildId")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getTargetDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("target")
+                .distinct(true)
+                .list();
+    }
+
+    public static List<TestSuiteResultEntity> getHostNameDistinctList() {
+        return ofy().load()
+                .type(TestSuiteResultEntity.class)
+                .project("hostName")
+                .distinct(true)
+                .list();
     }
 
     public String getDeviceNameFromVendorFpt() {

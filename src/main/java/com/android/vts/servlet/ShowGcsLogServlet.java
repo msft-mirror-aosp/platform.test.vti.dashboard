@@ -35,6 +35,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -55,9 +56,9 @@ public class ShowGcsLogServlet extends BaseServlet {
     private static final String GCS_LOG_JSP = "WEB-INF/jsp/show_gcs_log.jsp";
 
     /** Google Cloud Storage project's key file to access the storage */
-    private static final String GCS_KEY_FILE = System.getProperty("GCS_KEY_FILE");
+    private static String GCS_KEY_FILE;
     /** Google Cloud Storage project's default bucket name for vtslab log files */
-    private static final String GCS_BUCKET_NAME = System.getProperty("GCS_BUCKET_NAME");
+    private static String GCS_BUCKET_NAME;
 
     /**
      * This is the key file to access vtslab-gcs project. It will allow the dashboard to have a full
@@ -78,7 +79,11 @@ public class ShowGcsLogServlet extends BaseServlet {
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
 
-        this.keyFileInputStream = this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
+        GCS_KEY_FILE = systemConfigProp.getProperty("gcs.keyFile");
+        GCS_BUCKET_NAME = systemConfigProp.getProperty("gcs.bucketName");
+
+        this.keyFileInputStream =
+                this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
 
         Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
         if (optionalStorage.isPresent()) {
@@ -215,15 +220,17 @@ public class ShowGcsLogServlet extends BaseServlet {
             if (pathInfo.getNameCount() == 0) {
                 listOptions = new BlobListOption[] {BlobListOption.currentDirectory()};
             } else {
+                String prefixPathString = path.endsWith("/") ? path : path.concat("/");
                 if (pathInfo.getNameCount() <= 1) {
                     dirList.add("/");
                 } else {
-                    dirList.add(pathInfo.getParent().toString());
+                    dirList.add(getParentDirPath(prefixPathString));
                 }
+
                 listOptions =
                         new BlobListOption[] {
                             BlobListOption.currentDirectory(),
-                            BlobListOption.prefix(pathInfo.toString() + "/")
+                            BlobListOption.prefix(prefixPathString)
                         };
             }
 
@@ -253,5 +260,16 @@ public class ShowGcsLogServlet extends BaseServlet {
                 logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
             }
         }
+    }
+
+    private String getParentDirPath(String fileOrDirPath) {
+        boolean endsWithSlashCheck = fileOrDirPath.endsWith(File.separator);
+        return fileOrDirPath.substring(
+                0,
+                fileOrDirPath.lastIndexOf(
+                        File.separatorChar,
+                        endsWithSlashCheck
+                                ? fileOrDirPath.length() - 2
+                                : fileOrDirPath.length() - 1));
     }
 }

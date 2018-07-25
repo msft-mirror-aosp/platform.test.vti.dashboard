@@ -15,6 +15,7 @@
 syntax = "proto2";
 
 package android.vts;
+import "vti/test_serving/proto/TestScheduleConfigMessage.proto";
 option java_package = "com.android.vts.proto";
 option java_outer_classname = "TestSuiteResultMessageProto";
 option java_multiple_files = false;
@@ -58,4 +59,12 @@ message TestSuiteResultMessage {
 
   // GCS path to the corresponding infra log file.
   optional string infra_log_path = 51;
+
+  // GCS path to the repacked device[+GSI] image set.
+  repeated string repacked_image_path = 52;
+
+  // Fetch info used to fetch and flash certain builds for retry_prompt command.
+  optional string vendor_build_id = 61;
+  optional string gsi_build_id = 62;
+  optional android.test.lab.ScheduleConfigMessage schedule_config = 63;
 }

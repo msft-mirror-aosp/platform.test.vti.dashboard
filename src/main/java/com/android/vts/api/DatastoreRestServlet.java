@@ -19,16 +19,24 @@ package com.android.vts.api;
 import com.android.vts.proto.VtsReportMessage.DashboardPostMessage;
 import com.android.vts.proto.VtsReportMessage.TestPlanReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestReportMessage;
+import com.android.vts.servlet.BaseServlet;
 import com.android.vts.util.DatastoreHelper;
+import com.android.vts.util.EmailHelper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Tokeninfo;
+
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,9 +44,31 @@ import org.apache.commons.codec.binary.Base64;
 
 /** REST endpoint for posting data to the Dashboard. */
 public class DatastoreRestServlet extends HttpServlet {
-    private static final String SERVICE_CLIENT_ID = System.getProperty("SERVICE_CLIENT_ID");
+    private static String SERVICE_CLIENT_ID;
     private static final String SERVICE_NAME = "VTS Dashboard";
     private static final Logger logger = Logger.getLogger(DatastoreRestServlet.class.getName());
+
+    /** System Configuration Property class */
+    protected Properties systemConfigProp = new Properties();
+
+    @Override
+    public void init(ServletConfig cfg) throws ServletException {
+        super.init(cfg);
+
+        try {
+            InputStream defaultInputStream =
+                    DatastoreRestServlet.class
+                            .getClassLoader()
+                            .getResourceAsStream("config.properties");
+            systemConfigProp.load(defaultInputStream);
+
+            SERVICE_CLIENT_ID = systemConfigProp.getProperty("appengine.serviceClientID");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -70,7 +100,8 @@ public class DatastoreRestServlet extends HttpServlet {
                     DatastoreHelper.insertTestReport(testReportMessage);
                 }
 
-                for (TestPlanReportMessage planReportMessage : postMessage.getTestPlanReportList()) {
+                for (TestPlanReportMessage planReportMessage :
+                        postMessage.getTestPlanReportList()) {
                     DatastoreHelper.insertTestPlanReport(planReportMessage);
                 }
 
