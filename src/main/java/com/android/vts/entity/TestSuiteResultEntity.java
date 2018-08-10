@@ -16,6 +16,7 @@
 
 package com.android.vts.entity;
 
+import com.google.common.base.Strings;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
@@ -23,6 +24,8 @@ import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.Parent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -124,6 +127,8 @@ class TestTypeIndex {
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 public class TestSuiteResultEntity {
+
+    private static final Logger logger = Logger.getLogger(TestSuiteResultEntity.class.getName());
 
     /** Bug Tracking System Property class */
     private static Properties bugTrackingSystemProp = new Properties();
@@ -288,9 +293,27 @@ public class TestSuiteResultEntity {
     }
 
     /** Saving function for the instance of this class */
-    public void save() {
-        this.updated = new Date();
-        ofy().save().entity(this).now();
+    public void save(TestSuiteFileEntity newTestSuiteFileEntity) {
+        List<String> checkList =
+                Arrays.asList(
+                        this.hostName,
+                        this.suitePlan,
+                        this.suiteName,
+                        this.suiteBuildNumber,
+                        this.branch,
+                        this.target,
+                        this.buildId);
+        boolean isAllTrue = checkList.stream().allMatch(val -> Strings.isNullOrEmpty(val));
+
+        if (isAllTrue) {
+            logger.log(Level.WARNING, "There is null or empty string among required fields!");
+        } else {
+            this.updated = new Date();
+            ofy().transact(() -> {
+                newTestSuiteFileEntity.save();
+                ofy().save().entity(this).now();
+            });
+        }
     }
 
     public static void setPropertyValues(Properties newSystemConfigProp) {
