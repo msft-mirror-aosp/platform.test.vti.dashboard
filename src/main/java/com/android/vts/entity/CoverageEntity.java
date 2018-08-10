@@ -176,9 +176,9 @@ public class CoverageEntity implements Serializable {
    */
   public String getGerritUrl() throws UnsupportedEncodingException {
     String gerritPath = GERRIT_URI + "/projects/" +
-        projectName + "/commits/" +
+        URLEncoder.encode(projectName, "UTF-8") + "/commits/" +
         URLEncoder.encode(projectVersion, "UTF-8") + "/files/" +
-        filePath;
+        URLEncoder.encode(filePath, "UTF-8") + "/content";
     return gerritPath;
   }
 

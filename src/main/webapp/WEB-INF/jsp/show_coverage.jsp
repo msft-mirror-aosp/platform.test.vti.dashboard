@@ -103,10 +103,10 @@
             if (prev.length > 0) {
                 prev.find('.table-container').empty();
             }
-            var url = self.parent().attr('url');
-            var i = self.parent().attr('index');
+            var url = self.parent().data('url');
             var container = self.parent().find('.table-container');
             container.html('<div class="center-align">Loading...</div>');
+            var coverageVectors = self.parent().data('coverage');
             if (self.parent().hasClass('active')) {
                 // Remove the code from display
                 container.empty();
@@ -128,7 +128,7 @@
                     total = 0;
                     var table = $('<table class="table"></table>');
                     var rows = srcLines.forEach(function(line, j) {
-                        var count = coverageVectors[i][j];
+                        var count = coverageVectors[j];
                         var row = $('<tr></tr>');
                         if (typeof count == 'undefined' || count < 0) {
                             count = "--";
@@ -170,10 +170,10 @@
       <h4 class="section-title"><b>Coverage:</b> </h4>
       <ul class="collapsible popout" data-collapsible="accordion">
         <c:forEach var="coverageEntity" items="${coverageEntityList}" varStatus="loop">
-          <li url="<c:url value="${coverageEntity.gerritUrl}"/>" data-index="${loop.index}">
+          <li data-url="<c:url value="${coverageEntity.gerritUrl}"/>" data-index="${loop.index}" data-coverage="${coverageEntity.lineCoverage}">
           <div class="collapsible-header <c:out value='${coverageEntity.isIgnored ? "grey" : ""}'/>">
             <i class="material-icons">library_books</i>
-            <div class="truncate"><b>${coverageEntity.projectName}</b>${coverageEntity.filePath}</div>
+            <div class="truncate"><b>${coverageEntity.projectName}</b>/${coverageEntity.filePath}</div>
             <div class="right total-count">${coverageEntity.coveredCount}/${coverageEntity.totalCount}</div>
             <div class="indicator ${coverageEntity.percentage >= 70 ? "green" : "red"}">${coverageEntity.percentage}%</div>
             <c:if test="${isModerator}">
