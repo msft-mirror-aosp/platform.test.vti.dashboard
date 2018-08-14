@@ -134,7 +134,7 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
         continue;
       }
       devices.add(deviceEntity);
-      buildIdList.add(deviceEntity.buildId);
+      buildIdList.add(deviceEntity.getBuildId());
     }
     String deviceBuild = StringUtils.join(buildIdList, ", ");
     String footer = EmailHelper.getEmailFooter(testRunEntity, devices, link);
