@@ -143,7 +143,7 @@ public class TestResults {
         List<DeviceInfoEntity> deviceInfos = deviceInfoMap.get(mostRecentRun.getKey());
         if (deviceInfos.size() > 0) {
             DeviceInfoEntity totDevice = deviceInfos.get(0);
-            totBuildId = totDevice.buildId;
+            totBuildId = totDevice.getBuildId();
         }
         // Count array for each test result
         for (TestCaseRunEntity testCaseRunEntity : testCaseResults) {
@@ -260,13 +260,13 @@ public class TestResults {
             List<String> productVariantList = new ArrayList<>();
             List<String> abiInfoList = new ArrayList<>();
             for (DeviceInfoEntity deviceInfoEntity : devices) {
-                buildAliasList.add(deviceInfoEntity.branch);
-                buildFlavorList.add(deviceInfoEntity.buildFlavor);
-                productVariantList.add(deviceInfoEntity.product);
-                buildIdList.add(deviceInfoEntity.buildId);
+                buildAliasList.add(deviceInfoEntity.getBranch());
+                buildFlavorList.add(deviceInfoEntity.getBuildFlavor());
+                productVariantList.add(deviceInfoEntity.getProduct());
+                buildIdList.add(deviceInfoEntity.getBuildId());
                 String abi = "";
-                String abiName = deviceInfoEntity.abiName;
-                String abiBitness = deviceInfoEntity.abiBitness;
+                String abiName = deviceInfoEntity.getAbiName();
+                String abiBitness = deviceInfoEntity.getAbiBitness();
                 if (abiName.length() > 0) {
                     abi += abiName;
                     if (abiBitness.length() > 0) {
