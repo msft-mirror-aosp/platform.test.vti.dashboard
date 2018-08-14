@@ -89,7 +89,13 @@ public class ShowPlanReleaseServlet extends BaseServlet {
 
         public void addDevice(DeviceInfoEntity device) {
             if (device == null || deviceSet.contains(device)) return;
-            devices.add(device.branch + "/" + device.buildFlavor + " (" + device.buildId + ")");
+            devices.add(
+                    device.getBranch()
+                            + "/"
+                            + device.getBuildFlavor()
+                            + " ("
+                            + device.getBuildId()
+                            + ")");
             deviceSet.add(device);
         }
 
@@ -196,6 +202,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                         dir,
                         MAX_RUNS_PER_PAGE);
         Map<Key, Entity> entityMap = datastore.get(gets);
+        logger.log(Level.INFO, "entityMap => " + entityMap);
         for (Key key : gets) {
             if (!entityMap.containsKey(key)) {
                 continue;
@@ -232,6 +239,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
                     deviceGets.add(device.getKey());
                 }
             }
+            logger.log(Level.INFO, "deviceGets => " + deviceGets);
             Map<Key, Entity> devices = datastore.get(deviceGets);
             for (Key key : devices.keySet()) {
                 if (!testPlanMap.containsKey(key.getParent())) continue;
@@ -243,6 +251,7 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         }
 
         testPlanRuns.sort(Comparator.naturalOrder());
+        logger.log(Level.INFO, "testPlanRuns => " + testPlanRuns);
 
         if (testPlanRuns.size() > 0) {
             TestPlanRunMetadata firstRun = testPlanRuns.get(0);
@@ -328,7 +337,8 @@ public class ShowPlanReleaseServlet extends BaseServlet {
         if (Objects.nonNull(request.getParameter("deviceName"))) {
             request.setAttribute("deviceName", request.getParameter("deviceName"));
             testSuiteResultEntityQuery =
-                testSuiteResultEntityQuery.filter("deviceName", request.getParameter("deviceName"));
+                    testSuiteResultEntityQuery.filter(
+                            "deviceName", request.getParameter("deviceName"));
         }
         testSuiteResultEntityQuery = testSuiteResultEntityQuery.orderKey(true);
 

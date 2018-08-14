@@ -81,8 +81,12 @@ public class DashboardMainServlet extends BaseServlet {
          * @param muteNotifications The flag for user notification in case of test failure.
          * @param isFavorite The flag for showing favorite mark on All Tests Tab page.
          */
-        public TestDisplay(Key testKey, int passCount, int failCount, boolean muteNotifications,
-            boolean isFavorite) {
+        public TestDisplay(
+                Key testKey,
+                int passCount,
+                int failCount,
+                boolean muteNotifications,
+                boolean isFavorite) {
             this.testKey = testKey;
             this.passCount = passCount;
             this.failCount = failCount;
@@ -180,15 +184,15 @@ public class DashboardMainServlet extends BaseServlet {
 
         List<Key> favoriteKeyList = new ArrayList<Key>();
         Filter userFilter =
-                new FilterPredicate(
-                        UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
+                new FilterPredicate(UserFavoriteEntity.USER, FilterOperator.EQUAL, currentUser);
         Query filterQuery = new Query(UserFavoriteEntity.KIND).setFilter(userFilter);
         Iterable<Entity> favoriteIter = datastore.prepare(filterQuery).asIterable();
-        favoriteIter.forEach(fe -> {
-            Key testKey = UserFavoriteEntity.fromEntity(fe).testKey;
-            favoriteKeyList.add(testKey);
-            subscriptionMap.put(testKey.getName(), KeyFactory.keyToString(fe.getKey()));
-        });
+        favoriteIter.forEach(
+                fe -> {
+                    Key testKey = UserFavoriteEntity.fromEntity(fe).testKey;
+                    favoriteKeyList.add(testKey);
+                    subscriptionMap.put(testKey.getName(), KeyFactory.keyToString(fe.getKey()));
+                });
 
         Query query =
                 new Query(TestStatusEntity.KIND)
@@ -199,12 +203,17 @@ public class DashboardMainServlet extends BaseServlet {
         for (Entity status : datastore.prepare(query).asIterable()) {
             TestStatusEntity statusEntity = TestStatusEntity.fromEntity(status);
             if (statusEntity == null) continue;
-            Key testKey = KeyFactory.createKey(TestEntity.KIND, statusEntity.testName);
+            Key testKey = KeyFactory.createKey(TestEntity.KIND, statusEntity.getTestName());
             boolean isFavorite = favoriteKeyList.contains(testKey);
             TestDisplay display = new TestDisplay(testKey, -1, -1, false, isFavorite);
             if (!unprocessedTestKeys.contains(testKey)) {
-                display = new TestDisplay(testKey, statusEntity.passCount, statusEntity.failCount,
-                    false, isFavorite);
+                display =
+                        new TestDisplay(
+                                testKey,
+                                statusEntity.getPassCount(),
+                                statusEntity.getFailCount(),
+                                false,
+                                isFavorite);
             }
             testMap.put(testKey, display);
         }
