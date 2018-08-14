@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -463,6 +464,7 @@ public class FilterUtil {
                 ops.limit(maxSize);
                 testQuery.addSort(Entity.KEY_RESERVED_PROPERTY, dir);
             }
+            logger.log(Level.INFO, "testQuery => " + testQuery);
             for (Entity testRunKey : datastore.prepare(testQuery).asIterable(ops)) {
                 filterMatches.add(testRunKey.getKey());
                 if (maxKey == null || testRunKey.getKey().compareTo(maxKey) > 0)
@@ -476,6 +478,7 @@ public class FilterUtil {
                 matchingTestKeys = Sets.intersection(matchingTestKeys, filterMatches);
             }
         }
+        logger.log(Level.INFO, "matchingTestKeys => " + matchingTestKeys);
 
         Set<Key> allMatchingKeys;
         if (deviceFilter == null || matchingTestKeys.size() == 0) {
@@ -504,6 +507,7 @@ public class FilterUtil {
                 }
             }
         }
+        logger.log(Level.INFO, "allMatchingKeys => " + allMatchingKeys);
         List<Key> gets = new ArrayList<>(allMatchingKeys);
         if (dir == Query.SortDirection.DESCENDING) {
             gets.sort(Comparator.reverseOrder());
