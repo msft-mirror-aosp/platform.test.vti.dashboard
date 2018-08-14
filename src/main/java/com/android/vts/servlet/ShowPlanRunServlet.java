@@ -98,18 +98,24 @@ public class ShowPlanRunServlet extends BaseServlet {
         long startTime = 0;
         long endTime = 0;
         long moduleCount = 0;
+        long totalApiCount = 0L;
+        long totalCoveredApiCount = 0L;
         try {
             Entity testPlanRunEntity = datastore.get(planRunKey);
             TestPlanRunEntity testPlanRun = TestPlanRunEntity.fromEntity(testPlanRunEntity);
-            Map<Key, Entity> testRuns = datastore.get(testPlanRun.getTestRuns());
+            Map<Key, Entity> testRuns = datastore.get(testPlanRun.getOldTestRuns());
             testBuildId = testPlanRun.getTestBuildId();
             passCount = (int) testPlanRun.getPassCount();
             failCount = (int) testPlanRun.getFailCount();
+            totalApiCount = testPlanRun.getTotalApiCount();
+            logger.log(Level.INFO, "totalApiCount => " + totalApiCount);
+            totalCoveredApiCount = testPlanRun.getCoveredApiCount();
+            logger.log(Level.INFO, "totalCoveredApiCount => " + totalCoveredApiCount);
             startTime = testPlanRun.getStartTimestamp();
             endTime = testPlanRun.getEndTimestamp();
             moduleCount = testPlanRun.getTestRuns().size();
 
-            for (Key key : testPlanRun.getTestRuns()) {
+            for (Key key : testPlanRun.getOldTestRuns()) {
                 if (!testRuns.containsKey(key)) continue;
                 TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRuns.get(key));
                 if (testRunEntity == null) continue;
@@ -150,6 +156,8 @@ public class ShowPlanRunServlet extends BaseServlet {
         request.setAttribute("moduleCount", new Gson().toJson(moduleCount));
         request.setAttribute("passingTestCaseCount", new Gson().toJson(passCount));
         request.setAttribute("failingTestCaseCount", new Gson().toJson(failCount));
+        request.setAttribute("totalApiCount", totalApiCount);
+        request.setAttribute("totalCoveredApiCount", totalCoveredApiCount);
 
         // data for pie chart
         request.setAttribute("topBuildResultCounts", new Gson().toJson(topBuildResultCounts));
