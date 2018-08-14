@@ -78,10 +78,10 @@ public class VtsInactivityJobServlet extends HttpServlet {
         // test is assumed to be deprecated).
         if (diff >= TimeUnit.DAYS.toMicros(1) && diff < TimeUnit.DAYS.toMicros(8)) {
             String uploadTimeString = TimeUtil.getDateTimeString(lastRunTime);
-            String subject = "Warning! Inactive test: " + test.testName;
+            String subject = "Warning! Inactive test: " + test.getTestName();
             String body =
                     "Hello,<br><br>Test \""
-                            + test.testName
+                            + test.getTestName()
                             + "\" is inactive. "
                             + "No new data has been uploaded since "
                             + uploadTimeString
@@ -159,12 +159,12 @@ public class VtsInactivityJobServlet extends HttpServlet {
         if (status == null) {
             return;
         }
-        Key testKey = KeyFactory.createKey(TestEntity.KIND, status.testName);
+        Key testKey = KeyFactory.createKey(TestEntity.KIND, status.getTestName());
         long lastRunTime = getLastRunTime(testKey);
 
         StringBuffer fullUrl = request.getRequestURL();
         String baseUrl = fullUrl.substring(0, fullUrl.indexOf(request.getRequestURI()));
-        String link = baseUrl + "/show_tree?testName=" + status.testName;
+        String link = baseUrl + "/show_tree?testName=" + status.getTestName();
 
         List<Message> messageQueue = new ArrayList<>();
         List<String> emails;
