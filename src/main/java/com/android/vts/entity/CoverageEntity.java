@@ -268,7 +268,7 @@ public class CoverageEntity implements Serializable {
     List<Long> lineCoverage = null;
     if (coverage.getLineCoverageVectorCount() > 0) {
       lineCoverage = new ArrayList<>();
-      for (Long count : coverage.getLineCoverageVectorList()) {
+      for (long count : coverage.getLineCoverageVectorList()) {
         lineCoverage.add(count);
       }
     }
