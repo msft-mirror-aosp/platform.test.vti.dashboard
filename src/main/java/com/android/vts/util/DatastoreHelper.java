@@ -13,6 +13,7 @@
  */
 package com.android.vts.util;
 
+import com.android.vts.entity.ApiCoverageEntity;
 import com.android.vts.entity.BranchEntity;
 import com.android.vts.entity.BuildTargetEntity;
 import com.android.vts.entity.CoverageEntity;
@@ -28,7 +29,9 @@ import com.android.vts.job.VtsAlertJobServlet;
 import com.android.vts.job.VtsCoverageAlertJobServlet;
 import com.android.vts.job.VtsProfilingStatsJobServlet;
 import com.android.vts.proto.VtsReportMessage.AndroidDeviceInfoMessage;
+import com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage;
 import com.android.vts.proto.VtsReportMessage.CoverageReportMessage;
+import com.android.vts.proto.VtsReportMessage.HalInterfaceMessage;
 import com.android.vts.proto.VtsReportMessage.LogMessage;
 import com.android.vts.proto.VtsReportMessage.ProfilingReportMessage;
 import com.android.vts.proto.VtsReportMessage.TestCaseReportMessage;
@@ -62,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * DatastoreHelper, a helper class for interacting with Cloud Datastore.
@@ -231,6 +235,7 @@ public class DatastoreHelper {
           coverageEntityList.add(coverageEntity.toEntity());
         }
       }
+
       // Process profiling data for test case
       for (ProfilingReportMessage profiling : testCase.getProfilingList()) {
         ProfilingPointRunEntity profilingPointRunEntity =
@@ -239,7 +244,7 @@ public class DatastoreHelper {
           logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
         } else {
           profilingPointRunEntityList.add(profilingPointRunEntity.toEntity());
-          profilingPointKeys.add(profilingPointRunEntity.key);
+          profilingPointKeys.add(profilingPointRunEntity.getKey());
           testEntity.setHasProfilingData(true);
         }
       }
@@ -273,18 +278,18 @@ public class DatastoreHelper {
         logger.log(Level.WARNING, "Invalid device info in test run " + testRunKey);
       } else {
         // Run type on devices must be the same, else set to OTHER
-        TestRunType runType = TestRunType.fromBuildId(deviceInfoEntity.buildId);
+        TestRunType runType = TestRunType.fromBuildId(deviceInfoEntity.getBuildId());
         if (testRunType == null) {
           testRunType = runType;
         } else if (runType != testRunType) {
           testRunType = TestRunType.OTHER;
         }
         testEntityList.add(deviceInfoEntity.toEntity());
-        BuildTargetEntity target = new BuildTargetEntity(deviceInfoEntity.buildFlavor);
+        BuildTargetEntity target = new BuildTargetEntity(deviceInfoEntity.getBuildFlavor());
         if (buildTargetKeys.add(target.key)) {
           buildTargetEntityList.add(target.toEntity());
         }
-        BranchEntity branch = new BranchEntity(deviceInfoEntity.branch);
+        BranchEntity branch = new BranchEntity(deviceInfoEntity.getBranch());
         if (branchKeys.add(branch.key)) {
           branchEntityList.add(branch.toEntity());
         }
@@ -311,6 +316,30 @@ public class DatastoreHelper {
       }
     }
 
+    // Process global API coverage data
+    for (ApiCoverageReportMessage apiCoverage : report.getApiCoverageList()) {
+      HalInterfaceMessage halInterfaceMessage = apiCoverage.getHalInterface();
+      List<String> halApiList = apiCoverage.getHalApiList().stream().map(h -> h.toStringUtf8())
+          .collect(
+              Collectors.toList());
+      List<String> coveredHalApiList = apiCoverage.getCoveredHalApiList().stream()
+          .map(h -> h.toStringUtf8()).collect(
+              Collectors.toList());
+      ApiCoverageEntity apiCoverageEntity = new ApiCoverageEntity(
+          testRunKey,
+          halInterfaceMessage.getHalPackageName().toStringUtf8(),
+          halInterfaceMessage.getHalVersionMajor(),
+          halInterfaceMessage.getHalVersionMinor(),
+          halInterfaceMessage.getHalInterfaceName().toStringUtf8(),
+          halApiList,
+          coveredHalApiList
+      );
+      com.googlecode.objectify.Key apiCoverageEntityKey = apiCoverageEntity.save();
+      if (apiCoverageEntityKey == null) {
+        logger.log(Level.WARNING, "Invalid API coverage report in test run " + testRunKey);
+      }
+    }
+
     // Process global profiling data
     for (ProfilingReportMessage profiling : report.getProfilingList()) {
       ProfilingPointRunEntity profilingPointRunEntity =
@@ -319,7 +348,7 @@ public class DatastoreHelper {
         logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
       } else {
         profilingPointRunEntityList.add(profilingPointRunEntity.toEntity());
-        profilingPointKeys.add(profilingPointRunEntity.key);
+        profilingPointKeys.add(profilingPointRunEntity.getKey());
         testEntity.setHasProfilingData(true);
       }
     }
@@ -482,6 +511,8 @@ public class DatastoreHelper {
             testBuildId,
             passCount,
             failCount,
+            0L,
+            0L,
             testRunKeys);
 
     // Create the device infos.
@@ -489,6 +520,9 @@ public class DatastoreHelper {
       testEntityList.add(device.copyWithParent(testPlanRun.key).toEntity());
     }
     testEntityList.add(testPlanRun.toEntity());
+
+    // Add the task to calculate total number API list.
+    testPlanRun.addCoverageApiTask();
 
     datastoreTransactionalRetry(testPlanEntity, testEntityList);
   }
