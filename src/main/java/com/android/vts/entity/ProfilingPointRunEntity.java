@@ -23,13 +23,26 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.protobuf.ByteString;
+import com.googlecode.objectify.annotation.Cache;
+import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Parent;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@com.googlecode.objectify.annotation.Entity(name = "ProfilingPointRun")
+@Cache
+@Data
+@NoArgsConstructor
 /** Entity describing a profiling point execution. */
-public class ProfilingPointRunEntity implements DashboardEntity {
+public class ProfilingPointRunEntity implements Serializable {
     protected static final Logger logger =
             Logger.getLogger(ProfilingPointRunEntity.class.getName());
 
@@ -44,16 +57,39 @@ public class ProfilingPointRunEntity implements DashboardEntity {
     public static final String Y_LABEL = "yLabel";
     public static final String OPTIONS = "options";
 
-    public final Key key;
+    @Ignore
+    private Key key;
 
-    public final String name;
-    public final VtsProfilingType type;
-    public final VtsProfilingRegressionMode regressionMode;
-    public final List<String> labels;
-    public final List<Long> values;
-    public final String xLabel;
-    public final String yLabel;
-    public final List<String> options;
+    /** ID field using profilingPointName */
+    @Id
+    private String name;
+
+    /** parent field based on Test and TestRun key */
+    @Parent
+    private com.googlecode.objectify.Key<?> parent;
+
+    /** VtsProfilingType in ProfilingPointRunEntity class  */
+    private int type;
+
+    /** VtsProfilingType in ProfilingPointRunEntity class  */
+    private int regressionMode;
+
+    /** list of label name  */
+    private List<String> labels;
+
+    /** list of values  */
+    private List<Long> values;
+
+    /** X axis label name */
+    private String xLabel;
+
+    /** Y axis label name */
+    private String yLabel;
+
+    /** Test Suite file name field */
+    private List<String> options;
+
+    /** When this record was created or updated */
 
     /**
      * Create a ProfilingPointRunEntity object.
@@ -80,8 +116,8 @@ public class ProfilingPointRunEntity implements DashboardEntity {
             List<String> options) {
         this.key = KeyFactory.createKey(parentKey, KIND, name);
         this.name = name;
-        this.type = VtsProfilingType.valueOf(type);
-        this.regressionMode = VtsProfilingRegressionMode.valueOf(regressionMode);
+        this.type = type;
+        this.regressionMode = regressionMode;
         this.labels = labels == null ? null : new ArrayList<>(labels);
         this.values = new ArrayList<>(values);
         this.xLabel = xLabel;
@@ -89,11 +125,28 @@ public class ProfilingPointRunEntity implements DashboardEntity {
         this.options = options;
     }
 
-    @Override
+    /**
+     * Get VtsProfilingType from int value.
+     *
+     * @return VtsProfilingType class.
+     */
+    public VtsProfilingType getVtsProfilingType(int type) {
+        return VtsProfilingType.forNumber(type);
+    }
+
+    /**
+     * Get VtsProfilingRegressionMode from int value.
+     *
+     * @return VtsProfilingType class.
+     */
+    public VtsProfilingRegressionMode getVtsProfilingRegressionMode(int regressionMode) {
+        return VtsProfilingRegressionMode.forNumber(regressionMode);
+    }
+
     public Entity toEntity() {
         Entity profilingRun = new Entity(this.key);
-        profilingRun.setUnindexedProperty(TYPE, this.type.getNumber());
-        profilingRun.setUnindexedProperty(REGRESSION_MODE, this.regressionMode.getNumber());
+        profilingRun.setUnindexedProperty(TYPE, this.type);
+        profilingRun.setUnindexedProperty(REGRESSION_MODE, this.regressionMode);
         if (this.labels != null) {
             profilingRun.setUnindexedProperty(LABELS, this.labels);
         }

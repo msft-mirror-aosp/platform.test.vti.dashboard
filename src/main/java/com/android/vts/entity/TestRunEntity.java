@@ -16,12 +16,15 @@
 
 package com.android.vts.entity;
 
+import static com.googlecode.objectify.ObjectifyService.ofy;
+
 import com.android.vts.util.UrlUtil;
 import com.android.vts.util.UrlUtil.LinkDisplay;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -33,14 +36,20 @@ import com.googlecode.objectify.annotation.Parent;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.json.JSONArray;
 
-@com.googlecode.objectify.annotation.Entity(name="TestRun")
+@com.googlecode.objectify.annotation.Entity(name = "TestRun")
 @Cache
 @Data
 @NoArgsConstructor
@@ -88,28 +97,25 @@ public class TestRunEntity implements Serializable {
         /**
          * Determine the test run type based on the build ID.
          *
-         * Postsubmit runs are expected to have integer build IDs, while presubmit runs are integers
-         * prefixed by the character P. All other runs (e.g. local builds) are classified as OTHER.
+         * <p>Postsubmit runs are expected to have integer build IDs, while presubmit runs are
+         * integers prefixed by the character P. All other runs (e.g. local builds) are classified
+         * as OTHER.
          *
          * @param buildId The build ID.
          * @return the TestRunType.
          */
         public static TestRunType fromBuildId(String buildId) {
-            try {
-                Integer.parseInt(buildId);
-                return TestRunType.POSTSUBMIT;
-            } catch (NumberFormatException e) {
-                // Not an integer
-            }
-            if (Character.toLowerCase(buildId.charAt(0)) == 'p') {
-                try {
-                    Integer.parseInt(buildId.substring(1));
+            if (buildId.toLowerCase().startsWith("p")) {
+                if (NumberUtils.isParsable(buildId.substring(1))) {
                     return TestRunType.PRESUBMIT;
-                } catch (NumberFormatException e) {
-                    // Not an integer
+                } else {
+                    return TestRunType.OTHER;
                 }
+            } else if (NumberUtils.isParsable(buildId)) {
+                return TestRunType.POSTSUBMIT;
+            } else {
+                return TestRunType.OTHER;
             }
-            return TestRunType.OTHER;
         }
     }
 
@@ -129,82 +135,41 @@ public class TestRunEntity implements Serializable {
     public static final String HAS_COVERAGE = "hasCoverage";
     public static final String TOTAL_LINE_COUNT = "totalLineCount";
     public static final String COVERED_LINE_COUNT = "coveredLineCount";
+    public static final String API_COVERAGE_KEY_LIST = "apiCoverageKeyList";
+    public static final String TOTAL_API_COUNT = "totalApiCount";
+    public static final String COVERED_API_COUNT = "coveredApiCount";
 
-    @Ignore
-    private Key key;
+    @Ignore private Key key;
 
-    @Id
-    @Getter
-    @Setter
-    private Long ID;
+    @Id @Getter @Setter private Long ID;
 
-    @Parent
-    @Getter
-    @Setter
-    private com.googlecode.objectify.Key<?> testParent;
+    @Parent @Getter @Setter private com.googlecode.objectify.Key<?> testRunParent;
 
-    @Index
-    @Getter
-    @Setter
-    private TestRunType type;
+    @Index @Getter @Setter private TestRunType type;
 
-    @Index
-    @Getter
-    @Setter
-    private long startTimestamp;
+    @Index @Getter @Setter private long startTimestamp;
 
-    @Index
-    @Getter
-    @Setter
-    private long endTimestamp;
+    @Index @Getter @Setter private long endTimestamp;
 
-    @Index
-    @Getter
-    @Setter
-    private String testBuildId;
+    @Index @Getter @Setter private String testBuildId;
 
-    @Index
-    @Getter
-    @Setter
-    private String testName;
+    @Index @Getter @Setter private String testName;
 
-    @Index
-    @Getter
-    @Setter
-    private String hostName;
+    @Index @Getter @Setter private String hostName;
 
-    @Index
-    @Getter
-    @Setter
-    private long passCount;
+    @Index @Getter @Setter private long passCount;
 
-    @Index
-    @Getter
-    @Setter
-    private long failCount;
+    @Index @Getter @Setter private long failCount;
 
-    @Index
-    @Getter
-    @Setter
-    private boolean hasCoverage;
+    @Index @Getter @Setter private boolean hasCoverage;
 
-    @Index
-    @Getter
-    @Setter
-    private long coveredLineCount;
+    @Index @Getter @Setter private long coveredLineCount;
 
-    @Index
-    @Getter
-    @Setter
-    private long totalLineCount;
+    @Index @Getter @Setter private long totalLineCount;
 
-    @Getter
-    @Setter
-    private List<Long> testCaseIds;
+    @Getter @Setter private List<Long> testCaseIds;
 
-    @Getter
-    @Setter
-    private List<String> links;
+    @Getter @Setter private List<String> links;
 
     /**
      * Create a TestRunEntity object describing a test run.
@@ -222,9 +187,18 @@ public class TestRunEntity implements Serializable {
      * @param coveredLineCount The number of lines covered by the test run.
      * @param totalLineCount The total number of executable lines by the test in the test run.
      */
-    public TestRunEntity(Key parentKey, TestRunType type, long startTimestamp, long endTimestamp,
-            String testBuildId, String hostName, long passCount, long failCount,
-            List<Long> testCaseIds, List<String> links, long coveredLineCount,
+    public TestRunEntity(
+            Key parentKey,
+            TestRunType type,
+            long startTimestamp,
+            long endTimestamp,
+            String testBuildId,
+            String hostName,
+            long passCount,
+            long failCount,
+            List<Long> testCaseIds,
+            List<String> links,
+            long coveredLineCount,
             long totalLineCount) {
         this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
         this.type = type;
@@ -255,11 +229,30 @@ public class TestRunEntity implements Serializable {
      * @param testCaseIds A list of key IDs to the TestCaseRunEntity objects for the test run.
      * @param links A list of links to resource files for the test run, or null if there aren't any.
      */
-    public TestRunEntity(Key parentKey, TestRunType type, long startTimestamp, long endTimestamp,
-            String testBuildId, String hostName, long passCount, long failCount,
-            List<Long> testCaseIds, List<String> links) {
-        this(parentKey, type, startTimestamp, endTimestamp, testBuildId, hostName, passCount,
-                failCount, testCaseIds, links, 0, 0);
+    public TestRunEntity(
+            Key parentKey,
+            TestRunType type,
+            long startTimestamp,
+            long endTimestamp,
+            String testBuildId,
+            String hostName,
+            long passCount,
+            long failCount,
+            List<Long> testCaseIds,
+            List<String> links) {
+        this(
+                parentKey,
+                type,
+                startTimestamp,
+                endTimestamp,
+                testBuildId,
+                hostName,
+                passCount,
+                failCount,
+                testCaseIds,
+                links,
+                0,
+                0);
     }
 
     public Entity toEntity() {
@@ -294,6 +287,19 @@ public class TestRunEntity implements Serializable {
         return KeyFactory.createKey(parentKey, KIND, startTimestamp);
     }
 
+    /** Get ApiCoverageEntity from key info */
+    public Optional<List<ApiCoverageEntity>> getApiCoverageEntityList() {
+        com.googlecode.objectify.Key testKey =
+                com.googlecode.objectify.Key.create(
+                        TestEntity.class, this.key.getParent().getName());
+        com.googlecode.objectify.Key apiCoverageKey =
+                com.googlecode.objectify.Key.create(testKey, TestRunEntity.class, startTimestamp);
+
+        List<ApiCoverageEntity> apiCoverageEntityList =
+                ofy().load().type(ApiCoverageEntity.class).ancestor(apiCoverageKey).list();
+        return Optional.ofNullable(apiCoverageEntityList);
+    }
+
     /**
      * Convert an Entity object to a TestRunEntity.
      *
@@ -302,10 +308,15 @@ public class TestRunEntity implements Serializable {
      */
     @SuppressWarnings("unchecked")
     public static TestRunEntity fromEntity(Entity e) {
-        if (!e.getKind().equals(KIND) || !e.hasProperty(TYPE) || !e.hasProperty(START_TIMESTAMP)
-                || !e.hasProperty(END_TIMESTAMP) || !e.hasProperty(TEST_BUILD_ID)
-                || !e.hasProperty(HOST_NAME) || !e.hasProperty(PASS_COUNT)
-                || !e.hasProperty(FAIL_COUNT) || !e.hasProperty(TEST_CASE_IDS)) {
+        if (!e.getKind().equals(KIND)
+                || !e.hasProperty(TYPE)
+                || !e.hasProperty(START_TIMESTAMP)
+                || !e.hasProperty(END_TIMESTAMP)
+                || !e.hasProperty(TEST_BUILD_ID)
+                || !e.hasProperty(HOST_NAME)
+                || !e.hasProperty(PASS_COUNT)
+                || !e.hasProperty(FAIL_COUNT)
+                || !e.hasProperty(TEST_CASE_IDS)) {
             logger.log(Level.WARNING, "Missing test run attributes in entity: " + e.toString());
             return null;
         }
@@ -328,9 +339,19 @@ public class TestRunEntity implements Serializable {
             if (e.hasProperty(LOG_LINKS)) {
                 links = (List<String>) e.getProperty(LOG_LINKS);
             }
-            return new TestRunEntity(e.getKey().getParent(), type, startTimestamp, endTimestamp,
-                    testBuildId, hostName, passCount, failCount, testCaseIds, links,
-                    coveredLineCount, totalLineCount);
+            return new TestRunEntity(
+                    e.getKey().getParent(),
+                    type,
+                    startTimestamp,
+                    endTimestamp,
+                    testBuildId,
+                    hostName,
+                    passCount,
+                    failCount,
+                    testCaseIds,
+                    links,
+                    coveredLineCount,
+                    totalLineCount);
         } catch (ClassCastException exception) {
             // Invalid cast
             logger.log(Level.WARNING, "Error parsing test run entity.", exception);
@@ -351,6 +372,32 @@ public class TestRunEntity implements Serializable {
             json.add(COVERED_LINE_COUNT, new JsonPrimitive(this.coveredLineCount));
             json.add(TOTAL_LINE_COUNT, new JsonPrimitive(this.totalLineCount));
         }
+        Optional<List<ApiCoverageEntity>> apiCoverageEntityOptionList =
+                this.getApiCoverageEntityList();
+        if (apiCoverageEntityOptionList.isPresent()) {
+            List<ApiCoverageEntity> apiCoverageEntityList = apiCoverageEntityOptionList.get();
+            Supplier<Stream<ApiCoverageEntity>> apiCoverageStreamSupplier =
+                    () -> apiCoverageEntityList.stream();
+            int totalHalApi =
+                    apiCoverageStreamSupplier.get().mapToInt(data -> data.getHalApi().size()).sum();
+            if (totalHalApi > 0) {
+                int coveredHalApi =
+                        apiCoverageStreamSupplier
+                                .get()
+                                .mapToInt(data -> data.getCoveredHalApi().size())
+                                .sum();
+                JsonArray apiCoverageKeyArray =
+                        apiCoverageStreamSupplier
+                                .get()
+                                .map(data -> new JsonPrimitive(data.getUrlSafeKey()))
+                                .collect(JsonArray::new, JsonArray::add, JsonArray::addAll);
+
+                json.add(API_COVERAGE_KEY_LIST, apiCoverageKeyArray);
+                json.add(COVERED_API_COUNT, new JsonPrimitive(coveredHalApi));
+                json.add(TOTAL_API_COUNT, new JsonPrimitive(totalHalApi));
+            }
+        }
+
         if (this.links != null && this.links.size() > 0) {
             List<JsonElement> links = new ArrayList<>();
             for (String rawUrl : this.links) {

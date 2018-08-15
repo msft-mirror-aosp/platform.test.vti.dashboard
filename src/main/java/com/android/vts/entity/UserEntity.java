@@ -60,7 +60,7 @@ public class UserEntity {
 
     @Load
     @Getter
-    List<Ref<RoleEntity>> roles;
+    List<Ref<RoleEntity>> roles = new ArrayList<>();
 
     /** Constructor function for UserEntity Class */
     public UserEntity(
@@ -68,14 +68,14 @@ public class UserEntity {
             String name,
             String company,
             String roleName) {
-        RoleEntity role = ofy().load().type(RoleEntity.class).id(roleName).now();
 
         this.email = email;
         this.name = name;
         this.enable = true;
         this.isAdmin = false;
         this.company = company;
-        this.roles.add(Ref.create(role));
+        RoleEntity roleEntity = RoleEntity.getRole(roleName);
+        this.roles.add(Ref.create(roleEntity));
     }
 
     /** Saving function for the instance of this class */
