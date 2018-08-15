@@ -18,11 +18,19 @@ package com.android.vts.entity;
 
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.googlecode.objectify.annotation.Cache;
+import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@com.googlecode.objectify.annotation.Entity(name = "TestCaseRun")
+@Cache
+@Data
 /** Entity describing the execution of a test case. */
 public class TestCaseRunEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(TestCaseRunEntity.class.getName());
@@ -39,8 +47,17 @@ public class TestCaseRunEntity implements DashboardEntity {
     // Maximum number of test cases in the entity.
     private static final int SIZE_LIMIT = 500;
 
-    public final long id;
+    @Id
+    private Long id;
+
+    private List<Integer> results;
+
+    private List<String> testCaseNames;
+
+    @Ignore
     public final List<TestCase> testCases;
+
+    @Ignore
     private String systraceUrl;
 
     /**
@@ -71,7 +88,7 @@ public class TestCaseRunEntity implements DashboardEntity {
      * Create a TestCaseRunEntity.
      */
     public TestCaseRunEntity() {
-        this.id = -1;
+        this.id = -1L;
         this.testCases = new ArrayList<>();
         this.systraceUrl = null;
     }

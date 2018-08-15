@@ -19,11 +19,23 @@ package com.android.vts.entity;
 import com.android.vts.proto.VtsReportMessage.AndroidDeviceInfoMessage;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
+import com.googlecode.objectify.annotation.Cache;
+import com.googlecode.objectify.annotation.Id;
+import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Index;
+import com.googlecode.objectify.annotation.Parent;
+import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@com.googlecode.objectify.annotation.Entity(name = "DeviceInfo")
+@Cache
+@Data
+@NoArgsConstructor
 /** Class describing a device used for a test run. */
-public class DeviceInfoEntity implements DashboardEntity {
+public class DeviceInfoEntity implements Serializable {
     protected static final Logger logger = Logger.getLogger(DeviceInfoEntity.class.getName());
 
     public static final String KIND = "DeviceInfo";
@@ -36,14 +48,41 @@ public class DeviceInfoEntity implements DashboardEntity {
     public static final String ABI_BITNESS = "abiBitness";
     public static final String ABI_NAME = "abiName";
 
-    private final Key parentKey;
+    @Ignore
+    private Key parentKey;
 
+    /** ID field using start timestamp */
+    @Id
+    private long id;
+
+    /** parent field based on Test and TestRun key */
+    @Parent
+    private com.googlecode.objectify.Key<?> parent;
+
+    @Index
+    private String branch;
+
+    @Index
+    private String product;
+
+    @Index
+    private String buildFlavor;
+
+    @Index
+    private String buildId;
+
+    private String abiBitness;
+
+    private String abiName;
+
+    /*
     public final String branch;
     public final String product;
     public final String buildFlavor;
     public final String buildId;
     public final String abiBitness;
     public final String abiName;
+    */
 
     /**
      * Create a DeviceInfoEntity object.
@@ -67,7 +106,6 @@ public class DeviceInfoEntity implements DashboardEntity {
         this.abiName = abiName;
     }
 
-    @Override
     public Entity toEntity() {
         Entity deviceEntity = new Entity(KIND, this.parentKey);
         deviceEntity.setProperty(BRANCH, this.branch.toLowerCase());
