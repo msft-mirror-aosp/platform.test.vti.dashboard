@@ -34,9 +34,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Cache
 @com.googlecode.objectify.annotation.Entity(name = "TestCoverageStatus")
 @EqualsAndHashCode(of = "testName")
+@Cache
 @NoArgsConstructor
 /** Entity describing test coverage status. */
 public class TestCoverageStatusEntity implements Serializable {
