@@ -243,9 +243,9 @@
         metadata.testRun.totalLineCount != undefined) {
         var url = (
           '/show_coverage?testName=' + test + '&startTime=' + startTime);
-        covered = metadata.testRun.coveredLineCount;
-        total = metadata.testRun.totalLineCount;
-        covPct = Math.round(covered / total * 1000) / 10;
+        var covered = metadata.testRun.coveredLineCount;
+        var total = metadata.testRun.totalLineCount;
+        var covPct = Math.round(covered / total * 1000) / 10;
         var color = 'red';
         if (covPct > 20 && covPct < 70) {
           color = 'orange';
@@ -257,6 +257,20 @@
         createClickableIndicator(
           div, coverage, color,
           function () { window.location.href = url; return false; });
+      }
+      if (metadata.testRun.coveredApiCount != undefined &&
+          metadata.testRun.totalApiCount != undefined) {
+        var covered = metadata.testRun.coveredApiCount;
+        var total = metadata.testRun.totalApiCount;
+        var apiCoverage = ('API Coverage: ' + covered + '/' + total);
+        createClickableIndicator(
+            div, apiCoverage, 'yellow grey-text',
+            function (evt) {
+              $('#apiCoverageModal').data("urlSafeKeyList", metadata.testRun.apiCoverageKeyList);
+              $('#apiCoverageModal').modal('open');
+              return false;
+            }
+        );
       }
       if (metadata.testRun.logLinks != undefined) {
         createClickableIndicator(

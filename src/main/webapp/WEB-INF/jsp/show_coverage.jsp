@@ -47,7 +47,7 @@
               var cmd = $(evt.target).text();
               var testRunId = $(evt.target).data("id");
               var postData = { coverageId: testRunId, testName: "${testName}", testRunId: "${startTime}", cmd: cmd};
-              $.post("/api/coverage", postData, function() {
+              $.post("/api/coverage/data", postData, function() {
                 // success
                 console.log("success");
                 var detachedLi = $(evt.target).parent().parent().detach();
