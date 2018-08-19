@@ -34,7 +34,7 @@
       <div class='row'>
         <div class='col s12'>
 
-          <ul class="tabs">
+          <ul class="tabs z-depth-1">
             <li class="tab col s6" id="planTabLink">
               <a class="${testType == 'plan' ? 'active' : 'inactive'}" href="${requestScope['javax.servlet.forward.servlet_path']}?type=plan">Test Plans</a>
             </li>
@@ -51,14 +51,14 @@
         <c:forEach items='${planNames}' var='plan'>
           <c:choose>
             <c:when test="${isAdmin}">
-              <div class="col s11 center">
+              <div class="col s10 center">
                 <a href='/show_plan_release?plan=${plan}${typeParam}'>
                   <div class='col s12 card hoverable option valign-wrapper waves-effect'>
                     <span class='entry valign'>${plan}</span>
                   </div>
                 </a>
               </div>
-              <div class="col s1 center btn-container" style="margin-top: 9px;">
+              <div class="col s2 center btn-container" style="margin-top: 9px;">
                 <a href='/show_green_release?plan=${plan}${typeParam}' class="waves-effect waves-light btn">Green</a>
               </div>
             </c:when>
