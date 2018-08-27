@@ -16,13 +16,20 @@
 
 package com.android.vts.config;
 
+import com.android.vts.entity.ApiCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
+import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.ProfilingPointEntity;
+import com.android.vts.entity.ProfilingPointRunEntity;
+import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.entity.RoleEntity;
+import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestRunEntity;
+import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.entity.UserEntity;
@@ -66,12 +73,21 @@ public class ObjectifyListener implements ServletContextListener {
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     ObjectifyService.init();
+    ObjectifyService.register(ApiCoverageEntity.class);
     ObjectifyService.register(CoverageEntity.class);
+    ObjectifyService.register(DeviceInfoEntity.class);
     ObjectifyService.register(TestCoverageStatusEntity.class);
+
+    ObjectifyService.register(ProfilingPointEntity.class);
+    ObjectifyService.register(ProfilingPointRunEntity.class);
+    ObjectifyService.register(ProfilingPointSummaryEntity.class);
+
     ObjectifyService.register(TestEntity.class);
     ObjectifyService.register(TestPlanEntity.class);
     ObjectifyService.register(TestPlanRunEntity.class);
     ObjectifyService.register(TestRunEntity.class);
+    ObjectifyService.register(TestCaseRunEntity.class);
+    ObjectifyService.register(TestStatusEntity.class);
     ObjectifyService.register(TestSuiteFileEntity.class);
     ObjectifyService.register(TestSuiteResultEntity.class);
     ObjectifyService.register(RoleEntity.class);
