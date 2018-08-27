@@ -278,7 +278,6 @@ public class TestDataForDevServlet extends HttpServlet {
                                                                             new TestSuiteFileEntity(
                                                                                     pathInfo
                                                                                             .toString());
-                                                            newTestSuiteFileEntity.save();
 
                                                             com.googlecode.objectify.Key<
                                                                             TestSuiteFileEntity>
@@ -289,6 +288,8 @@ public class TestDataForDevServlet extends HttpServlet {
                                                                                             .class,
                                                                                     newTestSuiteFileEntity
                                                                                             .getFilePath());
+
+
                                                             TestSuiteResultEntity
                                                                     testSuiteResultEntity =
                                                                             new TestSuiteResultEntity(
@@ -342,7 +343,7 @@ public class TestDataForDevServlet extends HttpServlet {
                                                                                     rand.nextInt(),
                                                                                     rand.nextInt());
 
-                                                            testSuiteResultEntity.save();
+                                                            testSuiteResultEntity.save(newTestSuiteFileEntity);
                                                         })));
         resultMap.put("result", "successfully generated!");
         return resultMap;
@@ -626,6 +627,8 @@ public class TestDataForDevServlet extends HttpServlet {
                                             testBuildId,
                                             passCount,
                                             failCount,
+                                        0L,
+                                        0L,
                                             testRunKeys);
 
                             // Create the device infos.

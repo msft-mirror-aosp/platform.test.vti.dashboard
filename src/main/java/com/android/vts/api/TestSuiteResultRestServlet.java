@@ -88,8 +88,10 @@ public class TestSuiteResultRestServlet extends BaseApiServlet {
             Tokeninfo tokenInfo = oauth2.tokeninfo().setAccessToken(accessToken).execute();
 
             if (tokenInfo.getIssuedTo().equals(SERVICE_CLIENT_ID)) {
+                String filePath = "suite_result/2019/04/06/132343.bin";
                 Key<TestSuiteFileEntity> testSuiteFileParent =
-                        Key.create(TestSuiteFileEntity.class, "suite_result/2019/04/06/132343.bin");
+                        Key.create(TestSuiteFileEntity.class, filePath);
+                TestSuiteFileEntity newTestSuiteFileEntity = new TestSuiteFileEntity(filePath);
                 TestSuiteResultEntity testSuiteResultEntity =
                         new TestSuiteResultEntity(
                                 testSuiteFileParent,
@@ -114,7 +116,7 @@ public class TestSuiteResultRestServlet extends BaseApiServlet {
                                 testSuiteResultMessage.getPassedTestCaseCount(),
                                 testSuiteResultMessage.getFailedTestCaseCount());
 
-                testSuiteResultEntity.save();
+                testSuiteResultEntity.save(newTestSuiteFileEntity);
                 resultMap.put("result", "successfully saved!");
             } else {
                 logger.log(Level.WARNING, "service_client_id didn't match!");

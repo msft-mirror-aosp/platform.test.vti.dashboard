@@ -16,77 +16,161 @@
 
 package com.android.vts.api;
 
+import com.android.vts.entity.ApiCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
-import com.android.vts.entity.TestSuiteFileEntity;
-import com.android.vts.entity.TestSuiteResultEntity;
-import com.android.vts.proto.TestSuiteResultMessageProto.TestSuiteResultMessage;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson.JacksonFactory;
-import com.google.api.services.oauth2.Oauth2;
-import com.google.api.services.oauth2.model.Tokeninfo;
+import com.android.vts.entity.TestPlanRunEntity;
 import com.google.gson.Gson;
 import com.googlecode.objectify.Key;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.codec.binary.Base64;
 
-/**
- * REST endpoint for posting test suite data to the Dashboard.
- */
+import static com.googlecode.objectify.ObjectifyService.ofy;
+
+/** REST endpoint for posting test suite data to the Dashboard. */
 public class CoverageRestServlet extends BaseApiServlet {
 
-  private static final Logger logger =
-      Logger.getLogger(CoverageRestServlet.class.getName());
+    private static final Logger logger = Logger.getLogger(CoverageRestServlet.class.getName());
 
-  @Override
-  public void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String pathInfo = request.getPathInfo();
+        String json = "";
+        if (Objects.nonNull(pathInfo)) {
+            if (pathInfo.equalsIgnoreCase("/api/data")) {
+                String key = request.getParameter("key");
+                json = apiCoverageData(key);
+            } else {
+                json = "{error: 'true', message: 'unexpected path!!!'}";
+                logger.log(Level.INFO, "Path Info => " + pathInfo);
+                logger.log(Level.WARNING, "Unknown path access!");
+            }
+        } else {
+            json = "{error: 'true', message: 'the path info is not existed!!!'}";
+        }
 
-    String cmd = request.getParameter("cmd");
-    String coverageId = request.getParameter("coverageId");
-    String testName = request.getParameter("testName");
-    String testRunId = request.getParameter("testRunId");
-
-    Boolean isIgnored = false;
-    if (cmd.equals("disable")) {
-      isIgnored = true;
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(json);
     }
-    CoverageEntity coverageEntity = CoverageEntity.findById(testName, testRunId, coverageId);
-    coverageEntity.setIsIgnored(isIgnored);
-    coverageEntity.save();
 
-    TestCoverageStatusEntity testCoverageStatusEntity = TestCoverageStatusEntity.findById(testName);
-    Long newCoveredLineCount =
-        cmd.equals("disable") ? testCoverageStatusEntity.getUpdatedCoveredLineCount()
-            - coverageEntity.getCoveredCount()
-            : testCoverageStatusEntity.getUpdatedCoveredLineCount() + coverageEntity
-                .getCoveredCount();
-    Long newTotalLineCount =
-        cmd.equals("disable") ? testCoverageStatusEntity.getUpdatedTotalLineCount() - coverageEntity
-            .getTotalCount()
-            : testCoverageStatusEntity.getUpdatedTotalLineCount() + coverageEntity.getTotalCount();
-    testCoverageStatusEntity.setUpdatedCoveredLineCount(newCoveredLineCount);
-    testCoverageStatusEntity.setUpdatedTotalLineCount(newTotalLineCount);
-    testCoverageStatusEntity.save();
+    private String apiCoverageData(String key) {
+        ApiCoverageEntity apiCoverageEntity = ApiCoverageEntity.getByUrlSafeKey(key);
+        String apiCoverageEntityJson = new Gson().toJson(apiCoverageEntity);
+        return apiCoverageEntityJson;
+    }
 
-    String json = new Gson().toJson("Success!");
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType("application/json");
-    response.setCharacterEncoding("UTF-8");
-    response.getWriter().write(json);
-  }
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        String pathInfo = request.getPathInfo();
+        String json = "";
+        if (Objects.nonNull(pathInfo)) {
+            if (pathInfo.equalsIgnoreCase("/api/data")) {
+                String cmd = request.getParameter("cmd");
+                String coverageId = request.getParameter("coverageId");
+                String testName = request.getParameter("testName");
+                String testRunId = request.getParameter("testRunId");
+                json = postCoverageData(cmd, coverageId, testName, testRunId);
+            } else if (pathInfo.equalsIgnoreCase("/api/sum")) {
+                String urlSafeKey = request.getParameter("urlSafeKey");
+                json = postCoverageDataSum(urlSafeKey);
+            } else {
+                json = "{error: 'true', message: 'unexpected path!!!'}";
+            }
+        } else {
+            json = "{error: 'true', message: 'the path info is not existed!!!'}";
+        }
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(json);
+    }
+
+    private String postCoverageDataSum(String urlSafeKey) {
+        List<List<String>> allHalApiList = new ArrayList();
+        List<List<String>> allCoveredHalApiList = new ArrayList();
+
+        Key<TestPlanRunEntity> key = Key.create(urlSafeKey);
+        TestPlanRunEntity testPlanRunEntity = ofy().load().key(key).now();
+
+        for (Key testRunKey : testPlanRunEntity.getTestRuns()) {
+            List<ApiCoverageEntity> apiCoverageEntityList =
+                    ofy().load().type(ApiCoverageEntity.class).ancestor(testRunKey).list();
+            for (ApiCoverageEntity apiCoverageEntity : apiCoverageEntityList) {
+                allHalApiList.add(apiCoverageEntity.getHalApi());
+                allCoveredHalApiList.add(apiCoverageEntity.getCoveredHalApi());
+            }
+        }
+        long totalHalApiNum = allHalApiList.stream().flatMap(Collection::stream).distinct().count();
+        long totalCoveredHalApiNum =
+                allCoveredHalApiList.stream().flatMap(Collection::stream).distinct().count();
+        testPlanRunEntity.setTotalApiCount(totalHalApiNum);
+        testPlanRunEntity.setCoveredApiCount(totalCoveredHalApiNum);
+        testPlanRunEntity.save();
+
+        Map<String, Long> halApiNumMap =
+                new HashMap<String, Long>() {
+                    {
+                        put("totalHalApiNum", totalHalApiNum);
+                        put("totalCoveredHalApiNum", totalCoveredHalApiNum);
+                    }
+                };
+        String json = new Gson().toJson(halApiNumMap);
+        return json;
+    }
+
+    /**
+     * The API to ignore the irrelevant code for calculating ratio
+     *
+     * @param cmd disable or enable command to ignore the code.
+     * @param coverageId the datastore ID for code coverage.
+     * @param testName the test name.
+     * @param testRunId the test run ID from datastore.
+     * @return success json.
+     */
+    private String postCoverageData(
+            String cmd, String coverageId, String testName, String testRunId) {
+
+        Boolean isIgnored = false;
+        if (cmd.equals("disable")) {
+            isIgnored = true;
+        }
+        CoverageEntity coverageEntity = CoverageEntity.findById(testName, testRunId, coverageId);
+        coverageEntity.setIsIgnored(isIgnored);
+        coverageEntity.save();
+
+        TestCoverageStatusEntity testCoverageStatusEntity =
+                TestCoverageStatusEntity.findById(testName);
+        Long newCoveredLineCount =
+                cmd.equals("disable")
+                        ? testCoverageStatusEntity.getUpdatedCoveredLineCount()
+                                - coverageEntity.getCoveredCount()
+                        : testCoverageStatusEntity.getUpdatedCoveredLineCount()
+                                + coverageEntity.getCoveredCount();
+        Long newTotalLineCount =
+                cmd.equals("disable")
+                        ? testCoverageStatusEntity.getUpdatedTotalLineCount()
+                                - coverageEntity.getTotalCount()
+                        : testCoverageStatusEntity.getUpdatedTotalLineCount()
+                                + coverageEntity.getTotalCount();
+        testCoverageStatusEntity.setUpdatedCoveredLineCount(newCoveredLineCount);
+        testCoverageStatusEntity.setUpdatedTotalLineCount(newTotalLineCount);
+        testCoverageStatusEntity.save();
+
+        String json = new Gson().toJson("Success!");
+        return json;
+    }
 }

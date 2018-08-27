@@ -264,7 +264,7 @@
         var total = metadata.testRun.totalApiCount;
         var apiCoverage = ('API Coverage: ' + covered + '/' + total);
         createClickableIndicator(
-            div, apiCoverage, 'yellow grey-text',
+            div, apiCoverage, 'orange',
             function (evt) {
               $('#apiCoverageModal').data("urlSafeKeyList", metadata.testRun.apiCoverageKeyList);
               $('#apiCoverageModal').modal('open');
