@@ -391,6 +391,16 @@ public class TestSuiteResultEntity {
         return deviceName;
     }
 
+    public String getScreenResultLogPath() {
+        String gcsBucketName = systemConfigProp.getProperty("gcs.bucketName");
+        return resultPath.replace("gs://" + gcsBucketName + "/", "");
+    }
+
+    public String getScreenInfraLogPath() {
+        String gcsInfraLogBucketName = systemConfigProp.getProperty("gcs.infraLogBucketName");
+        return infraLogPath.replace("gs://" + gcsInfraLogBucketName + "/", "");
+    }
+
     private String getNormalizedVersion(String fingerprint) {
         Map<String, Pattern> partternMap =
                 new HashMap<String, Pattern>() {
