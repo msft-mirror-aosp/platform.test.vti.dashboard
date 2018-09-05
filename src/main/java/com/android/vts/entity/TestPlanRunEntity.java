@@ -186,13 +186,11 @@ public class TestPlanRunEntity implements Serializable {
 
     /** Add a task to calculate the total number of coverage API */
     public void addCoverageApiTask() {
-        if (this.totalApiCount > 0) {
-            Queue queue = QueueFactory.getQueue(QUEUE_NAME);
-            queue.add(
-                    TaskOptions.Builder.withUrl(COVERAGE_API_URL)
-                            .param("urlSafeKey", String.valueOf(this.getUrlSafeKey()))
-                            .method(TaskOptions.Method.POST));
-        }
+        Queue queue = QueueFactory.getQueue(QUEUE_NAME);
+        queue.add(
+                TaskOptions.Builder.withUrl(COVERAGE_API_URL)
+                        .param("urlSafeKey", String.valueOf(this.getUrlSafeKey()))
+                        .method(TaskOptions.Method.POST));
     }
 
     /**

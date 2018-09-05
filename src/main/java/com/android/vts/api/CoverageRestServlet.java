@@ -117,9 +117,13 @@ public class CoverageRestServlet extends BaseApiServlet {
         long totalHalApiNum = allHalApiList.stream().flatMap(Collection::stream).distinct().count();
         long totalCoveredHalApiNum =
                 allCoveredHalApiList.stream().flatMap(Collection::stream).distinct().count();
-        testPlanRunEntity.setTotalApiCount(totalHalApiNum);
-        testPlanRunEntity.setCoveredApiCount(totalCoveredHalApiNum);
-        testPlanRunEntity.save();
+        if (totalHalApiNum > 0) {
+            testPlanRunEntity.setTotalApiCount(totalHalApiNum);
+            if (totalCoveredHalApiNum > 0) {
+                testPlanRunEntity.setCoveredApiCount(totalCoveredHalApiNum);
+            }
+            testPlanRunEntity.save();
+        }
 
         Map<String, Long> halApiNumMap =
                 new HashMap<String, Long>() {
