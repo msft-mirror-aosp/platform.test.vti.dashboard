@@ -77,7 +77,7 @@ public class VtsInactivityJobServlet extends HttpServlet {
         // After 7 full days have passed, notifications will no longer be sent (i.e. the
         // test is assumed to be deprecated).
         if (diff >= TimeUnit.DAYS.toMicros(1) && diff < TimeUnit.DAYS.toMicros(8)) {
-            String uploadTimeString = TimeUtil.getDateTimeString(lastRunTime);
+            String uploadTimeString = TimeUtil.getDateTimeZoneString(lastRunTime);
             String subject = "Warning! Inactive test: " + test.getTestName();
             String body =
                     "Hello,<br><br>Test \""

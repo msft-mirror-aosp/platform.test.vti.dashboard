@@ -26,9 +26,11 @@ import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
@@ -75,8 +77,8 @@ public class EmailHelper {
 
         if (testRun != null) {
             sb.append("VTS Build ID: " + testRun.getTestBuildId() + "<br>");
-            sb.append("Start Time: " + TimeUtil.getDateTimeString(testRun.getStartTimestamp()));
-            sb.append("<br>End Time: " + TimeUtil.getDateTimeString(testRun.getEndTimestamp()));
+            sb.append("Start Time: " + TimeUtil.getDateTimeZoneString(testRun.getStartTimestamp()));
+            sb.append("<br>End Time: " + TimeUtil.getDateTimeZoneString(testRun.getEndTimestamp()));
         }
         sb.append(
                 "<br><br>For details, visit the"
@@ -105,11 +107,15 @@ public class EmailHelper {
         }
         for (Entity favorite : datastore.prepare(favoritesQuery).asIterable()) {
             UserFavoriteEntity favoriteEntity = UserFavoriteEntity.fromEntity(favorite);
+            // TODO this logic need to be reexamined thoroughly and improved
             if (favoriteEntity != null
                     && favoriteEntity.user != null
-                    && favoriteEntity.user.getEmail().endsWith(EMAIL_DOMAIN)
                     && !favoriteEntity.muteNotifications) {
-                emailSet.add(favoriteEntity.user.getEmail());
+                Optional<String> userEmail = Optional.of(favoriteEntity.user.getEmail());
+                if (userEmail.isPresent() &&
+                        userEmail.orElse("").endsWith(EMAIL_DOMAIN)) {
+                    emailSet.add(favoriteEntity.user.getEmail());
+                }
             }
         }
         return new ArrayList<>(emailSet);

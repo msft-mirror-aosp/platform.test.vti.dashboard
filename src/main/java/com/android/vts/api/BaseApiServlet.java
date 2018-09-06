@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * REST endpoint for posting test suite data to the Dashboard.
+ * An abstract class to be subclassed to create API Servlet
  */
 public class BaseApiServlet extends HttpServlet {
 

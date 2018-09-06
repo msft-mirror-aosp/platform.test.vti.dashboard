@@ -16,26 +16,16 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
-import com.android.vts.entity.TestRunEntity.TestRunType;
+
 import com.android.vts.proto.VtsReportMessage;
-import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.FilterUtil;
-import com.android.vts.util.TestRunMetadata;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Query;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
-import com.google.cloud.datastore.LongValue;
 import com.google.cloud.datastore.PathElement;
-import com.google.cloud.datastore.QueryResults;
-import com.google.cloud.datastore.StringValue;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.Filter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
@@ -52,29 +42,32 @@ import com.google.visualization.datasource.datatable.ColumnDescription;
 import com.google.visualization.datasource.datatable.DataTable;
 import com.google.visualization.datasource.datatable.TableRow;
 import com.google.visualization.datasource.datatable.value.DateTimeValue;
-import com.google.visualization.datasource.datatable.value.DateValue;
 import com.google.visualization.datasource.datatable.value.NumberValue;
 import com.google.visualization.datasource.datatable.value.ValueType;
+import com.googlecode.objectify.Key;
 import com.ibm.icu.util.GregorianCalendar;
 import com.ibm.icu.util.TimeZone;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.joda.time.DateTime;
+
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /**
  * Represents the servlet that is invoked on loading the coverage overview page.
@@ -148,10 +141,25 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
     }
   }
 
+    private List<Key<TestRunEntity>> getTestCoverageStatusEntityKeyList(
+            List<TestCoverageStatusEntity> testCoverageStatusEntityList) {
+        return testCoverageStatusEntityList.stream()
+                .map(
+                        testCoverageStatusEntity -> {
+                            com.googlecode.objectify.Key testKey =
+                                    com.googlecode.objectify.Key.create(
+                                            TestEntity.class,
+                                            testCoverageStatusEntity.getTestName());
+                            return com.googlecode.objectify.Key.create(
+                                    testKey,
+                                    TestRunEntity.class,
+                                    testCoverageStatusEntity.getUpdatedTimestamp());
+                        })
+                .collect(Collectors.toList());
+    }
+
   private RequestDispatcher getCoverageDispatcher(
       HttpServletRequest request, HttpServletResponse response) {
-
-    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
     String COVERAGE_OVERVIEW_JSP = "WEB-INF/jsp/show_coverage_overview.jsp";
 
@@ -171,70 +179,58 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
       showPresubmit = true;
     }
 
-    Map<String, TestCoverageStatusEntity> testCoverageStatusMap = TestCoverageStatusEntity
-        .getTestCoverageStatusMap();
-
-    List<Key> allTests = TestEntity.getAllTest().stream().map(t -> t.getOldKey())
-        .collect(Collectors.toList());
-
     // Add test names to list
     List<String> resultNames = new ArrayList<>();
     for (VtsReportMessage.TestCaseResult r : VtsReportMessage.TestCaseResult.values()) {
       resultNames.add(r.name());
     }
 
-    List<JsonObject> testRunObjects = new ArrayList<>();
-
-    Query.Filter testFilter =
-        new Query.FilterPredicate(
-            TestRunEntity.HAS_COVERAGE, Query.FilterOperator.EQUAL, true);
-    Query.Filter timeFilter =
-        FilterUtil.getTestTypeFilter(showPresubmit, showPostsubmit, unfiltered);
-
-    if (timeFilter != null) {
-      testFilter = Query.CompositeFilterOperator.and(testFilter, timeFilter);
-    }
     Map<String, String[]> parameterMap = request.getParameterMap();
-    List<Query.Filter> userTestFilters = FilterUtil.getUserTestFilters(parameterMap);
-    userTestFilters.add(0, testFilter);
-    Query.Filter userDeviceFilter = FilterUtil.getUserDeviceFilter(parameterMap);
+
+    List<TestCoverageStatusEntity> testCoverageStatusEntityList =
+            TestCoverageStatusEntity.getAllTestCoverage();
+
+        List<com.googlecode.objectify.Key<TestRunEntity>> testCoverageStatusEntityKeyList =
+                this.getTestCoverageStatusEntityKeyList(testCoverageStatusEntityList);
+
+        Map<Key<TestRunEntity>, TestRunEntity> keyTestRunEntityMap =
+                ofy().load().keys(() -> testCoverageStatusEntityKeyList.iterator());
+
+        List<com.googlecode.objectify.Key<CodeCoverageEntity>> codeCoverageEntityKeyList =
+                new ArrayList<>();
+        Map<Long, TestRunEntity> testRunEntityMap = new HashMap<>();
+        for (Map.Entry<com.googlecode.objectify.Key<TestRunEntity>, TestRunEntity> entry :
+                keyTestRunEntityMap.entrySet()) {
+            com.googlecode.objectify.Key codeCoverageEntityKey =
+                    com.googlecode.objectify.Key.create(
+                            entry.getKey(), CodeCoverageEntity.class, entry.getValue().getId());
+            codeCoverageEntityKeyList.add(codeCoverageEntityKey);
+            testRunEntityMap.put(entry.getValue().getId(), entry.getValue());
+        }
+
+        Map<com.googlecode.objectify.Key<CodeCoverageEntity>, CodeCoverageEntity>
+                keyCodeCoverageEntityMap =
+                        ofy().load().keys(() -> codeCoverageEntityKeyList.iterator());
+
+      Map<Long, CodeCoverageEntity> codeCoverageEntityMap = new HashMap<>();
+        for (Map.Entry<com.googlecode.objectify.Key<CodeCoverageEntity>, CodeCoverageEntity> entry :
+                keyCodeCoverageEntityMap.entrySet()) {
+            codeCoverageEntityMap.put(entry.getValue().getId(), entry.getValue());
+        }
 
     int coveredLines = 0;
     int uncoveredLines = 0;
     int passCount = 0;
     int failCount = 0;
-    for (Key key : allTests) {
-      List<Key> gets =
-          FilterUtil.getMatchingKeys(
-              key,
-              TestRunEntity.KIND,
-              userTestFilters,
-              userDeviceFilter,
-              Query.SortDirection.DESCENDING,
-              1);
-      Map<Key, Entity> entityMap = datastore.get(gets);
-      for (Key entityKey : gets) {
-        if (!entityMap.containsKey(entityKey)) {
-          continue;
-        }
-        TestRunEntity testRunEntity = TestRunEntity.fromEntity(entityMap.get(entityKey));
-        if (testRunEntity == null) {
-          continue;
-        }
+      for (Map.Entry<Long, CodeCoverageEntity> entry : codeCoverageEntityMap.entrySet()) {
+        TestRunEntity testRunEntity = testRunEntityMap.get(entry.getKey());
 
-        // Overwrite the coverage value with newly update value from user decision
-        TestCoverageStatusEntity testCoverageStatusEntity = testCoverageStatusMap
-            .get(key.getName());
-        testRunEntity.setCoveredLineCount(testCoverageStatusEntity.getUpdatedCoveredLineCount());
-        testRunEntity.setTotalLineCount(testCoverageStatusEntity.getUpdatedTotalLineCount());
-        TestRunMetadata metadata = new TestRunMetadata(key.getName(), testRunEntity);
+        CodeCoverageEntity codeCoverageEntity = entry.getValue();
 
-        testRunObjects.add(metadata.toJson());
-        coveredLines += testRunEntity.getCoveredLineCount();
-        uncoveredLines += testRunEntity.getTotalLineCount() - testRunEntity.getCoveredLineCount();
+        coveredLines += codeCoverageEntity.getCoveredLineCount();
+        uncoveredLines += codeCoverageEntity.getTotalLineCount() - codeCoverageEntity.getCoveredLineCount();
         passCount += testRunEntity.getPassCount();
         failCount += testRunEntity.getFailCount();
-      }
     }
 
     FilterUtil.setAttributes(request, parameterMap);
@@ -246,7 +242,8 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
     response.setStatus(HttpServletResponse.SC_OK);
     request.setAttribute("resultNames", resultNames);
     request.setAttribute("resultNamesJson", new Gson().toJson(resultNames));
-    request.setAttribute("testRuns", new Gson().toJson(testRunObjects));
+    request.setAttribute("testRunEntityList", testRunEntityMap.values());
+    request.setAttribute("codeCoverageEntityMap", codeCoverageEntityMap);
     request.setAttribute("coveredLines", new Gson().toJson(coveredLines));
     request.setAttribute("uncoveredLines", new Gson().toJson(uncoveredLines));
     request.setAttribute("testStats", new Gson().toJson(testStats));
@@ -254,8 +251,8 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
     request.setAttribute("unfiltered", unfiltered);
     request.setAttribute("showPresubmit", showPresubmit);
     request.setAttribute("showPostsubmit", showPostsubmit);
-    request.setAttribute("branches", new Gson().toJson(DatastoreHelper.getAllBranches()));
-    request.setAttribute("devices", new Gson().toJson(DatastoreHelper.getAllBuildFlavors()));
+    request.setAttribute("branches", new Gson().toJson(new ArrayList<>())); // DeviceInfoEntity.getAllBranches()
+    request.setAttribute("devices", new Gson().toJson(new ArrayList<>()));  // DeviceInfoEntity.getAllBuildFlavors()
     dispatcher = request.getRequestDispatcher(COVERAGE_OVERVIEW_JSP);
     return dispatcher;
   }
@@ -278,7 +275,7 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
     dataTable.addColumns(cd);
 
     Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.DATE, -30);
+    cal.add(Calendar.MONTH, -6);
     Long startTime = cal.getTime().getTime() * 1000;
     Long endTime = Calendar.getInstance().getTime().getTime() * 1000;
 
@@ -294,79 +291,55 @@ public class ShowCoverageOverviewServlet extends BaseServlet {
             PathElement.of(TestRunEntity.KIND, endTime))
         .newKey(endTime);
 
-    Filter testRunFilter = CompositeFilter.and(
+    Filter codeCoverageFilter = CompositeFilter.and(
         PropertyFilter.lt("__key__", endKey),
-        PropertyFilter.gt("__key__", startKey),
-        PropertyFilter.eq("hasCoverage", true)
+        PropertyFilter.gt("__key__", startKey)
     );
 
-    com.google.cloud.datastore.Query<com.google.cloud.datastore.Entity> testRunQuery =
-        com.google.cloud.datastore.Query
-        .newEntityQueryBuilder()
-        .setKind(TestRunEntity.KIND)
-        .setFilter(testRunFilter)
-        .build();
-
-    List<TestRunEntity> testRunEntityList = new ArrayList<>();
-    QueryResults<com.google.cloud.datastore.Entity> testRunIterator = datastore.run(testRunQuery);
-    while (testRunIterator.hasNext()) {
-      com.google.cloud.datastore.Entity entity = testRunIterator.next();
-
-      Key parentKey = KeyFactory.createKey(TestEntity.KIND, entity.getString("testName"));
-
-      List<LongValue> testCaseIdList = entity.getList("testCaseIds");
-      List<StringValue> linkList = new ArrayList<>();
-      if (entity.contains("logLinks")) {
-        linkList = entity.getList("logLinks");
-      }
-      TestRunEntity testRunEntity = new TestRunEntity(
-          KeyFactory.createKey(parentKey, TestRunEntity.KIND, entity.getLong("startTimestamp")),
-          TestRunType.fromNumber(Long.valueOf(entity.getLong("type")).intValue()),
-          entity.getLong("startTimestamp"),
-          entity.getLong("endTimestamp"),
-          entity.getString("testBuildId"),
-          entity.getString("hostName"),
-          entity.getLong("passCount"),
-          entity.getLong("failCount"),
-          testCaseIdList.stream().map(value -> value.get()).collect(Collectors.toList()),
-          linkList.stream().map(v -> v.get()).collect(Collectors.toList()),
-          entity.getLong("coveredLineCount"),
-          entity.getLong("totalLineCount")
-      );
-      testRunEntityList.add(testRunEntity);
-    }
+    List<CodeCoverageEntity> codeCoverageEntityList = ofy().load()
+            .type(CodeCoverageEntity.class)
+            .filter(codeCoverageFilter)
+            .limit(10)
+            .list();
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd");
-    Map<String, List<TestRunEntity>> testRunEntityListMap = testRunEntityList.stream().collect(
-        Collectors.groupingBy(v -> dateTimeFormatter.print(v.getStartTimestamp() / 1000))
+    Map<String, List<CodeCoverageEntity>> codeCoverageEntityListMap = codeCoverageEntityList.stream().collect(
+        Collectors.groupingBy(v -> dateTimeFormatter.print(v.getId() / 1000))
     );
 
-    testRunEntityListMap.forEach((key, entityList) -> {
-      if (dataTable.getRows().size() < 10) {
-        GregorianCalendar gCal = new GregorianCalendar();
-        gCal.setTimeZone(TimeZone.getTimeZone("GMT"));
-        gCal.setTimeInMillis(entityList.get(0).getStartTimestamp() / 1000);
+        codeCoverageEntityListMap.forEach(
+                (key, entityList) -> {
+                    GregorianCalendar gCal = new GregorianCalendar();
+                    gCal.setTimeZone(TimeZone.getTimeZone("GMT"));
+                    gCal.setTimeInMillis(entityList.get(0).getId() / 1000);
 
-        Long sumCoveredLine = entityList.stream().mapToLong(val -> val.getCoveredLineCount()).sum();
-        Long sumTotalLine = entityList.stream().mapToLong(val -> val.getTotalLineCount()).sum();
-        BigDecimal coveredLineNum = new BigDecimal(sumCoveredLine);
-        BigDecimal totalLineNum = new BigDecimal(sumTotalLine);
-        BigDecimal totalPercent = new BigDecimal(100);
-        float percentage = coveredLineNum.multiply(totalPercent).divide(totalLineNum, 2,
-            RoundingMode.HALF_DOWN).floatValue();
+                    Long sumCoveredLine =
+                            entityList.stream().mapToLong(val -> val.getCoveredLineCount()).sum();
+                    Long sumTotalLine =
+                            entityList.stream().mapToLong(val -> val.getTotalLineCount()).sum();
+                    float percentage = 0;
+                    if (sumTotalLine > 0) {
+                        BigDecimal coveredLineNum = new BigDecimal(sumCoveredLine);
+                        BigDecimal totalLineNum = new BigDecimal(sumTotalLine);
+                        BigDecimal totalPercent = new BigDecimal(100);
+                        percentage =
+                                coveredLineNum
+                                        .multiply(totalPercent)
+                                        .divide(totalLineNum, 2, RoundingMode.HALF_DOWN)
+                                        .floatValue();
+                    }
 
-        TableRow tableRow = new TableRow();
-        tableRow.addCell(new DateTimeValue(gCal));
-        tableRow.addCell(new NumberValue(sumCoveredLine));
-        tableRow.addCell(new NumberValue(sumTotalLine));
-        tableRow.addCell(new NumberValue(percentage));
-        try {
-          dataTable.addRow(tableRow);
-        } catch (TypeMismatchException e) {
-          logger.log(Level.WARNING, "Invalid type! ");
-        }
-      }
-    });
+                    TableRow tableRow = new TableRow();
+                    tableRow.addCell(new DateTimeValue(gCal));
+                    tableRow.addCell(new NumberValue(sumCoveredLine));
+                    tableRow.addCell(new NumberValue(sumTotalLine));
+                    tableRow.addCell(new NumberValue(percentage));
+                    try {
+                        dataTable.addRow(tableRow);
+                    } catch (TypeMismatchException e) {
+                        logger.log(Level.WARNING, "Invalid type! ");
+                    }
+                });
 
     return dataTable;
   }
