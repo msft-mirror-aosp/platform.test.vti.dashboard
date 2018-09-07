@@ -34,6 +34,7 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -41,7 +42,14 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -57,8 +65,10 @@ public class ShowGcsLogServlet extends BaseServlet {
 
     /** Google Cloud Storage project's key file to access the storage */
     private static String GCS_KEY_FILE;
-    /** Google Cloud Storage project's default bucket name for vtslab log files */
+    /** Google Cloud Storage project's default bucket name for vtslab test result files */
     private static String GCS_BUCKET_NAME;
+    /** Google Cloud Storage project's default bucket name for vtslab infra log files */
+    private static String GCS_INFRA_LOG_BUCKET_NAME;
 
     /**
      * This is the key file to access vtslab-gcs project. It will allow the dashboard to have a full
@@ -72,8 +82,11 @@ public class ShowGcsLogServlet extends BaseServlet {
     /** This is the instance of App Engine memcache service java library */
     private MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
 
-    /** GCS Bucket instance */
+    /** GCS Test Report Bucket instance */
     private Bucket vtsReportBucket;
+
+    /** GCS Infra Log Bucket instance */
+    private Bucket vtsInfraLogBucket;
 
     @Override
     public void init(ServletConfig cfg) throws ServletException {
@@ -81,14 +94,35 @@ public class ShowGcsLogServlet extends BaseServlet {
 
         GCS_KEY_FILE = systemConfigProp.getProperty("gcs.keyFile");
         GCS_BUCKET_NAME = systemConfigProp.getProperty("gcs.bucketName");
+        GCS_INFRA_LOG_BUCKET_NAME = systemConfigProp.getProperty("gcs.infraLogBucketName");
 
-        this.keyFileInputStream =
-                this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
+        String keyFilePath = "keys/" + GCS_KEY_FILE;
 
-        Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
-        if (optionalStorage.isPresent()) {
-            this.storage = optionalStorage.get();
+        byte[] keyFileByteArray = new byte[0];
+        try {
+            keyFileByteArray =
+                    IOUtils.toByteArray(
+                            this.getClass().getClassLoader().getResourceAsStream(keyFilePath));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        this.keyFileInputStream = new ByteArrayInputStream(keyFileByteArray);
+        InputStream vtsReportInputStream = new ByteArrayInputStream(keyFileByteArray);
+        InputStream vtsInfraInputStream = new ByteArrayInputStream(keyFileByteArray);
+
+        Optional<Storage> optionalVtsReportStorage = GcsHelper.getStorage(vtsReportInputStream);
+        if (optionalVtsReportStorage.isPresent()) {
+            this.storage = optionalVtsReportStorage.get();
             this.vtsReportBucket = storage.get(GCS_BUCKET_NAME);
+        } else {
+            logger.log(Level.SEVERE, "Error on getting storage instance!");
+            throw new ServletException("Creating storage instance exception!");
+        }
+
+        Optional<Storage> optionalVtsInfraStorage = GcsHelper.getStorage(vtsInfraInputStream);
+        if (optionalVtsInfraStorage.isPresent()) {
+            this.storage = optionalVtsInfraStorage.get();
+            this.vtsInfraLogBucket = storage.get(GCS_INFRA_LOG_BUCKET_NAME);
         } else {
             logger.log(Level.SEVERE, "Error on getting storage instance!");
             throw new ServletException("Creating storage instance exception!");
@@ -138,15 +172,26 @@ public class ShowGcsLogServlet extends BaseServlet {
         String file = request.getParameter("file") == null ? "/" : request.getParameter("file");
         Path filePathInfo = Paths.get(file);
 
-        Blob blobFile = vtsReportBucket.get(filePathInfo.toString());
+        Blob blobFile = vtsInfraLogBucket.get(filePathInfo.toString());
 
-        response.setContentType("application/octet-stream");
-        response.setContentLength(blobFile.getSize().intValue());
-        response.setHeader(
-                "Content-Disposition",
-                "attachment; filename=\"" + filePathInfo.getFileName() + "\"");
+        if (blobFile.exists()) {
+            response.setContentType("application/octet-stream");
+            response.setContentLength(blobFile.getSize().intValue());
+            response.setHeader(
+                    "Content-Disposition",
+                    "attachment; filename=\"" + filePathInfo.getFileName() + "\"");
 
-        response.getOutputStream().write(blobFile.getContent());
+            response.getOutputStream().write(blobFile.getContent());
+        } else {
+            request.setAttribute("error_title", "Infra Log File Not Found");
+            request.setAttribute("error_message", "Please contact the administrator!");
+            RequestDispatcher dispatcher = request.getRequestDispatcher(ERROR_MESSAGE_JSP);
+            try {
+                dispatcher.forward(request, response);
+            } catch (ServletException e) {
+                logger.log(Level.SEVERE, "Servlet Excpetion caught : ", e);
+            }
+        }
     }
 
     private void defaultHandler(HttpServletRequest request, HttpServletResponse response)

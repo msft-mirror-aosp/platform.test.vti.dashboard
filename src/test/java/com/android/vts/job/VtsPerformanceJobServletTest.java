@@ -45,7 +45,7 @@ public class VtsPerformanceJobServletTest {
             new LocalServiceTestHelper(new LocalDatastoreServiceTestConfig());
 
     private static final String LABEL = "testLabel";
-    private static final String ROOT = "src/test/res/servlet";
+    private static final String ROOT = "src/test/resources/servlet";
     private static final String[] LABELS = new String[] {"label1", "label2", "label3"};
     private static final long[] HIGH_VALS = new long[] {10, 20, 30};
     private static final long[] LOW_VALS = new long[] {1, 2, 3};
