@@ -4,7 +4,6 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 
-import javax.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
@@ -22,6 +21,9 @@ public class GcsHelper {
         GCS_PROJECT_ID = gcsProjectId;
     }
 
+    /**
+     * Get GCS storage from Key file input stream parameter.
+     */
     public static Optional<Storage> getStorage(InputStream keyFileInputStream) {
 
         if (keyFileInputStream == null) {
