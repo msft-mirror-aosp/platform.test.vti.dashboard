@@ -159,7 +159,7 @@
         <div class='row'>
             <div class='col s12'>
 
-                <ul class="tabs">
+                <ul class="tabs z-depth-1">
                     <li class="tab col s4" id="totTabLink">
                         <a class="<c:out value="${testCategoryType == '1' ? 'active' : 'inactive'}"></c:out>" href="${requestScope['javax.servlet.forward.servlet_path']}?plan=${plan}&type=${testType}&testCategoryType=1">TOT</a>
                     </li>
@@ -242,15 +242,13 @@
                             <div class="col s12">
                                 <span class="suite-test-run-metadata">
                                     <b>Result Log Path: </b>
-                                    <c:set var="resultLogPath" value="${fn:replace(testSuiteResultEntity.resultPath, 'gs://vts-report/', '')}"/>
-                                    <a href="show_gcs_log?path=${resultLogPath}">
-                                        <c:out value="${resultLogPath}"></c:out>
+                                    <a href="show_gcs_log?path=${testSuiteResultEntity.screenResultLogPath}">
+                                        <c:out value="${testSuiteResultEntity.screenResultLogPath}"></c:out>
                                     </a>
                                     <br>
                                     <b>Infra Log Path: </b>
-                                    <c:set var="infraLogPath" value="${fn:replace(testSuiteResultEntity.infraLogPath, 'gs://vts-report/', '')}"/>
-                                    <a href="show_gcs_log/download?file=${infraLogPath}">
-                                        <c:out value="${infraLogPath}"></c:out>
+                                    <a href="show_gcs_log/download?file=${testSuiteResultEntity.screenInfraLogPath}">
+                                        <c:out value="${testSuiteResultEntity.screenInfraLogPath}"></c:out>
                                     </a>
                                     <br>
                                 </span>
