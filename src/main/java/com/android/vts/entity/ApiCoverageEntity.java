@@ -128,6 +128,22 @@ public class ApiCoverageEntity {
   }
 
   /**
+   * Constructor function for ApiCoverageEntity Class with objectify Key.
+   */
+  public ApiCoverageEntity(Key testRunKey, String halPackageName,
+                           int halVersionMajor, int halVersionMinor, String halInterfaceName,
+                           List<String> halApi, List<String> coveredHalApi) {
+    this.parent = testRunKey;
+
+    this.halPackageName = halPackageName;
+    this.halMajorVersion = halVersionMajor;
+    this.halMinorVersion = halVersionMinor;
+    this.halInterfaceName = halInterfaceName;
+    this.halApi = halApi;
+    this.coveredHalApi = coveredHalApi;
+  }
+
+  /**
    * Get objectify Key from datastore Key type
    */
   private Key getParentKey(com.google.appengine.api.datastore.Key testRunKey) {
