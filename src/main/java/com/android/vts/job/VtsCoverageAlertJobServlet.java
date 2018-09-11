@@ -18,6 +18,7 @@ package com.android.vts.job;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
 import com.android.vts.entity.TestRunEntity;
@@ -57,7 +58,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Coverage notification job.
  */
-public class VtsCoverageAlertJobServlet extends HttpServlet {
+public class VtsCoverageAlertJobServlet extends BaseJobServlet {
 
   private static final String COVERAGE_ALERT_URL = "/task/vts_coverage_job";
   protected static final Logger logger =
@@ -115,14 +116,18 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
     }
 
     TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
-    if (testRunEntity == null || !testRunEntity.isHasCoverage()) {
+    if (testRunEntity == null || !testRunEntity.hasCodeCoverage()) {
       return null;
     }
-    if (testRunEntity.getTotalLineCount() <= 0 || testRunEntity.getCoveredLineCount() < 0) {
-      coveragePct = 0;
+    CodeCoverageEntity codeCoverageEntity = testRunEntity.getCodeCoverageEntity();
+
+    if (codeCoverageEntity.getTotalLineCount() <= 0
+            || codeCoverageEntity.getCoveredLineCount() < 0) {
+        coveragePct = 0;
     } else {
-      coveragePct =
-          ((double) testRunEntity.getCoveredLineCount()) / testRunEntity.getTotalLineCount();
+        coveragePct =
+                ((double) codeCoverageEntity.getCoveredLineCount())
+                        / codeCoverageEntity.getTotalLineCount();
     }
 
     Set<String> buildIdList = new HashSet<>();
@@ -265,8 +270,8 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
     return new TestCoverageStatusEntity(
         testName,
         testRunEntity.getStartTimestamp(),
-        testRunEntity.getCoveredLineCount(),
-        testRunEntity.getTotalLineCount());
+        codeCoverageEntity.getCoveredLineCount(),
+        codeCoverageEntity.getTotalLineCount());
   }
 
   /**
