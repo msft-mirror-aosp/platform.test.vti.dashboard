@@ -21,81 +21,47 @@ import static org.mockito.Mockito.when;
 import static com.googlecode.objectify.ObjectifyService.factory;
 
 import com.android.vts.entity.ApiCoverageEntity;
+import com.android.vts.entity.TestEntity;
+import com.android.vts.entity.TestRunEntity;
 import com.android.vts.util.ObjectifyTestBase;
-import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
-import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
-import com.googlecode.objectify.ObjectifyFactory;
-import com.googlecode.objectify.ObjectifyService;
-import com.googlecode.objectify.util.Closeable;
+import com.googlecode.objectify.Key;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import java.util.Arrays;
-import java.util.Properties;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 public class CoverageRestServletTest extends ObjectifyTestBase {
 
-    private final LocalServiceTestHelper helper =
-            new LocalServiceTestHelper(new LocalDatastoreServiceTestConfig());
-
-    protected Closeable session;
-
     private Gson gson;
 
-    @Mock HttpServletRequest request;
+    @Mock
+    private HttpServletRequest request;
 
-    @Mock HttpServletResponse response;
+    @Mock
+    private HttpServletResponse response;
 
-    @BeforeClass
-    public static void setUpBeforeClass() {}
-
-    @Before
-    public void setUp() throws Exception {
-        InputStream configIs =
-                this.getClass().getClassLoader().getResourceAsStream("config.properties");
-
-        Properties prop = new Properties();
-        prop.load(configIs);
-
+    /** It be executed before each @Test method */
+    @BeforeEach
+    void setUpExtra() {
         gson = new Gson();
 
-        MockitoAnnotations.initMocks(this);
-
-        this.helper.setUp();
-
-        Datastore datastore =
-                DatastoreOptions.newBuilder()
-                        .setProjectId(prop.getProperty("testProjectID"))
-                        .build()
-                        .getService();
-
-        ObjectifyService.init(new ObjectifyFactory(datastore));
-        ObjectifyService.register(ApiCoverageEntity.class);
-        ObjectifyService.begin();
-
-        this.session = ObjectifyService.begin();
-    }
-
-    @After
-    public void tearDown() {
-        this.session.close();
-        this.helper.tearDown();
+        /********
+        System.getenv().forEach((k,v) -> {
+            System.out.println("key => " + k);
+            System.out.println("value => " + v);
+        });
+         *********/
     }
 
     @Test
@@ -103,14 +69,26 @@ public class CoverageRestServletTest extends ObjectifyTestBase {
 
         factory().register(ApiCoverageEntity.class);
 
+        List<String> halApi = Arrays.asList("allocate", "dumpDebugInfo");
+        List<String> coveredHalApi = Arrays.asList("allocate", "dumpDebugInfo");
+
+        Key testParentKey = Key.create(TestEntity.class, "test1");
+        Key testRunParentKey = Key.create(testParentKey, TestRunEntity.class, 1);
+        ApiCoverageEntity apiCoverageEntity =
+                new ApiCoverageEntity(
+                        testRunParentKey,
+                        "android.hardware.graphics.allocator",
+                        4,
+                        1,
+                        "IAllocator",
+                        halApi,
+                        coveredHalApi);
+        apiCoverageEntity.save();
+
+        String key = apiCoverageEntity.getUrlSafeKey();
+
         when(request.getPathInfo()).thenReturn("/api/data");
 
-        String key =
-                "partition_id+%7B%0A++project_id%3A+%22android-vts-staging%22%0A%7D%0Apath+%7B%0A"
-                        + "++kind%3A+%22Test%22%0A++name%3A+%22VtsHalGraphicsMapperV2_0TargetProfiling"
-                        + "%22%0A%7D%0Apath+%7B%0A++kind%3A+%22TestRun%22%0A++id%3A+1534552828906226%0A%7D%0A"
-                        + "path+%7B%0A++kind%3A+%22ApiCoverage%22%0A"
-                        + "++name%3A+%221f529291-f1c3-4d9b-ba60-48525fe7c376%22%0A%7D%0A";
         when(request.getParameter("key")).thenReturn(key);
 
         StringWriter sw = new StringWriter();
@@ -124,11 +102,11 @@ public class CoverageRestServletTest extends ObjectifyTestBase {
 
         LinkedTreeMap resultMap = gson.fromJson(result, LinkedTreeMap.class);
 
-        assertEquals(resultMap.get("id"), "1f529291-f1c3-4d9b-ba60-48525fe7c376");
         assertEquals(resultMap.get("halInterfaceName"), "IAllocator");
         assertEquals(resultMap.get("halPackageName"), "android.hardware.graphics.allocator");
         assertEquals(resultMap.get("halApi"), Arrays.asList("allocate", "dumpDebugInfo"));
         assertEquals(resultMap.get("coveredHalApi"), Arrays.asList("allocate", "dumpDebugInfo"));
 
     }
+
 }
