@@ -85,9 +85,9 @@ public class ShowTreeServlet extends BaseServlet {
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     TestRunDetails details = new TestRunDetails();
     List<Key> gets = new ArrayList<>();
-    for (long testCaseId : metadata.testRun.getTestCaseIds()) {
-      gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
-    }
+        for (long testCaseId : metadata.testRun.getTestCaseIds()) {
+            gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
+        }
     Map<Key, Entity> entityMap = datastore.get(gets);
     for (int i = 0; i < 1; i++) {
       for (Key key : entityMap.keySet()) {

@@ -16,6 +16,7 @@
 
 package com.android.vts.servlet;
 
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
