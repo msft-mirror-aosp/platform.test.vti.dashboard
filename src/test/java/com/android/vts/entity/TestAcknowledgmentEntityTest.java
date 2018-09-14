@@ -16,8 +16,6 @@
 
 package com.android.vts.entity;
 
-import static org.junit.Assert.*;
-
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
