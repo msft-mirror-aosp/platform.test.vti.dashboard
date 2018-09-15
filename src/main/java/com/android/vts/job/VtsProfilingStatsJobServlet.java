@@ -56,7 +56,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /** Represents the notifications service which is automatically called on a fixed schedule. */
-public class VtsProfilingStatsJobServlet extends HttpServlet {
+public class VtsProfilingStatsJobServlet extends BaseJobServlet {
     protected static final Logger logger =
             Logger.getLogger(VtsProfilingStatsJobServlet.class.getName());
     private static final String HIDL_HAL_OPTION = "hidl_hal_mode";
