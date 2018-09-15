@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /** Suite Test result file processing job. */
-public class VtsSuiteTestJobServlet extends HttpServlet {
+public class VtsSuiteTestJobServlet extends BaseJobServlet {
 
     private static final String SUITE_TEST_URL = "/cron/test_suite_report_gcs_monitor";
 

@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /** Test inactivity notification job. */
-public class VtsInactivityJobServlet extends HttpServlet {
+public class VtsInactivityJobServlet extends BaseJobServlet {
     private static final String INACTIVITY_ALERT_URL = "/cron/vts_inactivity_job";
     protected static final Logger logger =
             Logger.getLogger(VtsInactivityJobServlet.class.getName());
