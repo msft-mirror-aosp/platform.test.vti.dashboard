@@ -59,13 +59,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang.StringUtils;
 
 /** Represents the notifications service which is automatically called on a fixed schedule. */
-public class VtsAlertJobServlet extends HttpServlet {
+public class VtsAlertJobServlet extends BaseJobServlet {
     private static final String ALERT_JOB_URL = "/task/vts_alert_job";
     protected static final Logger logger = Logger.getLogger(VtsAlertJobServlet.class.getName());
     protected static final int MAX_RUN_COUNT = 1000; // maximum number of runs to query for
