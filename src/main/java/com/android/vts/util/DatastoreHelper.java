@@ -13,9 +13,11 @@
  */
 package com.android.vts.util;
 
+
 import com.android.vts.entity.ApiCoverageEntity;
 import com.android.vts.entity.BranchEntity;
 import com.android.vts.entity.BuildTargetEntity;
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
@@ -223,6 +225,7 @@ public class DatastoreHelper {
         String systraceLink = testCase.getSystraceList().get(0).getUrl(0).toStringUtf8();
         links.add(systraceLink);
       }
+
       // Process coverage data for test case
       for (CoverageReportMessage coverage : testCase.getCoverageList()) {
         CoverageEntity coverageEntity =
@@ -270,7 +273,7 @@ public class DatastoreHelper {
     }
 
     // Process device information
-    TestRunType testRunType = null;
+    long testRunType = 0;
     for (AndroidDeviceInfoMessage device : report.getDeviceInfoList()) {
       DeviceInfoEntity deviceInfoEntity =
           DeviceInfoEntity.fromDeviceInfoMessage(testRunKey, device);
@@ -279,10 +282,10 @@ public class DatastoreHelper {
       } else {
         // Run type on devices must be the same, else set to OTHER
         TestRunType runType = TestRunType.fromBuildId(deviceInfoEntity.getBuildId());
-        if (testRunType == null) {
-          testRunType = runType;
-        } else if (runType != testRunType) {
-          testRunType = TestRunType.OTHER;
+        if (runType == null) {
+          testRunType = TestRunType.OTHER.getNumber();
+        } else {
+          testRunType = runType.getNumber();
         }
         testEntityList.add(deviceInfoEntity.toEntity());
         BuildTargetEntity target = new BuildTargetEntity(deviceInfoEntity.getBuildFlavor());
@@ -297,10 +300,10 @@ public class DatastoreHelper {
     }
 
     // Overall run type should be determined by the device builds unless test build is OTHER
-    if (testRunType == null) {
-      testRunType = TestRunType.fromBuildId(testBuildId);
+    if (testRunType == TestRunType.OTHER.getNumber()) {
+      testRunType = TestRunType.fromBuildId(testBuildId).getNumber();
     } else if (TestRunType.fromBuildId(testBuildId) == TestRunType.OTHER) {
-      testRunType = TestRunType.OTHER;
+      testRunType = TestRunType.OTHER.getNumber();
     }
 
     // Process global coverage data
@@ -366,6 +369,7 @@ public class DatastoreHelper {
       }
     }
 
+    boolean hasCodeCoverage = totalLineCount > 0 && coveredLineCount >= 0;
     TestRunEntity testRunEntity =
         new TestRunEntity(
             testEntity.getOldKey(),
@@ -376,11 +380,16 @@ public class DatastoreHelper {
             hostName,
             passCount,
             failCount,
+            hasCodeCoverage,
             testCaseIds,
-            links,
+            links);
+    testEntityList.add(testRunEntity.toEntity());
+
+    CodeCoverageEntity codeCoverageEntity = new CodeCoverageEntity(
+            testRunEntity.getKey(),
             coveredLineCount,
             totalLineCount);
-    testEntityList.add(testRunEntity.toEntity());
+    testEntityList.add(codeCoverageEntity.toEntity());
 
     Entity test = testEntity.toEntity();
 
@@ -419,9 +428,9 @@ public class DatastoreHelper {
         indexCount++;
       }
 
-      if (testRunEntity.getType() == TestRunType.POSTSUBMIT) {
+      if (testRunEntity.getType() == TestRunType.POSTSUBMIT.getNumber()) {
         VtsAlertJobServlet.addTask(testRunKey);
-        if (testRunEntity.isHasCoverage()) {
+        if (testRunEntity.isHasCodeCoverage()) {
           VtsCoverageAlertJobServlet.addTask(testRunKey);
         }
         if (profilingPointKeys.size() > 0) {
@@ -467,7 +476,7 @@ public class DatastoreHelper {
     long startTimestamp = -1;
     long endTimestamp = -1;
     String testBuildId = null;
-    TestRunType type = null;
+    long type = 0;
     Set<DeviceInfoEntity> deviceInfoEntitySet = new HashSet<>();
     for (Key testRunKey : testRuns.keySet()) {
       TestRunEntity testRun = TestRunEntity.fromEntity(testRuns.get(testRunKey));
@@ -482,11 +491,7 @@ public class DatastoreHelper {
       if (endTimestamp < 0 || testRun.getEndTimestamp() > endTimestamp) {
         endTimestamp = testRun.getEndTimestamp();
       }
-      if (type == null) {
-        type = testRun.getType();
-      } else if (type != testRun.getType()) {
-        type = TestRunType.OTHER;
-      }
+      type = testRun.getType();
       testBuildId = testRun.getTestBuildId();
       Query deviceInfoQuery = new Query(DeviceInfoEntity.KIND).setAncestor(testRunKey);
       for (Entity deviceInfoEntity : datastore.prepare(deviceInfoQuery).asIterable()) {
@@ -497,7 +502,7 @@ public class DatastoreHelper {
         deviceInfoEntitySet.add(device);
       }
     }
-    if (startTimestamp < 0 || testBuildId == null || type == null) {
+    if (startTimestamp < 0 || testBuildId == null || type == 0) {
       logger.log(Level.WARNING, "Couldn't infer test run information from runs.");
       return;
     }

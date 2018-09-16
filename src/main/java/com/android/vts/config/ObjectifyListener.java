@@ -17,6 +17,7 @@
 package com.android.vts.config;
 
 import com.android.vts.entity.ApiCoverageEntity;
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.ProfilingPointEntity;
@@ -33,7 +34,6 @@ import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.entity.UserEntity;
-import com.googlecode.objectify.Key;
 import com.googlecode.objectify.ObjectifyService;
 
 import java.util.Arrays;
@@ -74,6 +74,7 @@ public class ObjectifyListener implements ServletContextListener {
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     ObjectifyService.init();
     ObjectifyService.register(ApiCoverageEntity.class);
+    ObjectifyService.register(CodeCoverageEntity.class);
     ObjectifyService.register(CoverageEntity.class);
     ObjectifyService.register(DeviceInfoEntity.class);
     ObjectifyService.register(TestCoverageStatusEntity.class);

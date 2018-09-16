@@ -16,6 +16,7 @@
 
 package com.android.vts.api;
 
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
@@ -35,13 +36,16 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.googlecode.objectify.ObjectifyService.ofy;
+
 /** Servlet for handling requests to fetch test case results. */
-public class TestRunRestServlet extends HttpServlet {
+public class TestRunRestServlet extends BaseApiServlet {
     private static final String LATEST = "latest";
     protected static final Logger logger = Logger.getLogger(TestRunRestServlet.class.getName());
 
@@ -52,8 +56,7 @@ public class TestRunRestServlet extends HttpServlet {
      * @param timeString The string representation of the test run timestamp (in microseconds).
      * @return A TestRunDetails object with the test case details for the specified run.
      */
-    private static TestRunDetails getTestRunDetails(String test, String timeString) {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+    private TestRunDetails getTestRunDetails(String test, String timeString) {
         long timestamp;
         try {
             timestamp = Long.parseLong(timeString);
@@ -63,68 +66,52 @@ public class TestRunRestServlet extends HttpServlet {
             return null;
         }
 
-        Key testKey = KeyFactory.createKey(TestEntity.KIND, test);
-        Key testRunKey = KeyFactory.createKey(testKey, TestRunEntity.KIND, timestamp);
-        TestRunEntity testRunEntity;
-        try {
-            Entity testRun = datastore.get(testRunKey);
-            testRunEntity = TestRunEntity.fromEntity(testRun);
-            if (testRunEntity == null) {
-                throw new EntityNotFoundException(testRunKey);
-            }
-        } catch (EntityNotFoundException e) {
-            return null;
-        }
-        TestRunDetails details = new TestRunDetails();
-        List<Key> gets = new ArrayList<>();
-        for (long testCaseId : testRunEntity.getTestCaseIds()) {
-            gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
-        }
-        Map<Key, Entity> entityMap = datastore.get(gets);
-        for (Key key : entityMap.keySet()) {
-            TestCaseRunEntity testCaseRun = TestCaseRunEntity.fromEntity(entityMap.get(key));
-            if (testCaseRun == null) {
-                continue;
-            }
-            details.addTestCase(testCaseRun);
-        }
-        return details;
+        TestRunEntity testRunEntity = TestRunEntity.getByTestNameId(test, timestamp);
+
+        return getTestRunDetails(testRunEntity);
     }
 
     /**
      * Get the test case results for the latest run of the specified test.
      *
-     * @param test The test whose test cases to get.
+     * @param testName The test whose test cases to get.
      * @return A TestRunDetails object with the test case details for the latest run.
      */
-    private static TestRunDetails getLatestTestRunDetails(String test) {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        Key testKey = KeyFactory.createKey(TestEntity.KIND, test);
-        Query.Filter typeFilter = FilterUtil.getTestTypeFilter(false, true, false);
-        Query testRunQuery =
-                new Query(TestRunEntity.KIND)
-                        .setAncestor(testKey)
-                        .setFilter(typeFilter)
-                        .addSort(Entity.KEY_RESERVED_PROPERTY, Query.SortDirection.DESCENDING);
-        TestRunEntity testRun = null;
-        for (Entity testRunEntity :
-                datastore.prepare(testRunQuery).asIterable(FetchOptions.Builder.withLimit(1))) {
-            testRun = TestRunEntity.fromEntity(testRunEntity);
-        }
-        if (testRun == null) return null;
-        TestRunDetails details = new TestRunDetails();
+    private TestRunDetails getLatestTestRunDetails(String testName) {
+        com.googlecode.objectify.Key testKey =
+                com.googlecode.objectify.Key.create(
+                        TestEntity.class, testName);
 
-        List<Key> gets = new ArrayList<>();
-        for (long testCaseId : testRun.getTestCaseIds()) {
-            gets.add(KeyFactory.createKey(TestCaseRunEntity.KIND, testCaseId));
-        }
-        Map<Key, Entity> entityMap = datastore.get(gets);
-        for (Key key : entityMap.keySet()) {
-            TestCaseRunEntity testCaseRun = TestCaseRunEntity.fromEntity(entityMap.get(key));
-            if (testCaseRun == null) {
-                continue;
+        TestRunEntity testRun = ofy().load().type(TestRunEntity.class).ancestor(testKey)
+                .filter("type", 2).orderKey(true).first().now();
+
+        if (testRun == null) return null;
+
+        return getTestRunDetails(testRun);
+    }
+
+    /**
+     * Get TestRunDetails instance from codeCoverageEntity instance.
+     *
+     * @param testRunEntity The TestRunEntity to access testCaseId.
+     * @return A TestRunDetails object with the test case details for the latest run.
+     */
+    private TestRunDetails getTestRunDetails(TestRunEntity testRunEntity) {
+        TestRunDetails details = new TestRunDetails();
+        List<com.googlecode.objectify.Key<TestCaseRunEntity>> testCaseKeyList = new ArrayList<>();
+        if ( Objects.isNull(testRunEntity.getTestCaseIds()) ) {
+            return details;
+        } else {
+            for (long testCaseId : testRunEntity.getTestCaseIds()) {
+                testCaseKeyList.add(
+                        com.googlecode.objectify.Key.create(TestCaseRunEntity.class, testCaseId));
             }
-            details.addTestCase(testCaseRun);
+            Map<com.googlecode.objectify.Key<TestCaseRunEntity>, TestCaseRunEntity>
+                    testCaseRunEntityKeyMap = ofy().load().keys(() -> testCaseKeyList.iterator());
+            for (Map.Entry<com.googlecode.objectify.Key<TestCaseRunEntity>, TestCaseRunEntity> entry :
+                    testCaseRunEntityKeyMap.entrySet()) {
+                details.addTestCase(entry.getValue());
+            }
         }
         return details;
     }

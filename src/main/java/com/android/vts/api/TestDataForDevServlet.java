@@ -18,6 +18,7 @@ package com.android.vts.api;
 
 import com.android.vts.entity.BranchEntity;
 import com.android.vts.entity.BuildTargetEntity;
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
@@ -26,14 +27,10 @@ import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestPlanEntity;
 import com.android.vts.entity.TestPlanRunEntity;
 import com.android.vts.entity.TestRunEntity;
+import com.android.vts.entity.TestStatusEntity;
+import com.android.vts.entity.TestStatusEntity.TestCaseReference;
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
-import com.android.vts.entity.TestStatusEntity;
-
-import com.android.vts.entity.TestRunEntity.TestRunType;
-import com.android.vts.entity.TestStatusEntity.TestCaseReference;
-import com.android.vts.servlet.BaseServlet;
-import com.android.vts.util.EmailHelper;
 import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -280,7 +277,7 @@ public class TestDataForDevServlet extends HttpServlet {
                                                                                             .toString());
 
                                                             com.googlecode.objectify.Key<
-                                                                            TestSuiteFileEntity>
+                                                                    TestSuiteFileEntity>
                                                                     testSuiteFileParent =
                                                                             com.googlecode.objectify
                                                                                     .Key.create(
@@ -503,21 +500,30 @@ public class TestDataForDevServlet extends HttpServlet {
                                                     datastore.put(branchEntity.toEntity());
                                                 });
 
+                                        boolean hasCodeCoverage =
+                                                testRun.totalLineCount > 0
+                                                        && testRun.coveredLineCount >= 0;
                                         TestRunEntity testRunEntity =
                                                 new TestRunEntity(
                                                         testEntity.getOldKey(),
-                                                        TestRunType.fromNumber(testRun.type),
+                                                        testRun.type,
                                                         testRun.startTimestamp,
                                                         testRun.endTimestamp,
                                                         testRun.testBuildId,
                                                         testRun.hostName,
                                                         testRun.passCount,
                                                         testRun.failCount,
+                                                        hasCodeCoverage,
                                                         testRun.testCaseIds,
-                                                        testRun.links,
+                                                        testRun.links);
+                                        datastore.put(testRunEntity.toEntity());
+
+                                        CodeCoverageEntity codeCoverageEntity =
+                                                new CodeCoverageEntity(
+                                                        testRunEntity.getKey(),
                                                         testRun.coveredLineCount,
                                                         testRun.totalLineCount);
-                                        datastore.put(testRunEntity.toEntity());
+                                        datastore.put(codeCoverageEntity.toEntity());
 
                                         Entity newTestEntity = testEntity.toEntity();
 
@@ -525,7 +531,8 @@ public class TestDataForDevServlet extends HttpServlet {
                                         try {
                                             // Check if test already exists in the datastore
                                             try {
-                                                Entity oldTest = datastore.get(testEntity.getOldKey());
+                                                Entity oldTest =
+                                                        datastore.get(testEntity.getOldKey());
                                                 TestEntity oldTestEntity =
                                                         TestEntity.fromEntity(oldTest);
                                                 if (oldTestEntity == null
@@ -577,7 +584,7 @@ public class TestDataForDevServlet extends HttpServlet {
                             long startTimestamp = -1;
                             long endTimestamp = -1;
                             String testBuildId = null;
-                            TestRunType type = null;
+                            long type = 0;
                             Set<DeviceInfoEntity> devices = new HashSet<>();
                             for (Key testRunKey : testRuns.keySet()) {
                                 TestRunEntity testRun =
@@ -593,11 +600,7 @@ public class TestDataForDevServlet extends HttpServlet {
                                 if (endTimestamp < 0 || testRun.getEndTimestamp() > endTimestamp) {
                                     endTimestamp = testRun.getEndTimestamp();
                                 }
-                                if (type == null) {
-                                    type = testRun.getType();
-                                } else if (type != testRun.getType()) {
-                                    type = TestRunType.OTHER;
-                                }
+                                type = testRun.getType();
                                 testBuildId = testRun.getTestBuildId();
                                 Query deviceInfoQuery =
                                         new Query(DeviceInfoEntity.KIND).setAncestor(testRunKey);
@@ -611,7 +614,7 @@ public class TestDataForDevServlet extends HttpServlet {
                                     devices.add(device);
                                 }
                             }
-                            if (startTimestamp < 0 || testBuildId == null || type == null) {
+                            if (startTimestamp < 0 || testBuildId == null || type == 0) {
                                 logger.log(
                                         Level.WARNING,
                                         "Couldn't infer test run information from runs.");
