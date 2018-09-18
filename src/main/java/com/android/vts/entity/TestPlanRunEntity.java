@@ -35,6 +35,7 @@ import com.googlecode.objectify.annotation.Parent;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -79,8 +80,6 @@ public class TestPlanRunEntity implements Serializable {
 
     @Index private String testPlanName;
 
-    @Ignore private TestRunType testRunType;
-
     @Index private long type;
 
     @Index private long startTimestamp;
@@ -119,7 +118,7 @@ public class TestPlanRunEntity implements Serializable {
     public TestPlanRunEntity(
             Key parentKey,
             String testPlanName,
-            TestRunType type,
+            long type,
             long startTimestamp,
             long endTimestamp,
             String testBuildId,
@@ -130,7 +129,7 @@ public class TestPlanRunEntity implements Serializable {
             List<Key> testRuns) {
         this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
         this.testPlanName = testPlanName;
-        this.testRunType = type;
+        this.type = type;
         this.startTimestamp = startTimestamp;
         this.endTimestamp = endTimestamp;
         this.testBuildId = testBuildId;
@@ -156,7 +155,7 @@ public class TestPlanRunEntity implements Serializable {
     public Entity toEntity() {
         Entity planRun = new Entity(this.key);
         planRun.setProperty(TEST_PLAN_NAME, this.testPlanName);
-        planRun.setProperty(TYPE, this.testRunType.getNumber());
+        planRun.setProperty(TYPE, this.type);
         planRun.setProperty(START_TIMESTAMP, this.startTimestamp);
         planRun.setProperty(END_TIMESTAMP, this.endTimestamp);
         planRun.setProperty(TEST_BUILD_ID, this.testBuildId.toLowerCase());
@@ -186,11 +185,15 @@ public class TestPlanRunEntity implements Serializable {
 
     /** Add a task to calculate the total number of coverage API */
     public void addCoverageApiTask() {
-        Queue queue = QueueFactory.getQueue(QUEUE_NAME);
-        queue.add(
-                TaskOptions.Builder.withUrl(COVERAGE_API_URL)
-                        .param("urlSafeKey", String.valueOf(this.getUrlSafeKey()))
-                        .method(TaskOptions.Method.POST));
+        if (Objects.isNull(this.testRuns)) {
+            logger.log(Level.WARNING, "testRuns is null so adding task to the queue is skipped!");
+        } else {
+            Queue queue = QueueFactory.getQueue(QUEUE_NAME);
+            queue.add(
+                    TaskOptions.Builder.withUrl(COVERAGE_API_URL)
+                            .param("urlSafeKey", String.valueOf(this.getUrlSafeKey()))
+                            .method(TaskOptions.Method.POST));
+        }
     }
 
     /**
@@ -225,7 +228,7 @@ public class TestPlanRunEntity implements Serializable {
         }
         try {
             String testPlanName = (String) e.getProperty(TEST_PLAN_NAME);
-            TestRunType type = TestRunType.fromNumber((int) (long) e.getProperty(TYPE));
+            long type = (long) e.getProperty(TYPE);
             long startTimestamp = (long) e.getProperty(START_TIMESTAMP);
             long endTimestamp = (long) e.getProperty(END_TIMESTAMP);
             String testBuildId = (String) e.getProperty(TEST_BUILD_ID);

@@ -73,7 +73,7 @@ public class CoverageEntity implements Serializable {
   @Id
   @Getter
   @Setter
-  private Long ID;
+  private Long id;
 
   @Parent
   @Getter
