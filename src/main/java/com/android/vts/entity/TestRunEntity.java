@@ -18,6 +18,7 @@ package com.android.vts.entity;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
+import com.android.vts.util.TimeUtil;
 import com.android.vts.util.UrlUtil;
 import com.android.vts.util.UrlUtil.LinkDisplay;
 import com.google.appengine.api.datastore.Entity;
@@ -32,10 +33,14 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
+import com.googlecode.objectify.annotation.OnLoad;
 import com.googlecode.objectify.annotation.Parent;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -51,7 +56,6 @@ import org.json.JSONArray;
 
 @com.googlecode.objectify.annotation.Entity(name = "TestRun")
 @Cache
-@Data
 @NoArgsConstructor
 /** Entity describing test run information. */
 public class TestRunEntity implements Serializable {
@@ -130,22 +134,21 @@ public class TestRunEntity implements Serializable {
     public static final String HOST_NAME = "hostName";
     public static final String PASS_COUNT = "passCount";
     public static final String FAIL_COUNT = "failCount";
+    public static final String HAS_CODE_COVERAGE = "hasCodeCoverage";
+    public static final String HAS_COVERAGE = "hasCoverage";
     public static final String TEST_CASE_IDS = "testCaseIds";
     public static final String LOG_LINKS = "logLinks";
-    public static final String HAS_COVERAGE = "hasCoverage";
-    public static final String TOTAL_LINE_COUNT = "totalLineCount";
-    public static final String COVERED_LINE_COUNT = "coveredLineCount";
     public static final String API_COVERAGE_KEY_LIST = "apiCoverageKeyList";
     public static final String TOTAL_API_COUNT = "totalApiCount";
     public static final String COVERED_API_COUNT = "coveredApiCount";
 
     @Ignore private Key key;
 
-    @Id @Getter @Setter private Long ID;
+    @Id @Getter @Setter private Long id;
 
     @Parent @Getter @Setter private com.googlecode.objectify.Key<?> testRunParent;
 
-    @Index @Getter @Setter private TestRunType type;
+    @Index @Getter @Setter private long type;
 
     @Index @Getter @Setter private long startTimestamp;
 
@@ -161,7 +164,11 @@ public class TestRunEntity implements Serializable {
 
     @Index @Getter @Setter private long failCount;
 
-    @Index @Getter @Setter private boolean hasCoverage;
+    @Index private boolean hasCoverage;
+
+    @Index @Getter @Setter private boolean hasCodeCoverage;
+
+    private com.googlecode.objectify.Key<CodeCoverageEntity> codeCoverageEntityKey;
 
     @Index @Getter @Setter private long coveredLineCount;
 
@@ -169,7 +176,7 @@ public class TestRunEntity implements Serializable {
 
     @Getter @Setter private List<Long> testCaseIds;
 
-    @Getter @Setter private List<String> links;
+    @Getter @Setter private List<String> logLinks;
 
     /**
      * Create a TestRunEntity object describing a test run.
@@ -182,24 +189,19 @@ public class TestRunEntity implements Serializable {
      * @param hostName The name of host machine.
      * @param passCount The number of passing test cases in the run.
      * @param failCount The number of failing test cases in the run.
-     * @param testCaseIds A list of key IDs to the TestCaseRunEntity objects for the test run.
-     * @param links A list of links to resource files for the test run, or null if there aren't any.
-     * @param coveredLineCount The number of lines covered by the test run.
-     * @param totalLineCount The total number of executable lines by the test in the test run.
      */
     public TestRunEntity(
             Key parentKey,
-            TestRunType type,
+            long type,
             long startTimestamp,
             long endTimestamp,
             String testBuildId,
             String hostName,
             long passCount,
             long failCount,
+            boolean hasCodeCoverage,
             List<Long> testCaseIds,
-            List<String> links,
-            long coveredLineCount,
-            long totalLineCount) {
+            List<String> logLinks) {
         this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
         this.type = type;
         this.startTimestamp = startTimestamp;
@@ -208,96 +210,129 @@ public class TestRunEntity implements Serializable {
         this.hostName = hostName;
         this.passCount = passCount;
         this.failCount = failCount;
-        this.testCaseIds = testCaseIds == null ? new ArrayList<Long>() : testCaseIds;
-        this.links = links == null ? new ArrayList<String>() : links;
-        this.coveredLineCount = coveredLineCount;
-        this.totalLineCount = totalLineCount;
-        this.hasCoverage = totalLineCount > 0;
+        this.hasCodeCoverage = hasCodeCoverage;
+        this.testName = parentKey.getName();
+        this.codeCoverageEntityKey = getCodeCoverageEntityKey();
+        this.testCaseIds = testCaseIds;
+        this.logLinks = logLinks;
     }
 
     /**
-     * Create a TestRunEntity object describing a test run.
-     *
-     * @param parentKey The key to the parent TestEntity.
-     * @param type The test run type (e.g. presubmit, postsubmit, other)
-     * @param startTimestamp The time in microseconds when the test run started.
-     * @param endTimestamp The time in microseconds when the test run ended.
-     * @param testBuildId The build ID of the VTS test build.
-     * @param hostName The name of host machine.
-     * @param passCount The number of passing test cases in the run.
-     * @param failCount The number of failing test cases in the run.
-     * @param testCaseIds A list of key IDs to the TestCaseRunEntity objects for the test run.
-     * @param links A list of links to resource files for the test run, or null if there aren't any.
+     * Called after the POJO is populated with data through objecitfy library
      */
-    public TestRunEntity(
-            Key parentKey,
-            TestRunType type,
-            long startTimestamp,
-            long endTimestamp,
-            String testBuildId,
-            String hostName,
-            long passCount,
-            long failCount,
-            List<Long> testCaseIds,
-            List<String> links) {
-        this(
-                parentKey,
-                type,
-                startTimestamp,
-                endTimestamp,
-                testBuildId,
-                hostName,
-                passCount,
-                failCount,
-                testCaseIds,
-                links,
-                0,
-                0);
+    @OnLoad
+    private void onLoad() {
+        if (Objects.isNull(this.hasCodeCoverage)) {
+            this.hasCodeCoverage = this.hasCoverage;
+            this.save();
+        }
     }
 
     public Entity toEntity() {
         Entity testRunEntity = new Entity(this.key);
-        testRunEntity.setProperty(TEST_NAME, this.key.getParent().getName());
-        testRunEntity.setProperty(TYPE, this.type.getNumber());
+        testRunEntity.setProperty(TEST_NAME, this.testName);
+        testRunEntity.setProperty(TYPE, this.type);
         testRunEntity.setProperty(START_TIMESTAMP, this.startTimestamp);
         testRunEntity.setUnindexedProperty(END_TIMESTAMP, this.endTimestamp);
         testRunEntity.setProperty(TEST_BUILD_ID, this.testBuildId.toLowerCase());
         testRunEntity.setProperty(HOST_NAME, this.hostName.toLowerCase());
         testRunEntity.setProperty(PASS_COUNT, this.passCount);
         testRunEntity.setProperty(FAIL_COUNT, this.failCount);
+        testRunEntity.setProperty(HAS_CODE_COVERAGE, this.hasCodeCoverage);
         testRunEntity.setUnindexedProperty(TEST_CASE_IDS, this.testCaseIds);
-        boolean hasCoverage = this.totalLineCount > 0 && this.coveredLineCount >= 0;
-        testRunEntity.setProperty(HAS_COVERAGE, hasCoverage);
-        if (hasCoverage) {
-            testRunEntity.setProperty(COVERED_LINE_COUNT, this.coveredLineCount);
-            testRunEntity.setProperty(TOTAL_LINE_COUNT, this.totalLineCount);
-        }
-        if (this.links != null && this.links.size() > 0) {
-            testRunEntity.setUnindexedProperty(LOG_LINKS, this.links);
+        if (this.logLinks != null && this.logLinks.size() > 0) {
+            testRunEntity.setUnindexedProperty(LOG_LINKS, this.logLinks);
         }
         return testRunEntity;
     }
 
+    /** Saving function for the instance of this class */
+    public com.googlecode.objectify.Key<TestRunEntity> save() {
+        return ofy().save().entity(this).now();
+    }
+
     /**
      * Get key info from appengine based library.
-     *
-     * @param parentKey parent key.
      */
-    public Key getOldKey(Key parentKey) {
+    public Key getKey() {
+        Key parentKey = KeyFactory.createKey(TestEntity.KIND, testName);
         return KeyFactory.createKey(parentKey, KIND, startTimestamp);
+    }
+
+    /** Getter hasCodeCoverage value */
+    public boolean getHasCodeCoverage() {
+        return this.hasCodeCoverage;
+    }
+
+    /** Getter DateTime string from startTimestamp */
+    public String getStartDateTime() {
+        return TimeUtil.getDateTimeString(this.startTimestamp);
+    }
+
+    /** Getter DateTime string from startTimestamp */
+    public String getEndDateTime() {
+        return TimeUtil.getDateTimeString(this.endTimestamp);
+    }
+
+    /** find TestRun entity by ID and test name */
+    public static TestRunEntity getByTestNameId(String testName, long id) {
+        com.googlecode.objectify.Key testKey =
+                com.googlecode.objectify.Key.create(TestEntity.class, testName);
+        return ofy().load().type(TestRunEntity.class).parent(testKey).id(id).now();
+    }
+
+    /** Get CodeCoverageEntity Key to generate Key by combining key info */
+    private com.googlecode.objectify.Key getCodeCoverageEntityKey() {
+        com.googlecode.objectify.Key testRunKey = this.getOfyKey();
+        return com.googlecode.objectify.Key.create(
+                        testRunKey, CodeCoverageEntity.class, this.startTimestamp);
+    }
+
+    /** Get ApiCoverageEntity Key from the parent key */
+    private com.googlecode.objectify.Key getOfyKey() {
+        com.googlecode.objectify.Key testKey =
+                com.googlecode.objectify.Key.create(
+                        TestEntity.class, this.testName);
+        com.googlecode.objectify.Key testRunKey =
+                com.googlecode.objectify.Key.create(
+                        testKey, TestRunEntity.class, this.startTimestamp);
+        return testRunKey;
     }
 
     /** Get ApiCoverageEntity from key info */
     public Optional<List<ApiCoverageEntity>> getApiCoverageEntityList() {
-        com.googlecode.objectify.Key testKey =
-                com.googlecode.objectify.Key.create(
-                        TestEntity.class, this.key.getParent().getName());
-        com.googlecode.objectify.Key apiCoverageKey =
-                com.googlecode.objectify.Key.create(testKey, TestRunEntity.class, startTimestamp);
-
+        com.googlecode.objectify.Key testRunKey = this.getOfyKey();
         List<ApiCoverageEntity> apiCoverageEntityList =
-                ofy().load().type(ApiCoverageEntity.class).ancestor(apiCoverageKey).list();
+                ofy().load().type(ApiCoverageEntity.class).ancestor(testRunKey).list();
         return Optional.ofNullable(apiCoverageEntityList);
+    }
+
+    /**
+     * Get CodeCoverageEntity instance from codeCoverageEntityKey value.
+     */
+    public CodeCoverageEntity getCodeCoverageEntity() {
+        if (this.hasCodeCoverage) {
+            CodeCoverageEntity codeCoverageEntity =
+                    ofy().load()
+                            .type(CodeCoverageEntity.class)
+                            .filterKey(this.codeCoverageEntityKey)
+                            .first()
+                            .now();
+            if (Objects.isNull(codeCoverageEntity)) {
+                codeCoverageEntity =
+                        new CodeCoverageEntity(
+                                this.getKey(), coveredLineCount, totalLineCount);
+                codeCoverageEntity.save();
+                return codeCoverageEntity;
+            } else {
+                return codeCoverageEntity;
+            }
+        } else {
+            logger.log(
+                    Level.WARNING,
+                    "The hasCodeCoverage value is false. Please check the code coverage entity key");
+            return null;
+        }
     }
 
     /**
@@ -315,27 +350,29 @@ public class TestRunEntity implements Serializable {
                 || !e.hasProperty(TEST_BUILD_ID)
                 || !e.hasProperty(HOST_NAME)
                 || !e.hasProperty(PASS_COUNT)
-                || !e.hasProperty(FAIL_COUNT)
-                || !e.hasProperty(TEST_CASE_IDS)) {
+                || !e.hasProperty(FAIL_COUNT)) {
             logger.log(Level.WARNING, "Missing test run attributes in entity: " + e.toString());
             return null;
         }
         try {
-            TestRunType type = TestRunType.fromNumber((int) (long) e.getProperty(TYPE));
+            long type = (long) e.getProperty(TYPE);
             long startTimestamp = (long) e.getProperty(START_TIMESTAMP);
             long endTimestamp = (long) e.getProperty(END_TIMESTAMP);
             String testBuildId = (String) e.getProperty(TEST_BUILD_ID);
             String hostName = (String) e.getProperty(HOST_NAME);
             long passCount = (long) e.getProperty(PASS_COUNT);
             long failCount = (long) e.getProperty(FAIL_COUNT);
-            List<Long> testCaseIds = (List<Long>) e.getProperty(TEST_CASE_IDS);
-            List<String> links = null;
-            long coveredLineCount = 0;
-            long totalLineCount = 0;
-            if (e.hasProperty(TOTAL_LINE_COUNT) && e.hasProperty(COVERED_LINE_COUNT)) {
-                coveredLineCount = (long) e.getProperty(COVERED_LINE_COUNT);
-                totalLineCount = (long) e.getProperty(TOTAL_LINE_COUNT);
+            boolean hasCodeCoverage = false;
+            if (e.hasProperty(HAS_CODE_COVERAGE)) {
+                hasCodeCoverage = (boolean) e.getProperty(HAS_CODE_COVERAGE);
+            } else {
+                hasCodeCoverage = (boolean) e.getProperty(HAS_COVERAGE);
             }
+            List<Long> testCaseIds = (List<Long>) e.getProperty(TEST_CASE_IDS);
+            if (Objects.isNull(testCaseIds)) {
+                testCaseIds = new ArrayList<>();
+            }
+            List<String> links = new ArrayList<>();
             if (e.hasProperty(LOG_LINKS)) {
                 links = (List<String>) e.getProperty(LOG_LINKS);
             }
@@ -348,10 +385,9 @@ public class TestRunEntity implements Serializable {
                     hostName,
                     passCount,
                     failCount,
+                    hasCodeCoverage,
                     testCaseIds,
-                    links,
-                    coveredLineCount,
-                    totalLineCount);
+                    links);
         } catch (ClassCastException exception) {
             // Invalid cast
             logger.log(Level.WARNING, "Error parsing test run entity.", exception);
@@ -359,19 +395,62 @@ public class TestRunEntity implements Serializable {
         return null;
     }
 
+    /** Get JsonFormat logLinks */
+    public JsonElement getJsonLogLinks() {
+        List<String> logLinks = this.getLogLinks();
+        List<JsonElement> links = new ArrayList<>();
+        if (logLinks != null && logLinks.size() > 0) {
+            for (String rawUrl : logLinks) {
+                UrlUtil.LinkDisplay validatedLink = UrlUtil.processUrl(rawUrl);
+                if (validatedLink == null) {
+                    logger.log(Level.WARNING, "Invalid logging URL : " + rawUrl);
+                    continue;
+                }
+                String[] logInfo = new String[] {validatedLink.name, validatedLink.url};
+                links.add(new Gson().toJsonTree(logInfo));
+            }
+        }
+        return new Gson().toJsonTree(links);
+    }
+
     public JsonObject toJson() {
+        Map<String, TestCoverageStatusEntity> testCoverageStatusMap = TestCoverageStatusEntity
+                .getTestCoverageStatusMap();
+
         JsonObject json = new JsonObject();
-        json.add(TEST_NAME, new JsonPrimitive(this.key.getParent().getName()));
+        json.add(TEST_NAME, new JsonPrimitive(this.testName));
         json.add(TEST_BUILD_ID, new JsonPrimitive(this.testBuildId));
         json.add(HOST_NAME, new JsonPrimitive(this.hostName));
         json.add(PASS_COUNT, new JsonPrimitive(this.passCount));
         json.add(FAIL_COUNT, new JsonPrimitive(this.failCount));
         json.add(START_TIMESTAMP, new JsonPrimitive(this.startTimestamp));
         json.add(END_TIMESTAMP, new JsonPrimitive(this.endTimestamp));
-        if (this.totalLineCount > 0 && this.coveredLineCount >= 0) {
-            json.add(COVERED_LINE_COUNT, new JsonPrimitive(this.coveredLineCount));
-            json.add(TOTAL_LINE_COUNT, new JsonPrimitive(this.totalLineCount));
+
+        // Overwrite the coverage value with newly update value from user decision
+        if (this.hasCodeCoverage) {
+            CodeCoverageEntity codeCoverageEntity = this.getCodeCoverageEntity();
+            if (testCoverageStatusMap.containsKey(this.testName)) {
+                TestCoverageStatusEntity testCoverageStatusEntity =
+                        testCoverageStatusMap.get(this.testName);
+
+                if (testCoverageStatusEntity.getUpdatedCoveredLineCount() > 0) {
+                    codeCoverageEntity.setCoveredLineCount(
+                            testCoverageStatusEntity.getUpdatedCoveredLineCount());
+                }
+                if (testCoverageStatusEntity.getUpdatedTotalLineCount() > 0) {
+                    codeCoverageEntity.setTotalLineCount(
+                            testCoverageStatusEntity.getUpdatedTotalLineCount());
+                }
+            }
+
+            long totalLineCount = codeCoverageEntity.getTotalLineCount();
+            long coveredLineCount = codeCoverageEntity.getCoveredLineCount();
+            if (totalLineCount > 0 && coveredLineCount >= 0) {
+                json.add(CodeCoverageEntity.COVERED_LINE_COUNT, new JsonPrimitive(coveredLineCount));
+                json.add(CodeCoverageEntity.TOTAL_LINE_COUNT, new JsonPrimitive(totalLineCount));
+            }
         }
+
         Optional<List<ApiCoverageEntity>> apiCoverageEntityOptionList =
                 this.getApiCoverageEntityList();
         if (apiCoverageEntityOptionList.isPresent()) {
@@ -398,9 +477,10 @@ public class TestRunEntity implements Serializable {
             }
         }
 
-        if (this.links != null && this.links.size() > 0) {
+        List<String> logLinks = this.getLogLinks();
+        if (logLinks != null && logLinks.size() > 0) {
             List<JsonElement> links = new ArrayList<>();
-            for (String rawUrl : this.links) {
+            for (String rawUrl : logLinks) {
                 LinkDisplay validatedLink = UrlUtil.processUrl(rawUrl);
                 if (validatedLink == null) {
                     logger.log(Level.WARNING, "Invalid logging URL : " + rawUrl);
@@ -410,7 +490,7 @@ public class TestRunEntity implements Serializable {
                 links.add(new Gson().toJsonTree(logInfo));
             }
             if (links.size() > 0) {
-                json.add(LOG_LINKS, new Gson().toJsonTree(links));
+                json.add(this.LOG_LINKS, new Gson().toJsonTree(links));
             }
         }
         return json;
