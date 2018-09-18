@@ -19,16 +19,24 @@ package com.android.vts.entity;
 import com.android.vts.proto.VtsReportMessage.AndroidDeviceInfoMessage;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.Parent;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 @com.googlecode.objectify.annotation.Entity(name = "DeviceInfo")
 @Cache
@@ -37,6 +45,9 @@ import lombok.NoArgsConstructor;
 /** Class describing a device used for a test run. */
 public class DeviceInfoEntity implements Serializable {
     protected static final Logger logger = Logger.getLogger(DeviceInfoEntity.class.getName());
+
+    /** This is the instance of App Engine memcache service java library */
+    private static MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
 
     public static final String KIND = "DeviceInfo";
 
@@ -104,6 +115,44 @@ public class DeviceInfoEntity implements Serializable {
         this.buildId = buildID;
         this.abiBitness = abiBitness;
         this.abiName = abiName;
+    }
+
+    /**
+     * Get All Branch List from DeviceInfoEntity
+     */
+    public static List<String> getAllBranches() {
+        List<String> branchList = (List<String>) syncCache.get("branchList");
+        if (Objects.isNull(branchList)) {
+            branchList = ofy().load()
+                    .type(DeviceInfoEntity.class)
+                    .project("branch")
+                    .distinct(true)
+                    .list()
+                    .stream()
+                    .map(device -> device.branch)
+                    .collect(Collectors.toList());
+            syncCache.put("branchList", branchList);
+        }
+        return branchList;
+    }
+
+    /**
+     * Get All BuildFlavors List from DeviceInfoEntity
+     */
+    public static List<String> getAllBuildFlavors() {
+        List<String> buildFlavorList = (List<String>) syncCache.get("buildFlavorList");
+        if (Objects.isNull(buildFlavorList)) {
+            buildFlavorList = ofy().load()
+                    .type(DeviceInfoEntity.class)
+                    .project("buildFlavor")
+                    .distinct(true)
+                    .list()
+                    .stream()
+                    .map(device -> device.buildFlavor)
+                    .collect(Collectors.toList());
+            syncCache.put("buildFlavorList", buildFlavorList);
+        }
+        return buildFlavorList;
     }
 
     public Entity toEntity() {

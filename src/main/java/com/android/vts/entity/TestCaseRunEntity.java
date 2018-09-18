@@ -21,6 +21,7 @@ import com.google.appengine.api.datastore.KeyFactory;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.OnLoad;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -125,6 +126,18 @@ public class TestCaseRunEntity implements DashboardEntity {
      */
     public String getSystraceUrl() {
         return this.systraceUrl;
+    }
+
+    /**
+     * Called after the POJO is populated with data through objecitfy library
+     */
+    @OnLoad
+    private void onLoad() {
+        if (testCaseNames.size() == results.size()) {
+            for (int index = 0; index < testCaseNames.size(); index++) {
+                this.addTestCase(testCaseNames.get(index), results.get(index).intValue());
+            }
+        }
     }
 
     /**
