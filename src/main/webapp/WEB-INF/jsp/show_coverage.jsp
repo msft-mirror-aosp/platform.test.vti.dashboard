@@ -177,7 +177,7 @@
             <div class="right total-count">${coverageEntity.coveredCount}/${coverageEntity.totalCount}</div>
             <div class="indicator ${coverageEntity.percentage >= 70 ? "green" : "red"}">${coverageEntity.percentage}%</div>
             <c:if test="${isModerator}">
-              <span data-id="${coverageEntity.ID}" class="indicator waves-effect blue lighten-1" style="margin-left: 5px;"><c:out value='${coverageEntity.isIgnored ? "enable" : "disable"}'/></span>
+              <span data-id="${coverageEntity.id}" class="indicator waves-effect blue lighten-1" style="margin-left: 5px;"><c:out value='${coverageEntity.isIgnored ? "enable" : "disable"}'/></span>
             </c:if>
           </div>
           <div class="collapsible-body row">
