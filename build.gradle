@@ -6,13 +6,16 @@ buildscript {
         springBootVersion = '1.5.13.RELEASE'
         objectifyVersion = '6.0'
         googleCloudVersion = '0.47.0-alpha'
-        googleJavaFormatVersion = '0.7-SNAPSHOT'
+        googleJavaFormatVersion = '0.7.1'
         googleHttpClientVersion = '1.23.0'
-        appGradlePluginVersion = '1.3.5'
+        appGradlePluginVersion = '2.0.0-rc3'
     }
     repositories {
         jcenter()
         mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
         maven {
             url 'https://oss.sonatype.org/content/repositories/snapshots/'
         }
@@ -20,20 +23,21 @@ buildscript {
     dependencies {
         classpath "com.google.cloud.tools:appengine-gradle-plugin:${appGradlePluginVersion}"    // latest App Engine Gradle tasks
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-        classpath "com.github.sherter.googlejavaformatgradleplugin:google-java-format-gradle-plugin:${googleJavaFormatVersion}"
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'war'                               // standard Web Archive plugin
-apply plugin: 'com.google.cloud.tools.appengine'  // App Engine tasks
-apply plugin: 'com.github.sherter.google-java-format'
+plugins {
+    id 'war'        // standard Web Archive plugin
+    id "com.github.sherter.google-java-format" version "0.7.1"
+}
+
+apply plugin: 'com.google.cloud.tools.appengine-standard'  // App Engine tasks
+
 apply from: rootProject.file('gradle/profiles.gradle')
 
 group = 'com.android.vts'
 version = '4'
-
-description = ""
+description = "Google Android VTS dashboard"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -94,6 +98,10 @@ googleJavaFormat {
 }
 
 appengine {  // App Engine tasks configuration
+    tools {
+        // configure the Cloud Sdk tooling
+    }
+
     run {
         environment = [
                 GOOGLE_CLOUD_PROJECT: "android-vts-staging",
@@ -105,8 +113,12 @@ appengine {  // App Engine tasks configuration
                 "-Dappengine.fullscan.seconds=5"
         ]
     }
-
+    stage {
+        // configure staging for deployment
+    }
     deploy {   // deploy configuration
+        version = project.property("appEngineVersion")
+        projectId = project.property("projectIdList")
 
     }
 }
@@ -133,9 +145,15 @@ tasks.addRule("Pattern: vtsGaeDeploy<ID>") { String taskName ->
         def projectId = taskName.replace("vtsGaeDeploy-", "")
         def version = project.property("appEngineVersion")
 
-        project.ext.projectId = projectId
+        def appengineWebCopy = tasks.create(name: "appengineWebCopy-${projectId}", type: Copy) {
+            from "${webAppDirName}/WEB-INF/appengine-web.xml"
+            into "${appengine.stage.sourceDirectory}/WEB-INF"
+            filter(ReplaceTokens, tokens: [PROJECT_ID: projectId])
+        }
+        appengineWebCopy.dependsOn appengineStage
+        appengineWebCopy.mustRunAfter appengineStage
 
-        def gcsConfigCopy = task("gcsConfigCopy${projectId}") {
+        def gcsConfigCopy = task("gcsConfigCopy-${projectId}") {
             doFirst {
                 println "============ resource folder processing ============"
 
@@ -154,39 +172,21 @@ tasks.addRule("Pattern: vtsGaeDeploy<ID>") { String taskName ->
             }
 
             doLast {
-                def propertyFilePath = "$appengine.stage.stagingDirectory/WEB-INF/classes/config.properties"
 
-                def props = new Properties()
-                file(propertyFilePath).withInputStream {
-                    props.load(it)
-                }
-                project.ext.props = props
             }
         }
+        gcsConfigCopy.dependsOn appengineWebCopy
+        gcsConfigCopy.mustRunAfter appengineWebCopy
 
-        gcsConfigCopy.dependsOn appengineStage
-
-        def appengineWebCopy = tasks.create(name: "appengineWebCopy${projectId}", type: Copy) {
-            from "$appengine.stage.sourceDirectory/WEB-INF/appengine-web.xml"
-            into("$appengine.stage.stagingDirectory/WEB-INF")
-
-            doLast {
-                filter(ReplaceTokens, tokens: project.ext.props)
-            }
-        }
-
-        appengineWebCopy.dependsOn gcsConfigCopy
+        def deployTaskList = [appengineDeploy]
 
         def vtsGaeDeployTask = task(taskName) {
 
             doFirst {
-                println "--------------> setting project id <-------------"
-                project.appengine.deploy.project = projectId
-                project.appengine.deploy.version = version
+                println "--------------> setup deploying tasks <-------------"
             }
 
             doLast {
-                appengineDeploy.execute()
                 def commandKeyList = [
                         'enableAppengineDeployCron': appengineDeployCron,
                         'enableAppengineDeployDispatch': appengineDeployDispatch,
@@ -197,36 +197,15 @@ tasks.addRule("Pattern: vtsGaeDeploy<ID>") { String taskName ->
 
                 commandKeyList.each { key, value ->
                     if (project.hasProperty(key) && project.getProperty(key).toBoolean()) {
-                        println "execute command => ${key}"
-                        value.execute()
+                        deployTaskList.push(value)
                     }
                 }
             }
         }
 
-        vtsGaeDeployTask.dependsOn appengineWebCopy
-
-        def runAppengineTask = tasks.create(name: "runAppengineTask${projectId}", type: GradleBuild) {
-
-            appengine.deploy.project = projectId
-            def taskList = ['appengineDeploy']
-            def commandKeyList = [
-                    'enableAppengineDeployCron': 'appengineDeployCron',
-                    'enableAppengineDeployDispatch': 'appengineDeployDispatch',
-                    'enableAppengineDeployDos': 'appengineDeployDos',
-                    'enableAppengineDeployIndex': 'appengineDeployIndex',
-                    'enableAppengineDeployQueue': 'appengineDeployQueue'
-            ]
-
-            commandKeyList.each { key, value ->
-                if (project.hasProperty(key) && project.getProperty(key).toBoolean()) {
-                    println "execute command => ${key}"
-                    taskList.push(value)
-                }
-            }
-            tasks = taskList
-        }
-
+        vtsGaeDeployTask.dependsOn gcsConfigCopy
+        vtsGaeDeployTask.mustRunAfter gcsConfigCopy
+        vtsGaeDeployTask.finalizedBy deployTaskList
     }
 }
 
