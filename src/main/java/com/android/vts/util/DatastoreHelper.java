@@ -57,7 +57,6 @@ import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.datastore.TransactionOptions;
 import com.google.common.collect.Lists;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ConcurrentModificationException;
@@ -430,7 +429,7 @@ public class DatastoreHelper {
 
       if (testRunEntity.getType() == TestRunType.POSTSUBMIT.getNumber()) {
         VtsAlertJobServlet.addTask(testRunKey);
-        if (testRunEntity.isHasCodeCoverage()) {
+                if (testRunEntity.getHasCodeCoverage()) {
           VtsCoverageAlertJobServlet.addTask(testRunKey);
         }
         if (profilingPointKeys.size() > 0) {
