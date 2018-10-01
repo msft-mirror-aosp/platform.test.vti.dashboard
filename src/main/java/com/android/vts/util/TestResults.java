@@ -292,7 +292,7 @@ public class TestResults {
 
             long totalLineCount = 0;
             long coveredLineCount = 0;
-            if (testRun.isHasCodeCoverage()) {
+            if (testRun.getHasCodeCoverage()) {
                 totalLineCount = codeCoverageEntity.getTotalLineCount();
                 coveredLineCount = codeCoverageEntity.getCoveredLineCount();
             }
