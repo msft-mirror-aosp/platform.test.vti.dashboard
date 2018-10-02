@@ -404,10 +404,10 @@
 
                 <c:choose>
                   <c:when test = "${covPct <= 20}">
-                    <c:set var="badgeColor" value="green" />
+                    <c:set var="badgeColor" value="red" />
                   </c:when>
                   <c:when test = "${covPct >= 70}">
-                    <c:set var="badgeColor" value="yellow" />
+                    <c:set var="badgeColor" value="green" />
                   </c:when>
                   <c:otherwise>
                     <c:set var="badgeColor" value="orange" />
