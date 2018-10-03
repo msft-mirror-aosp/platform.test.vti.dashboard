@@ -67,6 +67,32 @@ function getNickname(testCaseResult) {
 }
 
 /**
+ * Get the badge color from ratio value.
+ *
+ * @param the percentage value.
+ * @returns the string of color for the badge.
+ */
+function getBadgeColor(ratio) {
+  var color = "orange";
+  if (ratio <= 20) {
+    color = "red";
+  } else if (ratio >= 70) {
+    color = "green";
+  }
+  return color;
+}
+
+/**
+ * Get the rounded value.
+ *
+ * @param the percentage value.
+ * @returns the rounded value from percentage value.
+ */
+function getRoundValue(ratio) {
+    return Math.round(ratio * 1000) / 10;
+}
+
+/**
  * Display test data in the body beneath a test run's metadata.
  * @param container The jquery object in which to insert the test metadata.
  * @param data The json object containing the columns to display.
@@ -249,16 +275,11 @@ function displayTestMetadata(container, metadataList, showTestNames = false) {
       var url = ('/show_coverage?testName=' + test + '&startTime=' + startTime);
       var covered = metadata.testRun.coveredLineCount;
       var total = metadata.testRun.totalLineCount;
-      var covPct = Math.round(covered / total * 1000) / 10;
-      var color = 'red';
-      if (covPct > 20 && covPct < 70) {
-        color = 'orange';
-      } else if (covPct >= 70) {
-        color = 'green';
-      }
+      var covPct = getRoundValue(covered / total);
+      var color = getBadgeColor(covPct);
       var coverage =
           ('Coverage: ' + covered + '/' + total + ' (' + covPct + '%)');
-      createClickableIndicator(div, coverage, color, function() {
+      createClickableIndicator(div, coverage, color, function(evt) {
         window.location.href = url;
         return false;
       });
@@ -267,8 +288,10 @@ function displayTestMetadata(container, metadataList, showTestNames = false) {
         metadata.testRun.totalApiCount != undefined) {
       var covered = metadata.testRun.coveredApiCount;
       var total = metadata.testRun.totalApiCount;
-      var apiCoverage = ('API Coverage: ' + covered + '/' + total);
-      createClickableIndicator(div, apiCoverage, 'orange', function(evt) {
+      var covPct = getRoundValue(covered / total);
+      var color = getBadgeColor(covPct);
+      var apiCoverage = ('API Coverage: ' + covered + '/' + total + ' (' + covPct + '%)');
+      createClickableIndicator(div, apiCoverage, color, function(evt) {
         $('#apiCoverageModal')
             .data('urlSafeKeyList', metadata.testRun.apiCoverageKeyList);
         $('#apiCoverageModal').modal('open');
