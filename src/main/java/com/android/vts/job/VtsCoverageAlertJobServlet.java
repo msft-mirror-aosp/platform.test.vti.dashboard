@@ -261,11 +261,12 @@ public class VtsCoverageAlertJobServlet extends BaseJobServlet {
         logger.log(Level.WARNING, "Error composing email : ", e);
       }
     }
-    return new TestCoverageStatusEntity(
-        testName,
-        testRunEntity.getStartTimestamp(),
-        codeCoverageEntity.getCoveredLineCount(),
-        codeCoverageEntity.getTotalLineCount());
+        return new TestCoverageStatusEntity(
+                testName,
+                testRunEntity.getStartTimestamp(),
+                codeCoverageEntity.getCoveredLineCount(),
+                codeCoverageEntity.getTotalLineCount(),
+                devices.size() > 0 ? devices.get(0).getId() : 0);
   }
 
   /**
@@ -299,7 +300,7 @@ public class VtsCoverageAlertJobServlet extends BaseJobServlet {
     TestCoverageStatusEntity status = ofy().load().type(TestCoverageStatusEntity.class).id(testName)
         .now();
     if (status == null) {
-      status = new TestCoverageStatusEntity(testName, 0, -1, -1);
+            status = new TestCoverageStatusEntity(testName, 0, -1, -1, 0);
     }
 
     StringBuffer fullUrl = request.getRequestURL();

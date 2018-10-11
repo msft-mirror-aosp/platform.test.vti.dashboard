@@ -17,6 +17,8 @@
 package com.android.vts.config;
 
 import com.android.vts.entity.ApiCoverageEntity;
+import com.android.vts.entity.BranchEntity;
+import com.android.vts.entity.BuildTargetEntity;
 import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
@@ -47,12 +49,10 @@ import javax.servlet.annotation.WebListener;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
 
 /**
  * The @WebListener annotation for registering a class as a listener of a web application.
@@ -73,6 +73,9 @@ public class ObjectifyListener implements ServletContextListener {
   @Override
   public void contextInitialized(ServletContextEvent servletContextEvent) {
     ObjectifyService.init();
+        ObjectifyService.register(BranchEntity.class);
+        ObjectifyService.register(BuildTargetEntity.class);
+
     ObjectifyService.register(ApiCoverageEntity.class);
     ObjectifyService.register(CodeCoverageEntity.class);
     ObjectifyService.register(CoverageEntity.class);
