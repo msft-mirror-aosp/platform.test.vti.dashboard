@@ -33,4 +33,10 @@ Copyright 2016 Google Inc. All Rights Reserved.
     <schedule>every 5 mins</schedule>
     <timezone>America/Los_Angeles</timezone>
   </cron>
+  <cron>
+    <url>/cron/vts_spreadsheet_sync_job</url>
+    <description>Sync google spreadsheet data with datastore entity.</description>
+    <schedule>every day 00:30</schedule>
+    <timezone>America/Los_Angeles</timezone>
+  </cron>
 </cronentries>
