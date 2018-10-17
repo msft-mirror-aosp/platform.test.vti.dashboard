@@ -34,10 +34,8 @@ import com.google.cloud.storage.Storage;
 import com.googlecode.objectify.Key;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystems;
@@ -51,7 +49,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -89,40 +86,25 @@ public class VtsSuiteTestJobServlet extends BaseJobServlet {
     /** This is the instance of App Engine memcache service java library */
     private MemcacheService syncCache = MemcacheServiceFactory.getMemcacheService();
 
-    /** System Configuration Property class */
-    protected Properties systemConfigProp = new Properties();
-
     @Override
     public void init(ServletConfig servletConfig) throws ServletException {
         super.init(servletConfig);
 
-        try {
-            InputStream defaultInputStream =
-                    VtsSuiteTestJobServlet.class
-                            .getClassLoader()
-                            .getResourceAsStream("config.properties");
-            systemConfigProp.load(defaultInputStream);
+        GCS_KEY_FILE = systemConfigProp.getProperty("gcs.keyFile");
+        GCS_BUCKET_NAME = systemConfigProp.getProperty("gcs.bucketName");
+        GCS_SUITE_TEST_FOLDER_NAME = systemConfigProp.getProperty("gcs.suiteTestFolderName");
 
-            GCS_KEY_FILE = systemConfigProp.getProperty("gcs.keyFile");
-            GCS_BUCKET_NAME = systemConfigProp.getProperty("gcs.bucketName");
-            GCS_SUITE_TEST_FOLDER_NAME = systemConfigProp.getProperty("gcs.suiteTestFolderName");
+        this.keyFileInputStream =
+                this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
 
-            this.keyFileInputStream =
-                    this.getClass().getClassLoader().getResourceAsStream("keys/" + GCS_KEY_FILE);
-
-            Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
-            if (optionalStorage.isPresent()) {
-                this.storage = optionalStorage.get();
-            } else {
-                logger.log(Level.SEVERE, "Error on getting storage instance!");
-                throw new ServletException("Creating storage instance exception!");
-            }
-            syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        Optional<Storage> optionalStorage = GcsHelper.getStorage(this.keyFileInputStream);
+        if (optionalStorage.isPresent()) {
+            this.storage = optionalStorage.get();
+        } else {
+            logger.log(Level.SEVERE, "Error on getting storage instance!");
+            throw new ServletException("Creating storage instance exception!");
         }
+        syncCache.setErrorHandler(ErrorHandlers.getConsistentLogAndContinue(Level.INFO));
     }
 
     @Override
