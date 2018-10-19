@@ -26,57 +26,55 @@
   <link rel='stylesheet' href='/css/search_header.css'>
   <script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>
   <script src='https://www.gstatic.com/external_hosted/moment/min/moment-with-locales.min.js'></script>
-  <script src='js/time.js'></script>
   <script src='js/common.js'></script>
-  <script src='js/search_header.js'></script>
+  <script src='js/time.js'></script>
   <script type='text/javascript'>
       google.charts.load('current', {'packages':['table', 'corechart']});
       google.charts.setOnLoadCallback(drawStatsChart);
       google.charts.setOnLoadCallback(drawCoverageCharts);
 
-      var search;
-
       $(document).ready(function() {
-          // $('#test-results-container').showTests(${testRuns}, true);
-          search = $('#filter-bar').createSearchHeader('Code Coverage', '', refresh);
-          search.addFilter('Branch', 'branch', {
-            corpus: ${branches}
-          }, ${branch});
-          search.addFilter('Device', 'device', {
-            corpus: ${devices}
-          }, ${device});
-          search.addFilter('Device Build ID', 'deviceBuildId', {}, ${deviceBuildId});
-          search.addFilter('Test Build ID', 'testBuildId', {}, ${testBuildId});
-          search.addFilter('Host', 'hostname', {}, ${hostname});
-          search.addFilter('Passing Count', 'passing', {
-            type: 'number',
-            width: 's2'
-          }, ${passing});
-          search.addFilter('Non-Passing Count', 'nonpassing', {
-            type: 'number',
-            width: 's2'
-          }, ${nonpassing});
-          search.addRunTypeCheckboxes(${showPresubmit}, ${showPostsubmit});
-          search.display();
+
+          $('select').material_select();
+
+          $(".search-icon-wrapper").click(function() {
+              $(".search-wrapper").toggle();
+          });
+
+          var inputIdList = ["device", "branch"];
+
+          $("#schBtn").click(function (evt) {
+              if($(this).hasClass('disabled')) return;
+              var queryParam = "?";
+              $.each(inputIdList, function( index, value ) {
+                  var selectId = value.charAt(0).toUpperCase() + value.slice(1)
+                  var result = $("#search" + selectId).val();
+                  if ( !$.isEmptyObject(result) ) {
+                      queryParam += value + "=" + result.trim() + "&";
+                  }
+              });
+              var link = '${pageContext.request.contextPath}' + '/show_coverage_overview' + queryParam;
+              window.open(link, '_self');
+          });
 
           var no_data_msg = "NO DATA";
 
           $('#coverageModalGraph').modal({
-                width: '75%',
-                dismissible: true, // Modal can be dismissed by clicking outside of the modal
-                opacity: .5, // Opacity of modal background
-                inDuration: 300, // Transition in duration
-                outDuration: 200, // Transition out duration
-                startingTop: '4%', // Starting top style attribute
-                endingTop: '10%', // Ending top style attribute
-                ready: function(modal, trigger) { // Callback for Modal open. Modal and trigger parameters available.
+              width: '75%',
+              dismissible: true, // Modal can be dismissed by clicking outside of the modal
+              opacity: .5, // Opacity of modal background
+              inDuration: 300, // Transition in duration
+              outDuration: 200, // Transition out duration
+              startingTop: '4%', // Starting top style attribute
+              endingTop: '10%', // Ending top style attribute
+              ready: function(modal, trigger) { // Callback for Modal open. Modal and trigger parameters available.
                   var testname = modal.data('testname');
                   $('#coverageModalTitle').text("Code Coverage Chart : " + testname);
                   var query = new google.visualization.Query('show_coverage_overview?pageType=datatable&testName=' + testname);
                   // Send the query with a callback function.
                   query.send(handleQueryResponse);
-                },
-                complete: function() {
+              },
+              complete: function() {
                   $('#coverage_combo_chart_div').empty();
                   $('#coverage_line_chart_div').empty();
                   $('#coverage_table_chart_div').empty();
@@ -90,9 +88,8 @@
                   });
 
                   $('#dataTableLoading').show("slow");
-                } // Callback for Modal close
-              }
-          );
+              } // Callback for Modal close
+          });
 
           // Handle the query response.
           function handleQueryResponse(response) {
@@ -339,7 +336,50 @@
 
   <body>
     <div class='wide container'>
-      <div id='filter-bar'></div>
+      <div id="filter-bar">
+        <div class="row card search-bar expanded">
+          <div class="header-wrapper">
+            <h5 class="section-header">
+              <b>Code Coverage</b>
+            </h5>
+            <div class="search-icon-wrapper">
+              <i class="material-icons">search</i>
+            </div>
+          </div>
+          <div class="search-wrapper" ${empty branch and empty device ? 'style="display: none"' : ''}>
+            <div class="row">
+              <div class="col s9">
+                <div class="input-field col s4">
+                  <c:set var="branchVal" value='${fn:replace(branch, "\\\"", "")}'></c:set>
+                  <select id="searchBranch">
+                      <option value="" <c:if test="${empty branch}">disabled selected</c:if> >Choose your branch</option>
+                      <c:forEach items='${branchOptions}' var='branchOption'>
+                        <option value="${branchOption}" ${branchVal == branchOption ? 'selected' : ''}>${branchOption}</option>
+                      </c:forEach>
+                  </select>
+                  <label>Branch Select</label>
+                </div>
+                <div class="input-field col s4">
+                  <c:set var="deviceVal" value='${fn:replace(device, "\\\"", "")}'></c:set>
+                  <select id="searchDevice">
+                    <option value="" <c:if test="${empty device}">disabled selected</c:if> >Choose your device</option>
+                    <c:forEach items='${deviceOptions}' var='deviceOption'>
+                      <option value="${deviceOption}" ${deviceVal == deviceOption ? 'selected' : ''}>${deviceOption}</option>
+                    </c:forEach>
+                  </select>
+                  <label>Device Select</label>
+                </div>
+                <div class="col s4"></div>
+              </div>
+              <div class="refresh-wrapper col s3">
+                <a id="schBtn" class="btn-floating btn-medium red waves-effect waves-light" style="margin-right: 30px;">
+                  <i class="medium material-icons">cached</i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class='row'>
         <div class='col s12'>
           <div class='col s12 card center-align'>
@@ -457,17 +497,6 @@
       </div>
       <div class="modal-footer">
         <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat ">Close</a>
-      </div>
-    </div>
-
-    <!-- Link Modal Structure -->
-    <div id="info-modal" class="modal modal-fixed-footer">
-      <div class="modal-content">
-        <h4>Links</h4>
-        <div class="info-container"></div>
-      </div>
-      <div class="modal-footer">
-        <a class="btn-flat modal-close">Close</a>
       </div>
     </div>
 

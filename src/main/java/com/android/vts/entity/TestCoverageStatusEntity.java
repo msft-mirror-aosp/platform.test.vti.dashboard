@@ -19,13 +19,16 @@ package com.android.vts.entity;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 import com.google.appengine.api.datastore.Entity;
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -50,6 +53,7 @@ public class TestCoverageStatusEntity implements Serializable {
     public static final String TOTAL_LINE_COUNT = "totalLineCount";
     public static final String COVERED_LINE_COUNT = "coveredLineCount";
     public static final String UPDATED_TIMESTAMP = "updatedTimestamp";
+    public static final String DEVICE_INFO_ID = "deviceInfoId";
 
     /** TestCoverageStatusEntity name field */
     @Id @Getter @Setter String testName;
@@ -62,6 +66,9 @@ public class TestCoverageStatusEntity implements Serializable {
 
     /** TestCoverageStatusEntity updatedTimestamp field */
     @Index @Getter @Setter long updatedTimestamp;
+
+    /** TestCoverageStatusEntity DeviceInfo Entity ID reference field */
+    @Index @Getter @Setter long deviceInfoId;
 
     /** TestCoverageStatusEntity updatedCoveredLineCount field */
     @Index @Getter @Setter long updatedCoveredLineCount;
@@ -81,11 +88,16 @@ public class TestCoverageStatusEntity implements Serializable {
      * @param totalLineCount The total number of lines.
      */
     public TestCoverageStatusEntity(
-            String testName, long timestamp, long coveredLineCount, long totalLineCount) {
+            String testName,
+            long timestamp,
+            long coveredLineCount,
+            long totalLineCount,
+            long deviceInfoId) {
         this.testName = testName;
         this.updatedTimestamp = timestamp;
         this.coveredLineCount = coveredLineCount;
         this.totalLineCount = totalLineCount;
+        this.deviceInfoId = deviceInfoId;
     }
 
     /** find TestCoverageStatus entity by ID */
@@ -103,9 +115,67 @@ public class TestCoverageStatusEntity implements Serializable {
         return testCoverageStatusMap;
     }
 
+    /** Get all DeviceInfoEntity List by TestCoverageStatusEntities' key list */
+    public static List<Key<DeviceInfoEntity>> getDeviceInfoEntityKeyList(
+            List<TestCoverageStatusEntity> testCoverageStatusEntityList) {
+        return testCoverageStatusEntityList
+                .stream()
+                .map(
+                        testCoverageStatusEntity -> {
+                            com.googlecode.objectify.Key testKey =
+                                    com.googlecode.objectify.Key.create(
+                                            TestEntity.class,
+                                            testCoverageStatusEntity.getTestName());
+                            com.googlecode.objectify.Key testRunKey =
+                                    com.googlecode.objectify.Key.create(
+                                            testKey,
+                                            TestRunEntity.class,
+                                            testCoverageStatusEntity.getUpdatedTimestamp());
+                            return com.googlecode.objectify.Key.create(
+                                    testRunKey,
+                                    DeviceInfoEntity.class,
+                                    testCoverageStatusEntity.getDeviceInfoId());
+                        })
+                .collect(Collectors.toList());
+    }
+
     /** Get all TestCoverageStatusEntity List */
     public static List<TestCoverageStatusEntity> getAllTestCoverage() {
         return ofy().load().type(TestCoverageStatusEntity.class).list();
+    }
+
+    /** Get all TestCoverageStatusEntities' Branch List */
+    public static Set<String> getBranchSet(
+            List<TestCoverageStatusEntity> testCoverageStatusEntityList) {
+        List<com.googlecode.objectify.Key<DeviceInfoEntity>> deviceInfoEntityKeyList =
+                getDeviceInfoEntityKeyList(testCoverageStatusEntityList);
+
+        Collection<DeviceInfoEntity> deviceInfoEntityList =
+                ofy().load().keys(() -> deviceInfoEntityKeyList.iterator()).values();
+
+        Set<String> branchSet =
+                deviceInfoEntityList
+                        .stream()
+                        .map(deviceInfoEntity -> deviceInfoEntity.getBranch())
+                        .collect(Collectors.toSet());
+        return branchSet;
+    }
+
+    /** Get all TestCoverageStatusEntities' Device List */
+    public static Set<String> getDeviceSet(
+            List<TestCoverageStatusEntity> testCoverageStatusEntityList) {
+        List<com.googlecode.objectify.Key<DeviceInfoEntity>> deviceInfoEntityKeyList =
+                getDeviceInfoEntityKeyList(testCoverageStatusEntityList);
+
+        Collection<DeviceInfoEntity> deviceInfoEntityList =
+                ofy().load().keys(() -> deviceInfoEntityKeyList.iterator()).values();
+
+        Set<String> deviceSet =
+                deviceInfoEntityList
+                        .stream()
+                        .map(deviceInfoEntity -> deviceInfoEntity.getBuildFlavor())
+                        .collect(Collectors.toSet());
+        return deviceSet;
     }
 
     /** TestRunEntity function to get the related TestRunEntity from id value */
@@ -146,7 +216,8 @@ public class TestCoverageStatusEntity implements Serializable {
                 || e.getKey().getName() == null
                 || !e.hasProperty(UPDATED_TIMESTAMP)
                 || !e.hasProperty(COVERED_LINE_COUNT)
-                || !e.hasProperty(TOTAL_LINE_COUNT)) {
+                || !e.hasProperty(TOTAL_LINE_COUNT)
+                || !e.hasProperty(DEVICE_INFO_ID)) {
             logger.log(Level.WARNING, "Missing test attributes in entity: " + e.toString());
             return null;
         }
@@ -154,15 +225,18 @@ public class TestCoverageStatusEntity implements Serializable {
         long timestamp = 0;
         long coveredLineCount = -1;
         long totalLineCount = -1;
+        long deviceInfoId = 0;
         try {
             timestamp = (long) e.getProperty(UPDATED_TIMESTAMP);
             coveredLineCount = (Long) e.getProperty(COVERED_LINE_COUNT);
             totalLineCount = (Long) e.getProperty(TOTAL_LINE_COUNT);
+            deviceInfoId = (Long) e.getProperty(DEVICE_INFO_ID);
         } catch (ClassCastException exception) {
             // Invalid contents or null values
             logger.log(Level.WARNING, "Error parsing test entity.", exception);
             return null;
         }
-        return new TestCoverageStatusEntity(testName, timestamp, coveredLineCount, totalLineCount);
+        return new TestCoverageStatusEntity(
+                testName, timestamp, coveredLineCount, totalLineCount, deviceInfoId);
     }
 }
