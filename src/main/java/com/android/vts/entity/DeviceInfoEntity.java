@@ -21,6 +21,7 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.memcache.MemcacheService;
 import com.google.appengine.api.memcache.MemcacheServiceFactory;
+import com.google.apphosting.api.ApiProxy;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
@@ -106,9 +107,43 @@ public class DeviceInfoEntity implements Serializable {
      * @param abiBitness The abi bitness of the device.
      * @param abiName The name of the abi.
      */
-    public DeviceInfoEntity(Key parentKey, String branch, String product, String buildFlavor,
-            String buildID, String abiBitness, String abiName) {
+    public DeviceInfoEntity(
+            Key parentKey,
+            String branch,
+            String product,
+            String buildFlavor,
+            String buildID,
+            String abiBitness,
+            String abiName) {
         this.parentKey = parentKey;
+        this.branch = branch;
+        this.product = product;
+        this.buildFlavor = buildFlavor;
+        this.buildId = buildID;
+        this.abiBitness = abiBitness;
+        this.abiName = abiName;
+    }
+
+    /**
+     * Create a DeviceInfoEntity object with objectify Key
+     *
+     * @param parent The objectify key for the parent entity in the database.
+     * @param branch The build branch.
+     * @param product The device product.
+     * @param buildFlavor The device build flavor.
+     * @param buildID The device build ID.
+     * @param abiBitness The abi bitness of the device.
+     * @param abiName The name of the abi.
+     */
+    public DeviceInfoEntity(
+            com.googlecode.objectify.Key parent,
+            String branch,
+            String product,
+            String buildFlavor,
+            String buildID,
+            String abiBitness,
+            String abiName) {
+        this.parent = parent;
         this.branch = branch;
         this.product = product;
         this.buildFlavor = buildFlavor;
@@ -121,9 +156,23 @@ public class DeviceInfoEntity implements Serializable {
      * Get All Branch List from DeviceInfoEntity
      */
     public static List<String> getAllBranches() {
-        List<String> branchList = (List<String>) syncCache.get("branchList");
-        if (Objects.isNull(branchList)) {
-            branchList = ofy().load()
+        try {
+            List<String> branchList = (List<String>) syncCache.get("branchList");
+            if (Objects.isNull(branchList)) {
+                branchList =
+                        ofy().load()
+                                .type(DeviceInfoEntity.class)
+                                .project("branch")
+                                .distinct(true)
+                                .list()
+                                .stream()
+                                .map(device -> device.branch)
+                                .collect(Collectors.toList());
+                syncCache.put("branchList", branchList);
+            }
+            return branchList;
+        } catch (ApiProxy.CallNotFoundException e) {
+            return ofy().load()
                     .type(DeviceInfoEntity.class)
                     .project("branch")
                     .distinct(true)
@@ -131,18 +180,30 @@ public class DeviceInfoEntity implements Serializable {
                     .stream()
                     .map(device -> device.branch)
                     .collect(Collectors.toList());
-            syncCache.put("branchList", branchList);
         }
-        return branchList;
     }
 
     /**
      * Get All BuildFlavors List from DeviceInfoEntity
      */
     public static List<String> getAllBuildFlavors() {
-        List<String> buildFlavorList = (List<String>) syncCache.get("buildFlavorList");
-        if (Objects.isNull(buildFlavorList)) {
-            buildFlavorList = ofy().load()
+        try {
+            List<String> buildFlavorList = (List<String>) syncCache.get("buildFlavorList");
+            if (Objects.isNull(buildFlavorList)) {
+                buildFlavorList =
+                        ofy().load()
+                                .type(DeviceInfoEntity.class)
+                                .project("buildFlavor")
+                                .distinct(true)
+                                .list()
+                                .stream()
+                                .map(device -> device.buildFlavor)
+                                .collect(Collectors.toList());
+                syncCache.put("buildFlavorList", buildFlavorList);
+            }
+            return buildFlavorList;
+        } catch (ApiProxy.CallNotFoundException e) {
+            return ofy().load()
                     .type(DeviceInfoEntity.class)
                     .project("buildFlavor")
                     .distinct(true)
@@ -150,9 +211,12 @@ public class DeviceInfoEntity implements Serializable {
                     .stream()
                     .map(device -> device.buildFlavor)
                     .collect(Collectors.toList());
-            syncCache.put("buildFlavorList", buildFlavorList);
         }
-        return buildFlavorList;
+    }
+
+    /** Saving function for the instance of this class */
+    public void save() {
+        ofy().save().entity(this).now();
     }
 
     public Entity toEntity() {
