@@ -176,6 +176,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet>
 
 <servlet>
+  <servlet-name>vts_spreadsheet_sync_job</servlet-name>
+  <servlet-class>com.android.vts.job.VtsSpreadSheetSyncServlet</servlet-class>
+</servlet>
+
+<servlet>
   <servlet-name>suite_test_report_gcs_monitor_job</servlet-name>
   <servlet-class>com.android.vts.job.VtsSuiteTestJobServlet</servlet-class>
 </servlet>
@@ -323,6 +328,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 <servlet-mapping>
   <servlet-name>vts_inactivity_job</servlet-name>
   <url-pattern>/cron/vts_inactivity_job/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>vts_spreadsheet_sync_job</servlet-name>
+  <url-pattern>/cron/vts_spreadsheet_sync_job/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>
