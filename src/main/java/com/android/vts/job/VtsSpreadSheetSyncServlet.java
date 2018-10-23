@@ -18,6 +18,7 @@ package com.android.vts.job;
 
 import com.android.vts.entity.ApiCoverageExcludedEntity;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.extensions.appengine.datastore.AppEngineDataStoreFactory;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
@@ -26,18 +27,14 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
-import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -56,14 +53,6 @@ public class VtsSpreadSheetSyncServlet extends BaseJobServlet {
 
     private static final String APPLICATION_NAME = "VTS Dashboard";
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
-
-    /**
-     * Global instance of the scopes. If modifying these scopes, delete your previously saved
-     * tokens/ folder.
-     */
-    private static final List<String> SCOPES =
-            Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
 
     private String CREDENTIALS_KEY_FILE = "";
 
@@ -103,19 +92,24 @@ public class VtsSpreadSheetSyncServlet extends BaseJobServlet {
      * Creates an authorized Credential object.
      *
      * @param HTTP_TRANSPORT The network HTTP Transport.
+     * @param appEngineDataStoreFactory The credential will be persisted using the Google App Engine
+     *     Data Store API.
+     * @param SCOPES Scopes are strings that enable access to particular resources, such as user
+     *     data.
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private Credential getCredentials(
+            final NetHttpTransport HTTP_TRANSPORT,
+            final AppEngineDataStoreFactory appEngineDataStoreFactory,
+            final List<String> SCOPES)
+            throws IOException {
 
         // Build flow and trigger user authorization request.
-        File fileTokenDirPath = new File(TOKENS_DIRECTORY_PATH);
-        FileDataStoreFactory fileDataStoreFactory = new FileDataStoreFactory(fileTokenDirPath);
-
         GoogleAuthorizationCodeFlow flow =
                 new GoogleAuthorizationCodeFlow.Builder(
                                 HTTP_TRANSPORT, JSON_FACTORY, this.clientSecrets, SCOPES)
-                        .setDataStoreFactory(fileDataStoreFactory)
+                        .setDataStoreFactory(appEngineDataStoreFactory)
                         .setAccessType("offline")
                         .build();
         LocalServerReceiver localServerReceiver = new LocalServerReceiver();
@@ -128,8 +122,20 @@ public class VtsSpreadSheetSyncServlet extends BaseJobServlet {
         try {
             // Build a new authorized API client service.
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            final AppEngineDataStoreFactory appEngineDataStoreFactory =
+                    (AppEngineDataStoreFactory)
+                            request.getServletContext().getAttribute("dataStoreFactory");
+            final List<String> googleApiScopes =
+                    (List<String>) request.getServletContext().getAttribute("googleApiScopes");
+
             Sheets service =
-                    new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                    new Sheets.Builder(
+                                    HTTP_TRANSPORT,
+                                    JSON_FACTORY,
+                                    getCredentials(
+                                            HTTP_TRANSPORT,
+                                            appEngineDataStoreFactory,
+                                            googleApiScopes))
                             .setApplicationName(APPLICATION_NAME)
                             .build();
 
