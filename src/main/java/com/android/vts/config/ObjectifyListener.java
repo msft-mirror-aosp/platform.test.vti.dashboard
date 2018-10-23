@@ -37,9 +37,13 @@ import com.android.vts.entity.TestStatusEntity;
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
 import com.android.vts.entity.UserEntity;
+import com.google.api.client.extensions.appengine.datastore.AppEngineDataStoreFactory;
+import com.google.api.services.sheets.v4.SheetsScopes;
 import com.googlecode.objectify.ObjectifyService;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -63,6 +67,15 @@ import java.util.logging.Logger;
 public class ObjectifyListener implements ServletContextListener {
 
     private static final Logger logger = Logger.getLogger(ObjectifyListener.class.getName());
+
+
+    /** Global instance of the DataStoreFactory. */
+    private static final AppEngineDataStoreFactory DATA_STORE_FACTORY =
+            AppEngineDataStoreFactory.getDefaultInstance();
+
+    /** Global instance of the scopes. */
+    private static final List<String> GOOGLE_API_SCOPES =
+            Collections.singletonList(SheetsScopes.SPREADSHEETS_READONLY);
 
     /**
      * Receives notification that the web application initialization process is starting. This
@@ -108,6 +121,13 @@ public class ObjectifyListener implements ServletContextListener {
 
             systemConfigProp.load(defaultInputStream);
 
+            servletContextEvent
+                    .getServletContext()
+                    .setAttribute("dataStoreFactory", DATA_STORE_FACTORY);
+            servletContextEvent
+                    .getServletContext()
+                    .setAttribute("googleApiScopes", GOOGLE_API_SCOPES);
+
             String roleList = systemConfigProp.getProperty("user.roleList");
             Supplier<Stream<String>> streamSupplier = () -> Arrays.stream(roleList.split(","));
             this.createRoles(streamSupplier.get());
@@ -123,9 +143,9 @@ public class ObjectifyListener implements ServletContextListener {
                 this.createAdminUser(adminEmail, adminName, adminCompany, roleName.orElse("admin"));
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, e.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, e.getMessage());
         }
     }
 
