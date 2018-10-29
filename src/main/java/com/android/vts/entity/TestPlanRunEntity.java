@@ -18,7 +18,6 @@ package com.android.vts.entity;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
-import com.android.vts.entity.TestRunEntity.TestRunType;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -32,25 +31,21 @@ import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.Parent;
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @com.googlecode.objectify.annotation.Entity(name = "TestPlanRun")
 @Cache
 @Data
 @NoArgsConstructor
 /** Entity describing test plan run information. */
-public class TestPlanRunEntity implements Serializable {
+public class TestPlanRunEntity implements DashboardEntity {
 
     protected static final Logger logger = Logger.getLogger(TestPlanRunEntity.class.getName());
 
@@ -76,7 +71,7 @@ public class TestPlanRunEntity implements Serializable {
 
     @Id private Long id;
 
-    @Parent private com.googlecode.objectify.Key<TestPlanEntity> testParent;
+    @Parent private com.googlecode.objectify.Key<TestPlanEntity> parent;
 
     @Index private String testPlanName;
 
@@ -98,7 +93,7 @@ public class TestPlanRunEntity implements Serializable {
 
     @Ignore private List<Key> oldTestRuns;
 
-    private List<com.googlecode.objectify.Key<?>> testRuns;
+    private List<com.googlecode.objectify.Key<TestRunEntity>> testRuns;
 
     /** When this record was created or updated */
     @Index Date updated;
@@ -106,7 +101,7 @@ public class TestPlanRunEntity implements Serializable {
     /**
      * Create a TestPlanRunEntity object describing a test plan run.
      *
-     * @param parentKey The key for the parent entity in the database.
+     * @param testPlanKey The key for the parent entity in the database.
      * @param type The test run type (e.g. presubmit, postsubmit, other)
      * @param startTimestamp The time in microseconds when the test plan run started.
      * @param endTimestamp The time in microseconds when the test plan run ended.
@@ -116,7 +111,7 @@ public class TestPlanRunEntity implements Serializable {
      * @param testRuns A list of keys to the TestRunEntity objects for the plan run run.
      */
     public TestPlanRunEntity(
-            Key parentKey,
+            Key testPlanKey,
             String testPlanName,
             long type,
             long startTimestamp,
@@ -127,7 +122,8 @@ public class TestPlanRunEntity implements Serializable {
             long totalApiCount,
             long coveredApiCount,
             List<Key> testRuns) {
-        this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
+        this.id = startTimestamp;
+        this.key = KeyFactory.createKey(testPlanKey, KIND, startTimestamp);
         this.testPlanName = testPlanName;
         this.type = type;
         this.startTimestamp = startTimestamp;
@@ -152,6 +148,44 @@ public class TestPlanRunEntity implements Serializable {
                         .collect(Collectors.toList());
     }
 
+    /**
+     * Create a TestPlanRunEntity object describing a test plan run.
+     *
+     * @param testPlanKey The key for the parent entity in the database.
+     * @param type The test run type (e.g. presubmit, postsubmit, other)
+     * @param startTimestamp The time in microseconds when the test plan run started.
+     * @param endTimestamp The time in microseconds when the test plan run ended.
+     * @param testBuildId The build ID of the VTS test build.
+     * @param passCount The number of passing test cases in the run.
+     * @param failCount The number of failing test cases in the run.
+     * @param testRuns A list of keys to the TestRunEntity objects for the plan run run.
+     */
+    public TestPlanRunEntity(
+            com.googlecode.objectify.Key<TestPlanEntity> testPlanKey,
+            String testPlanName,
+            long type,
+            long startTimestamp,
+            long endTimestamp,
+            String testBuildId,
+            long passCount,
+            long failCount,
+            long totalApiCount,
+            long coveredApiCount,
+            List<com.googlecode.objectify.Key<TestRunEntity>> testRuns) {
+        this.id = startTimestamp;
+        this.parent = testPlanKey;
+        this.testPlanName = testPlanName;
+        this.type = type;
+        this.startTimestamp = startTimestamp;
+        this.endTimestamp = endTimestamp;
+        this.testBuildId = testBuildId;
+        this.passCount = passCount;
+        this.failCount = failCount;
+        this.totalApiCount = totalApiCount;
+        this.coveredApiCount = coveredApiCount;
+        this.testRuns = testRuns;
+    }
+
     public Entity toEntity() {
         Entity planRun = new Entity(this.key);
         planRun.setProperty(TEST_PLAN_NAME, this.testPlanName);
@@ -168,6 +202,7 @@ public class TestPlanRunEntity implements Serializable {
     }
 
     /** Saving function for the instance of this class */
+    @Override
     public com.googlecode.objectify.Key<TestPlanRunEntity> save() {
         this.updated = new Date();
         return ofy().save().entity(this).now();
@@ -175,12 +210,7 @@ public class TestPlanRunEntity implements Serializable {
 
     /** Get UrlSafeKey from this class */
     public String getUrlSafeKey() {
-        com.googlecode.objectify.Key testPlanKey =
-                com.googlecode.objectify.Key.create(TestPlanEntity.class, this.testPlanName);
-        com.googlecode.objectify.Key idKey =
-                com.googlecode.objectify.Key.create(
-                        testPlanKey, TestPlanRunEntity.class, this.startTimestamp);
-        return idKey.toUrlSafe();
+        return this.getOfyKey().toUrlSafe();
     }
 
     /** Add a task to calculate the total number of coverage API */
@@ -191,7 +221,7 @@ public class TestPlanRunEntity implements Serializable {
             Queue queue = QueueFactory.getQueue(QUEUE_NAME);
             queue.add(
                     TaskOptions.Builder.withUrl(COVERAGE_API_URL)
-                            .param("urlSafeKey", String.valueOf(this.getUrlSafeKey()))
+                            .param("urlSafeKey", this.getUrlSafeKey())
                             .method(TaskOptions.Method.POST));
         }
     }
@@ -203,6 +233,12 @@ public class TestPlanRunEntity implements Serializable {
      */
     public Key getOldKey(Key parentKey) {
         return KeyFactory.createKey(parentKey, KIND, startTimestamp);
+    }
+
+    /** Get key info from objecitfy library. */
+    public com.googlecode.objectify.Key getOfyKey() {
+        return com.googlecode.objectify.Key.create(
+                this.parent, TestPlanRunEntity.class, this.startTimestamp);
     }
 
     /**

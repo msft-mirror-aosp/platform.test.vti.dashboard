@@ -41,8 +41,6 @@ public class BuildTargetEntity implements DashboardEntity {
 
     public static final String KIND = "BuildTarget"; // The entity kind.
 
-    public Key key; // The key for the entity in the database.
-
     @Id private String name;
 
     /**
@@ -51,12 +49,16 @@ public class BuildTargetEntity implements DashboardEntity {
      * @param targetName The name of the build target.
      */
     public BuildTargetEntity(String targetName) {
-        this.key = KeyFactory.createKey(KIND, targetName);
+        this.name = targetName;
     }
 
+    public Key getKey() {
+        return KeyFactory.createKey(KIND, this.name);
+    }
+    /** Saving function for the instance of this class */
     @Override
-    public Entity toEntity() {
-        return new Entity(this.key);
+    public com.googlecode.objectify.Key<BuildTargetEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     /** find by Build Target Name */
