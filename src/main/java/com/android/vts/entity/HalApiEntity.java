@@ -94,6 +94,7 @@ public class HalApiEntity implements DashboardEntity {
         this.halInterfaceName = halInterfaceName;
         this.halApi = halApi;
         this.coveredHalApi = coveredHalApi;
+        this.updated = new Date();
     }
 
     /** Saving function for the instance of this class */

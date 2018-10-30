@@ -23,6 +23,7 @@ import com.android.vts.entity.ApiCoverageExcludedEntity;
 import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
+import com.android.vts.entity.HalApiEntity;
 import com.android.vts.entity.ProfilingPointEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.ProfilingPointSummaryEntity;
@@ -87,6 +88,7 @@ public class ObjectifyListener implements ServletContextListener {
         ObjectifyService.register(BranchEntity.class);
         ObjectifyService.register(BuildTargetEntity.class);
 
+        ObjectifyService.register(HalApiEntity.class);
         ObjectifyService.register(ApiCoverageEntity.class);
         ObjectifyService.register(ApiCoverageExcludedEntity.class);
         ObjectifyService.register(CodeCoverageEntity.class);
@@ -106,6 +108,7 @@ public class ObjectifyListener implements ServletContextListener {
         ObjectifyService.register(TestStatusEntity.class);
         ObjectifyService.register(TestSuiteFileEntity.class);
         ObjectifyService.register(TestSuiteResultEntity.class);
+        ObjectifyService.register(TestAcknowledgmentEntity.class);
         ObjectifyService.register(RoleEntity.class);
         ObjectifyService.register(UserEntity.class);
         ObjectifyService.begin();
@@ -121,6 +124,9 @@ public class ObjectifyListener implements ServletContextListener {
 
             systemConfigProp.load(defaultInputStream);
 
+            servletContextEvent
+                    .getServletContext()
+                    .setAttribute("systemConfigProp", systemConfigProp);
             servletContextEvent
                     .getServletContext()
                     .setAttribute("dataStoreFactory", DATA_STORE_FACTORY);

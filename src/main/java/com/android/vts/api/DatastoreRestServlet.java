@@ -458,7 +458,7 @@ public class DatastoreRestServlet extends BaseApiServlet {
         long startTimestamp = -1;
         long endTimestamp = -1;
         String testBuildId = null;
-        long type = 0;
+        long testType = -1;
         Set<DeviceInfoEntity> deviceInfoEntitySet = new HashSet<>();
         for (TestRunEntity testRunEntity : testRunEntityMap.values()) {
             passCount += testRunEntity.getPassCount();
@@ -469,7 +469,7 @@ public class DatastoreRestServlet extends BaseApiServlet {
             if (endTimestamp < 0 || testRunEntity.getEndTimestamp() > endTimestamp) {
                 endTimestamp = testRunEntity.getEndTimestamp();
             }
-            type = testRunEntity.getType();
+            testType = testRunEntity.getType();
             testBuildId = testRunEntity.getTestBuildId();
 
             List<DeviceInfoEntity> deviceInfoEntityListWithTestRunKey =
@@ -483,10 +483,10 @@ public class DatastoreRestServlet extends BaseApiServlet {
             }
         }
 
-        if (startTimestamp < 0 || testBuildId == null || type == 0) {
+        if (startTimestamp < 0 || testBuildId == null || testType == -1) {
             log.debug("startTimestamp => " + startTimestamp);
             log.debug("testBuildId => " + testBuildId);
-            log.debug("type => " + type);
+            log.debug("type => " + testType);
             log.error("Couldn't infer test run information from runs.");
             return;
         }
@@ -495,7 +495,7 @@ public class DatastoreRestServlet extends BaseApiServlet {
                 new TestPlanRunEntity(
                         testPlanEntity.getKey(),
                         testPlanName,
-                        type,
+                        testType,
                         startTimestamp,
                         endTimestamp,
                         testBuildId,
@@ -528,7 +528,7 @@ public class DatastoreRestServlet extends BaseApiServlet {
                             .collect(Collectors.toList());
             HalApiEntity halApiEntity =
                     new HalApiEntity(
-                            testPlanRunEntity.getParent(),
+                            testPlanRunEntity.getOfyKey(),
                             halInterfaceMessage.getHalReleaseLevel().toStringUtf8(),
                             halInterfaceMessage.getHalPackageName().toStringUtf8(),
                             halInterfaceMessage.getHalVersionMajor(),
