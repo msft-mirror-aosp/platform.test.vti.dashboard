@@ -106,10 +106,8 @@ public class CoverageRestServlet extends BaseApiServlet {
         List<List<String>> allCoveredHalApiList = new ArrayList();
 
         Key<TestPlanRunEntity> key = Key.create(urlSafeKey);
-        System.out.println("urlSafekey => " + urlSafeKey);
         TestPlanRunEntity testPlanRunEntity = ofy().load().key(key).safe();
 
-        System.out.println("testPlanRunEntity => " + testPlanRunEntity);
         for (Key<TestRunEntity> testRunKey : testPlanRunEntity.getTestRuns()) {
             List<ApiCoverageEntity> apiCoverageEntityList =
                     ofy().load().type(ApiCoverageEntity.class).ancestor(testRunKey).list();
