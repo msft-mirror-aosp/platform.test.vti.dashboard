@@ -150,7 +150,6 @@ public class BigtableLegacyJsonServlet extends HttpServlet {
         try {
             byte[] value = Base64.decodeBase64(payloadJson.getString("value"));
             TestReportMessage testReportMessage = TestReportMessage.parseFrom(value);
-            DatastoreHelper.insertTestReport(testReportMessage);
         } catch (InvalidProtocolBufferException e) {
             logger.log(Level.WARNING, "Invalid report posted to dashboard.");
         }

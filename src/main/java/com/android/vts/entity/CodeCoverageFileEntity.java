@@ -37,11 +37,10 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @Entity(name = "CodeCoverageFile")
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
-public class CodeCoverageFileEntity {
+public class CodeCoverageFileEntity implements DashboardEntity {
 
     /** CodeCoverageFileEntity testName field */
-    @Id
-    @Getter @Setter long id;
+    @Id @Getter @Setter Long id;
 
     @Parent
     @Getter @Setter private Key<?> coverageParent;
@@ -94,8 +93,9 @@ public class CodeCoverageFileEntity {
     }
 
     /** Saving function for the instance of this class */
-    public void save() {
+    @Override
+    public Key<CodeCoverageFileEntity> save() {
         this.isIgnored = false;
-        ofy().save().entity(this).now();
+        return ofy().save().entity(this).now();
     }
 }

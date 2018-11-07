@@ -179,29 +179,30 @@ public class VtsAlertJobServlet extends BaseJobServlet {
             List<TestAcknowledgmentEntity> acks) {
         Set<String> acknowledged = new HashSet<>();
         for (TestAcknowledgmentEntity ack : acks) {
-            boolean allDevices = ack.devices == null || ack.devices.size() == 0;
-            boolean allBranches = ack.branches == null || ack.branches.size() == 0;
+            boolean allDevices = ack.getDevices() == null || ack.getDevices().size() == 0;
+            boolean allBranches = ack.getBranches() == null || ack.getBranches().size() == 0;
             boolean isRelevant = allDevices && allBranches;
 
             // Determine if the acknowledgment is relevant to the devices.
             if (!isRelevant) {
                 for (DeviceInfoEntity device : devices) {
                     boolean deviceAcknowledged =
-                            allDevices || ack.devices.contains(device.getBuildFlavor());
+                            allDevices || ack.getDevices().contains(device.getBuildFlavor());
                     boolean branchAcknowledged =
-                            allBranches || ack.branches.contains(device.getBranch());
+                            allBranches || ack.getBranches().contains(device.getBranch());
                     if (deviceAcknowledged && branchAcknowledged) isRelevant = true;
                 }
             }
 
             if (isRelevant) {
                 // Separate the test cases
-                boolean allTestCases = ack.testCaseNames == null || ack.testCaseNames.size() == 0;
+                boolean allTestCases =
+                        ack.getTestCaseNames() == null || ack.getTestCaseNames().size() == 0;
                 if (allTestCases) {
                     acknowledged.addAll(testCases);
                     testCases.removeAll(acknowledged);
                 } else {
-                    for (String testCase : ack.testCaseNames) {
+                    for (String testCase : ack.getTestCaseNames()) {
                         if (testCases.contains(testCase)) {
                             acknowledged.add(testCase);
                             testCases.remove(testCase);

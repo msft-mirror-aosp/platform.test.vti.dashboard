@@ -35,9 +35,7 @@ import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.OnLoad;
 import com.googlecode.objectify.annotation.Parent;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,20 +43,17 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.json.JSONArray;
 
 @com.googlecode.objectify.annotation.Entity(name = "TestRun")
 @Cache
 @NoArgsConstructor
 /** Entity describing test run information. */
-public class TestRunEntity implements Serializable {
+public class TestRunEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(TestRunEntity.class.getName());
 
     /** Enum for classifying test run types. */
@@ -168,7 +163,7 @@ public class TestRunEntity implements Serializable {
 
     @Index @Getter @Setter private boolean hasCodeCoverage;
 
-    private com.googlecode.objectify.Key<CodeCoverageEntity> codeCoverageEntityKey;
+    @Ignore private com.googlecode.objectify.Key<CodeCoverageEntity> codeCoverageEntityKey;
 
     @Index @Getter @Setter private long coveredLineCount;
 
@@ -202,6 +197,7 @@ public class TestRunEntity implements Serializable {
             boolean hasCodeCoverage,
             List<Long> testCaseIds,
             List<String> logLinks) {
+        this.id = startTimestamp;
         this.key = KeyFactory.createKey(parentKey, KIND, startTimestamp);
         this.type = type;
         this.startTimestamp = startTimestamp;
@@ -212,9 +208,11 @@ public class TestRunEntity implements Serializable {
         this.failCount = failCount;
         this.hasCodeCoverage = hasCodeCoverage;
         this.testName = parentKey.getName();
-        this.codeCoverageEntityKey = getCodeCoverageEntityKey();
         this.testCaseIds = testCaseIds;
         this.logLinks = logLinks;
+
+        this.testRunParent = com.googlecode.objectify.Key.create(TestEntity.class, testName);
+        this.codeCoverageEntityKey = getCodeCoverageEntityKey();
     }
 
     /**
@@ -247,6 +245,7 @@ public class TestRunEntity implements Serializable {
     }
 
     /** Saving function for the instance of this class */
+    @Override
     public com.googlecode.objectify.Key<TestRunEntity> save() {
         return ofy().save().entity(this).now();
     }
@@ -289,7 +288,7 @@ public class TestRunEntity implements Serializable {
     }
 
     /** Get ApiCoverageEntity Key from the parent key */
-    private com.googlecode.objectify.Key getOfyKey() {
+    public com.googlecode.objectify.Key getOfyKey() {
         com.googlecode.objectify.Key testKey =
                 com.googlecode.objectify.Key.create(
                         TestEntity.class, this.testName);
