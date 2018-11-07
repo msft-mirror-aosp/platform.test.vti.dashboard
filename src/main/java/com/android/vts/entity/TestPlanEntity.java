@@ -19,21 +19,20 @@ package com.android.vts.entity;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 import com.google.appengine.api.datastore.Entity;
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
-import java.io.Serializable;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@com.googlecode.objectify.annotation.Entity(name="TestPlan")
+@com.googlecode.objectify.annotation.Entity(name = "TestPlan")
 @Cache
 @Data
 @NoArgsConstructor
 /** Entity describing test plan metadata. */
-public class TestPlanEntity implements Serializable {
+public class TestPlanEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(TestPlanEntity.class.getName());
 
     public static final String KIND = "TestPlan";
@@ -58,6 +57,11 @@ public class TestPlanEntity implements Serializable {
         return planEntity;
     }
 
+    public Key getKey() {
+        Key key = Key.create(TestPlanEntity.class, this.testPlanName);
+        return key;
+    }
+
     /**
      * Convert an Entity object to a TestEntity.
      *
@@ -76,7 +80,8 @@ public class TestPlanEntity implements Serializable {
     }
 
     /** Saving function for the instance of this class */
-    public void save() {
-        ofy().save().entity(this).now();
+    @Override
+    public com.googlecode.objectify.Key<TestPlanEntity> save() {
+        return ofy().save().entity(this).now();
     }
 }

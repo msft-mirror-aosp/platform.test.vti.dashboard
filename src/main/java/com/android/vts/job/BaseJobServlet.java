@@ -16,15 +16,10 @@
 
 package com.android.vts.job;
 
-import com.android.vts.servlet.BaseServlet;
-import com.android.vts.util.EmailHelper;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -37,20 +32,20 @@ public abstract class BaseJobServlet extends HttpServlet {
      */
     protected static Properties systemConfigProp = new Properties();
 
+    /**
+     * This variable is for maximum number of entities per transaction You can find the detail here
+     * (https://cloud.google.com/datastore/docs/concepts/limits)
+     */
+    protected int MAX_ENTITY_SIZE_PER_TRANSACTION = 300;
+
     @Override
     public void init(ServletConfig cfg) throws ServletException {
         super.init(cfg);
 
-        try {
-            InputStream defaultInputStream =
-                    BaseServlet.class.getClassLoader().getResourceAsStream("config.properties");
-            systemConfigProp.load(defaultInputStream);
+        systemConfigProp =
+                Properties.class.cast(cfg.getServletContext().getAttribute("systemConfigProp"));
 
-            EmailHelper.setPropertyValues(systemConfigProp);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.MAX_ENTITY_SIZE_PER_TRANSACTION =
+                Integer.parseInt(systemConfigProp.getProperty("datastore.maxEntitySize"));
     }
 }

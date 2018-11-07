@@ -24,7 +24,6 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
-import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,12 +33,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity(name="Test")
+@Entity(name = "Test")
 @Cache
 @Data
 @NoArgsConstructor
 /** Entity describing test metadata. */
-public class TestEntity implements Serializable {
+public class TestEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(TestEntity.class.getName());
 
     public static final String KIND = "Test";
@@ -75,10 +74,29 @@ public class TestEntity implements Serializable {
         this(testName, false);
     }
 
+    /** Saving function for the instance of this class */
+    @Override
+    public com.googlecode.objectify.Key<TestEntity> save() {
+        return ofy().save().entity(this).now();
+    }
+
     public com.google.appengine.api.datastore.Entity toEntity() {
         com.google.appengine.api.datastore.Entity testEntity = new com.google.appengine.api.datastore.Entity(this.getOldKey());
         testEntity.setProperty(HAS_PROFILING_DATA, this.hasProfilingData);
         return testEntity;
+    }
+
+    /**
+     * Get objectify TestRun Entity's key.
+     *
+     * @param startTimestamp test start timestamp
+     */
+    public com.googlecode.objectify.Key getTestRunKey(long startTimestamp) {
+        com.googlecode.objectify.Key testKey =
+                com.googlecode.objectify.Key.create(TestEntity.class, this.getTestName());
+        com.googlecode.objectify.Key testRunKey =
+                com.googlecode.objectify.Key.create(testKey, TestRunEntity.class, startTimestamp);
+        return testRunKey;
     }
 
     /**
@@ -130,10 +148,4 @@ public class TestEntity implements Serializable {
         }
         return new TestEntity(testName, hasProfilingData);
     }
-
-    /** Saving function for the instance of this class */
-    public void save() {
-        ofy().save().entity(this).now();
-    }
-
 }

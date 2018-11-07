@@ -25,7 +25,6 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,16 +32,16 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 @com.googlecode.objectify.annotation.Entity(name = "ProfilingPointSummary")
 @Cache
 @Data
 @NoArgsConstructor
 /** Entity describing a profiling point summary. */
-public class ProfilingPointSummaryEntity implements Serializable {
+public class ProfilingPointSummaryEntity implements DashboardEntity {
     protected static final Logger logger =
             Logger.getLogger(ProfilingPointSummaryEntity.class.getName());
     protected static final String DELIMITER = "#";
@@ -235,6 +234,12 @@ public class ProfilingPointSummaryEntity implements Serializable {
         for (long value : profilingRun.getValues()) {
             this.globalStats.updateStats(value);
         }
+    }
+
+    /** Saving function for the instance of this class */
+    @Override
+    public com.googlecode.objectify.Key<ProfilingPointSummaryEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     public Entity toEntity() {
