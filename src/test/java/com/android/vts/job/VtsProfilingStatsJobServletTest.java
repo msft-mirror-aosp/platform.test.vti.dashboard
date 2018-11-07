@@ -28,6 +28,7 @@ import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
 import com.android.vts.proto.VtsReportMessage;
+import com.android.vts.util.ObjectifyTestBase;
 import com.android.vts.util.StatSummary;
 import com.android.vts.util.TimeUtil;
 import com.google.appengine.api.datastore.DatastoreService;
@@ -55,11 +56,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
-public class VtsProfilingStatsJobServletTest {
+public class VtsProfilingStatsJobServletTest extends ObjectifyTestBase {
     private final LocalServiceTestHelper helper =
             new LocalServiceTestHelper(
                     new LocalDatastoreServiceTestConfig(),
@@ -67,12 +68,12 @@ public class VtsProfilingStatsJobServletTest {
                             .setQueueXmlPath("src/main/webapp/WEB-INF/queue.xml"));
     private static final double THRESHOLD = 1e-10;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         helper.setUp();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         helper.tearDown();
     }
