@@ -16,6 +16,8 @@
 
 package com.android.vts.api;
 
+import com.android.vts.entity.BranchEntity;
+import com.android.vts.entity.BuildTargetEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
@@ -25,6 +27,7 @@ import com.googlecode.objectify.Key;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Spy;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -36,12 +39,13 @@ import java.util.LinkedList;
 
 import static com.googlecode.objectify.ObjectifyService.factory;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 public class DataRestServletTest extends ObjectifyTestBase {
 
     private Gson gson;
+
+    @Spy private DataRestServlet servlet;
 
     @Mock private HttpServletRequest request;
 
@@ -54,7 +58,19 @@ public class DataRestServletTest extends ObjectifyTestBase {
 
         factory().register(TestEntity.class);
         factory().register(TestRunEntity.class);
+        factory().register(BranchEntity.class);
+        factory().register(BuildTargetEntity.class);
         factory().register(DeviceInfoEntity.class);
+
+        BranchEntity branchEntity1 = new BranchEntity("master");
+        branchEntity1.save();
+        BranchEntity branchEntity2 = new BranchEntity("pi");
+        branchEntity2.save();
+
+        BuildTargetEntity buildTargetEntity1 = new BuildTargetEntity("aosp_arm64_ab-userdebug");
+        buildTargetEntity1.save();
+        BuildTargetEntity buildTargetEntity2 = new BuildTargetEntity("sailfish-userdebug");
+        buildTargetEntity2.save();
 
         Key testParentKey = Key.create(TestEntity.class, "test1");
         Key testRunParentKey = Key.create(testParentKey, TestRunEntity.class, 1);
@@ -87,14 +103,14 @@ public class DataRestServletTest extends ObjectifyTestBase {
     public void testBranchData() throws IOException, ServletException {
 
         when(request.getPathInfo()).thenReturn("/branch");
+        when(request.getParameter("schKey")).thenReturn("*");
 
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
 
         when(response.getWriter()).thenReturn(pw);
 
-        DataRestServlet dataRestServlet = new DataRestServlet();
-        dataRestServlet.doGet(request, response);
+        servlet.doGet(request, response);
         String result = sw.getBuffer().toString().trim();
 
         LinkedList resultList = gson.fromJson(result, LinkedList.class);
@@ -108,26 +124,18 @@ public class DataRestServletTest extends ObjectifyTestBase {
     public void testDeviceData() throws IOException, ServletException {
 
         when(request.getPathInfo()).thenReturn("/device");
+        when(request.getParameter("schKey")).thenReturn("*");
 
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
 
         when(response.getWriter()).thenReturn(pw);
 
-        DataRestServlet dataRestServlet = new DataRestServlet();
-        dataRestServlet.doGet(request, response);
+        servlet.doGet(request, response);
         String result = sw.getBuffer().toString().trim();
 
         LinkedList resultList = gson.fromJson(result, LinkedList.class);
 
-        String value = "1";
-        int charValue = value.charAt(0);
-        String next = String.valueOf((char) (charValue + 1));
-        System.out.println(next);
-
-        String s = "asb";
-        System.out.println(s.replace("[.]$", ""));
-        assertTrue(s.charAt(0) == s.charAt(s.length() - 1));
         assertEquals(resultList.size(), 2);
         assertEquals(resultList.get(0), "aosp_arm64_ab-userdebug");
         assertEquals(resultList.get(1), "sailfish-userdebug");
