@@ -16,20 +16,10 @@
 
 package com.android.vts.api;
 
-import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestEntity;
 import com.android.vts.entity.TestRunEntity;
-import com.android.vts.util.FilterUtil;
 import com.android.vts.util.TestRunDetails;
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.EntityNotFoundException;
-import com.google.appengine.api.datastore.FetchOptions;
-import com.google.appengine.api.datastore.Key;
-import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.Query;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -38,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -108,10 +97,7 @@ public class TestRunRestServlet extends BaseApiServlet {
             }
             Map<com.googlecode.objectify.Key<TestCaseRunEntity>, TestCaseRunEntity>
                     testCaseRunEntityKeyMap = ofy().load().keys(() -> testCaseKeyList.iterator());
-            for (Map.Entry<com.googlecode.objectify.Key<TestCaseRunEntity>, TestCaseRunEntity> entry :
-                    testCaseRunEntityKeyMap.entrySet()) {
-                details.addTestCase(entry.getValue());
-            }
+            testCaseRunEntityKeyMap.forEach((key, value) -> details.addTestCase(value));
         }
         return details;
     }

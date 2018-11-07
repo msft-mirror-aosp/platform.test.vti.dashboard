@@ -138,7 +138,9 @@ public class TestCaseRunEntity implements DashboardEntity {
     private void onLoad() {
         if (testCaseNames.size() == results.size()) {
             for (int index = 0; index < testCaseNames.size(); index++) {
-                this.addTestCase(testCaseNames.get(index), results.get(index).intValue());
+                String name = testCaseNames.get(index);
+                int result = results.get(index).intValue();
+                this.testCases.add(new TestCase(this.id, this.testCases.size(), name, result));
             }
         }
     }
