@@ -17,6 +17,7 @@
 package com.android.vts.job;
 
 import com.android.vts.entity.ApiCoverageExcludedEntity;
+import com.android.vts.entity.DashboardEntity;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.appengine.datastore.AppEngineDataStoreFactory;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -162,7 +163,7 @@ public class VtsSpreadSheetSyncServlet extends BaseJobServlet {
                 }
             }
 
-            ApiCoverageExcludedEntity.saveAll(apiCoverageExcludedEntities);
+            DashboardEntity.saveAll(apiCoverageExcludedEntities, MAX_ENTITY_SIZE_PER_TRANSACTION);
 
         } catch (GeneralSecurityException gse) {
             logger.log(Level.SEVERE, gse.getMessage());

@@ -16,6 +16,7 @@
 
 package com.android.vts.entity;
 
+import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
@@ -25,11 +26,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
-import java.util.List;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
@@ -38,7 +37,7 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @Entity
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
-public class TestSuiteFileEntity {
+public class TestSuiteFileEntity implements DashboardEntity {
 
     /** Test Suite full file path field */
     @Id @Getter @Setter String filePath;
@@ -71,8 +70,9 @@ public class TestSuiteFileEntity {
     }
 
     /** Saving function for the instance of this class */
-    public void save() {
+    @Override
+    public Key<TestSuiteFileEntity> save() {
         this.updated = new Date();
-        ofy().save().entity(this).now();
+        return ofy().save().entity(this).now();
     }
 }

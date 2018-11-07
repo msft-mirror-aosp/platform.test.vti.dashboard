@@ -25,21 +25,20 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
-import java.io.Serializable;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 @com.googlecode.objectify.annotation.Entity(name = "ProfilingPoint")
 @Cache
 @Data
 @NoArgsConstructor
 /** Entity describing a profiling point. */
-public class ProfilingPointEntity implements Serializable {
+public class ProfilingPointEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(ProfilingPointEntity.class.getName());
     protected static final String DELIMITER = "#";
 
@@ -139,6 +138,12 @@ public class ProfilingPointEntity implements Serializable {
      */
     public static Key createKey(String testName, String profilingPointName) {
         return KeyFactory.createKey(KIND, testName + DELIMITER + profilingPointName);
+    }
+
+    /** Saving function for the instance of this class */
+    @Override
+    public com.googlecode.objectify.Key<ProfilingPointEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     public Entity toEntity() {
