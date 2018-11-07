@@ -112,8 +112,8 @@ public class DatastoreHelper {
     DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     Key startKey = KeyFactory.createKey(parentKey, kind, lowerBound);
     Filter startFilter =
-        new FilterPredicate(
-            Entity.KEY_RESERVED_PROPERTY, FilterOperator.GREATER_THAN, startKey);
+            new FilterPredicate(
+                    Entity.KEY_RESERVED_PROPERTY, FilterOperator.GREATER_THAN, startKey);
     Query q = new Query(kind).setAncestor(parentKey).setFilter(startFilter).setKeysOnly();
     return datastore.prepare(q).countEntities(FetchOptions.Builder.withLimit(1)) > 0;
   }
@@ -132,7 +132,7 @@ public class DatastoreHelper {
     }
     Key endKey = KeyFactory.createKey(parentKey, kind, upperBound);
     Filter endFilter =
-        new FilterPredicate(Entity.KEY_RESERVED_PROPERTY, FilterOperator.LESS_THAN, endKey);
+            new FilterPredicate(Entity.KEY_RESERVED_PROPERTY, FilterOperator.LESS_THAN, endKey);
     Query q = new Query(kind).setAncestor(parentKey).setFilter(endFilter).setKeysOnly();
     return datastore.prepare(q).countEntities(FetchOptions.Builder.withLimit(1)) > 0;
   }
@@ -179,10 +179,10 @@ public class DatastoreHelper {
     List<Entity> profilingPointRunEntityList = new ArrayList<>();
 
     if (!report.hasStartTimestamp()
-        || !report.hasEndTimestamp()
-        || !report.hasTest()
-        || !report.hasHostInfo()
-        || !report.hasBuildInfo()) {
+            || !report.hasEndTimestamp()
+            || !report.hasTest()
+            || !report.hasHostInfo()
+            || !report.hasBuildInfo()) {
       // missing information
       return;
     }
@@ -195,8 +195,8 @@ public class DatastoreHelper {
     TestEntity testEntity = new TestEntity(testName);
 
     Key testRunKey =
-        KeyFactory.createKey(
-            testEntity.getOldKey(), TestRunEntity.KIND, report.getStartTimestamp());
+            KeyFactory.createKey(
+                    testEntity.getOldKey(), TestRunEntity.KIND, report.getStartTimestamp());
 
     long passCount = 0;
     long failCount = 0;
@@ -220,7 +220,7 @@ public class DatastoreHelper {
         ++failCount;
       }
       if (testCase.getSystraceCount() > 0
-          && testCase.getSystraceList().get(0).getUrlCount() > 0) {
+              && testCase.getSystraceList().get(0).getUrlCount() > 0) {
         String systraceLink = testCase.getSystraceList().get(0).getUrl(0).toStringUtf8();
         links.add(systraceLink);
       }
@@ -228,7 +228,7 @@ public class DatastoreHelper {
       // Process coverage data for test case
       for (CoverageReportMessage coverage : testCase.getCoverageList()) {
         CoverageEntity coverageEntity =
-            CoverageEntity.fromCoverageReport(testRunKey, testCaseName, coverage);
+                CoverageEntity.fromCoverageReport(testRunKey, testCaseName, coverage);
         if (coverageEntity == null) {
           logger.log(Level.WARNING, "Invalid coverage report in test run " + testRunKey);
         } else {
@@ -241,7 +241,7 @@ public class DatastoreHelper {
       // Process profiling data for test case
       for (ProfilingReportMessage profiling : testCase.getProfilingList()) {
         ProfilingPointRunEntity profilingPointRunEntity =
-            ProfilingPointRunEntity.fromProfilingReport(testRunKey, profiling);
+                ProfilingPointRunEntity.fromProfilingReport(testRunKey, profiling);
         if (profilingPointRunEntity == null) {
           logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
         } else {
@@ -275,7 +275,7 @@ public class DatastoreHelper {
     long testRunType = 0;
     for (AndroidDeviceInfoMessage device : report.getDeviceInfoList()) {
       DeviceInfoEntity deviceInfoEntity =
-          DeviceInfoEntity.fromDeviceInfoMessage(testRunKey, device);
+              DeviceInfoEntity.fromDeviceInfoMessage(testRunKey, device);
       if (deviceInfoEntity == null) {
         logger.log(Level.WARNING, "Invalid device info in test run " + testRunKey);
       } else {
@@ -308,7 +308,7 @@ public class DatastoreHelper {
     // Process global coverage data
     for (CoverageReportMessage coverage : report.getCoverageList()) {
       CoverageEntity coverageEntity =
-          CoverageEntity.fromCoverageReport(testRunKey, new String(), coverage);
+              CoverageEntity.fromCoverageReport(testRunKey, new String(), coverage);
       if (coverageEntity == null) {
         logger.log(Level.WARNING, "Invalid coverage report in test run " + testRunKey);
       } else {
@@ -322,19 +322,19 @@ public class DatastoreHelper {
     for (ApiCoverageReportMessage apiCoverage : report.getApiCoverageList()) {
       HalInterfaceMessage halInterfaceMessage = apiCoverage.getHalInterface();
       List<String> halApiList = apiCoverage.getHalApiList().stream().map(h -> h.toStringUtf8())
-          .collect(
-              Collectors.toList());
+              .collect(
+                      Collectors.toList());
       List<String> coveredHalApiList = apiCoverage.getCoveredHalApiList().stream()
-          .map(h -> h.toStringUtf8()).collect(
-              Collectors.toList());
+              .map(h -> h.toStringUtf8()).collect(
+                      Collectors.toList());
       ApiCoverageEntity apiCoverageEntity = new ApiCoverageEntity(
-          testRunKey,
-          halInterfaceMessage.getHalPackageName().toStringUtf8(),
-          halInterfaceMessage.getHalVersionMajor(),
-          halInterfaceMessage.getHalVersionMinor(),
-          halInterfaceMessage.getHalInterfaceName().toStringUtf8(),
-          halApiList,
-          coveredHalApiList
+              testRunKey,
+              halInterfaceMessage.getHalPackageName().toStringUtf8(),
+              halInterfaceMessage.getHalVersionMajor(),
+              halInterfaceMessage.getHalVersionMinor(),
+              halInterfaceMessage.getHalInterfaceName().toStringUtf8(),
+              halApiList,
+              coveredHalApiList
       );
       com.googlecode.objectify.Key apiCoverageEntityKey = apiCoverageEntity.save();
       if (apiCoverageEntityKey == null) {
@@ -345,7 +345,7 @@ public class DatastoreHelper {
     // Process global profiling data
     for (ProfilingReportMessage profiling : report.getProfilingList()) {
       ProfilingPointRunEntity profilingPointRunEntity =
-          ProfilingPointRunEntity.fromProfilingReport(testRunKey, profiling);
+              ProfilingPointRunEntity.fromProfilingReport(testRunKey, profiling);
       if (profilingPointRunEntity == null) {
         logger.log(Level.WARNING, "Invalid profiling report in test run " + testRunKey);
       } else {
@@ -370,18 +370,18 @@ public class DatastoreHelper {
 
     boolean hasCodeCoverage = totalLineCount > 0 && coveredLineCount >= 0;
     TestRunEntity testRunEntity =
-        new TestRunEntity(
-            testEntity.getOldKey(),
-            testRunType,
-            startTimestamp,
-            endTimestamp,
-            testBuildId,
-            hostName,
-            passCount,
-            failCount,
-            hasCodeCoverage,
-            testCaseIds,
-            links);
+            new TestRunEntity(
+                    testEntity.getOldKey(),
+                    testRunType,
+                    startTimestamp,
+                    endTimestamp,
+                    testBuildId,
+                    hostName,
+                    passCount,
+                    failCount,
+                    hasCodeCoverage,
+                    testCaseIds,
+                    links);
     testEntityList.add(testRunEntity.toEntity());
 
     CodeCoverageEntity codeCoverageEntity = new CodeCoverageEntity(
@@ -394,11 +394,11 @@ public class DatastoreHelper {
 
     if (datastoreTransactionalRetry(test, testEntityList)) {
       List<List<Entity>> auxiliaryEntityList =
-          Arrays.asList(
-              profilingPointRunEntityList,
-              coverageEntityList,
-              branchEntityList,
-              buildTargetEntityList);
+              Arrays.asList(
+                      profilingPointRunEntityList,
+                      coverageEntityList,
+                      branchEntityList,
+                      buildTargetEntityList);
       int indexCount = 0;
       for (List<Entity> entityList : auxiliaryEntityList) {
         switch (indexCount) {
@@ -406,12 +406,12 @@ public class DatastoreHelper {
           case 1:
             if (entityList.size() > MAX_ENTITY_SIZE_PER_TRANSACTION) {
               List<List<Entity>> partitionedList =
-                  Lists.partition(entityList, MAX_ENTITY_SIZE_PER_TRANSACTION);
+                      Lists.partition(entityList, MAX_ENTITY_SIZE_PER_TRANSACTION);
               partitionedList.forEach(
-                  subEntityList -> {
-                    datastoreTransactionalRetry(
-                        new Entity(NULL_ENTITY_KIND), subEntityList);
-                  });
+                      subEntityList -> {
+                        datastoreTransactionalRetry(
+                                new Entity(NULL_ENTITY_KIND), subEntityList);
+                      });
             } else {
               datastoreTransactionalRetry(new Entity(NULL_ENTITY_KIND), entityList);
             }
@@ -419,7 +419,7 @@ public class DatastoreHelper {
           case 2:
           case 3:
             datastoreTransactionalRetryWithXG(
-                new Entity(NULL_ENTITY_KIND), entityList, true);
+                    new Entity(NULL_ENTITY_KIND), entityList, true);
             break;
           default:
             break;
@@ -429,7 +429,7 @@ public class DatastoreHelper {
 
       if (testRunEntity.getType() == TestRunType.POSTSUBMIT.getNumber()) {
         VtsAlertJobServlet.addTask(testRunKey);
-                if (testRunEntity.getHasCodeCoverage()) {
+        if (testRunEntity.getHasCodeCoverage()) {
           VtsCoverageAlertJobServlet.addTask(testRunKey);
         }
         if (profilingPointKeys.size() > 0) {
@@ -437,9 +437,9 @@ public class DatastoreHelper {
         }
       } else {
         logger.log(
-            Level.WARNING,
-            "The alert email was not sent as testRunEntity type is not POSTSUBMIT!" +
-                " \n " + " testRunEntity type => " + testRunEntity.getType());
+                Level.WARNING,
+                "The alert email was not sent as testRunEntity type is not POSTSUBMIT!" +
+                        " \n " + " testRunEntity type => " + testRunEntity.getType());
       }
     }
   }
@@ -506,18 +506,18 @@ public class DatastoreHelper {
       return;
     }
     TestPlanRunEntity testPlanRun =
-        new TestPlanRunEntity(
-            testPlanEntity.getKey(),
-            testPlanName,
-            type,
-            startTimestamp,
-            endTimestamp,
-            testBuildId,
-            passCount,
-            failCount,
-            0L,
-            0L,
-            testRunKeys);
+            new TestPlanRunEntity(
+                    testPlanEntity.getKey(),
+                    testPlanName,
+                    type,
+                    startTimestamp,
+                    endTimestamp,
+                    testBuildId,
+                    passCount,
+                    failCount,
+                    0L,
+                    0L,
+                    testRunKeys);
 
     // Create the device infos.
     for (DeviceInfoEntity device : deviceInfoEntitySet) {
@@ -549,7 +549,7 @@ public class DatastoreHelper {
    * @param entityList The list of entity for using datastore put method.
    */
   private static boolean datastoreTransactionalRetryWithXG(
-      Entity entity, List<Entity> entityList, boolean withXG) {
+          Entity entity, List<Entity> entityList, boolean withXG) {
     int retries = 0;
     while (true) {
       Transaction txn;
@@ -568,7 +568,7 @@ public class DatastoreHelper {
               Entity datastoreEntity = datastore.get(entity.getKey());
               TestEntity datastoreTestEntity = TestEntity.fromEntity(datastoreEntity);
               if (datastoreTestEntity == null
-                  || !datastoreTestEntity.equals(entity)) {
+                      || !datastoreTestEntity.equals(entity)) {
                 entityList.add(entity);
               }
             } else if (entity.getKind().equalsIgnoreCase("TestPlan")) {
@@ -584,25 +584,25 @@ public class DatastoreHelper {
         txn.commit();
         break;
       } catch (ConcurrentModificationException
-          | DatastoreFailureException
-          | DatastoreTimeoutException e) {
+              | DatastoreFailureException
+              | DatastoreTimeoutException e) {
         entityList.remove(entity);
         logger.log(
-            Level.WARNING,
-            "Retrying insert kind: " + entity.getKind() + " key: " + entity.getKey());
+                Level.WARNING,
+                "Retrying insert kind: " + entity.getKind() + " key: " + entity.getKey());
         if (retries++ >= MAX_WRITE_RETRIES) {
           logger.log(
-              Level.SEVERE,
-              "Exceeded maximum retries kind: "
-                  + entity.getKind()
-                  + " key: "
-                  + entity.getKey());
+                  Level.SEVERE,
+                  "Exceeded maximum retries kind: "
+                          + entity.getKind()
+                          + " key: "
+                          + entity.getKey());
           return false;
         }
       } finally {
         if (txn.isActive()) {
           logger.log(
-              Level.WARNING, "Transaction rollback forced for : " + entity.getKind());
+                  Level.WARNING, "Transaction rollback forced for : " + entity.getKind());
           txn.rollback();
         }
       }

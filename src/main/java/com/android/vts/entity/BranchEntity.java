@@ -41,8 +41,6 @@ public class BranchEntity implements DashboardEntity {
 
     public static final String KIND = "Branch"; // The entity kind.
 
-    public Key key; // The key for the entity in the database.
-
     @Id private String name;
 
     /**
@@ -51,7 +49,11 @@ public class BranchEntity implements DashboardEntity {
      * @param branchName The name of the branch.
      */
     public BranchEntity(String branchName) {
-        this.key = KeyFactory.createKey(KIND, branchName);
+        this.name = branchName;
+    }
+
+    public Key getKey() {
+        return KeyFactory.createKey(KIND, this.name);
     }
 
     /** find by branch name */
@@ -86,9 +88,10 @@ public class BranchEntity implements DashboardEntity {
         }
     }
 
+    /** Saving function for the instance of this class */
     @Override
-    public Entity toEntity() {
-        return new Entity(this.key);
+    public com.googlecode.objectify.Key<BranchEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     /**

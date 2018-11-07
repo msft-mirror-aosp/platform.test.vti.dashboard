@@ -27,7 +27,6 @@ import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.Parent;
-import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -44,7 +43,7 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @Data
 @NoArgsConstructor
 /** Class describing a device used for a test run. */
-public class DeviceInfoEntity implements Serializable {
+public class DeviceInfoEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(DeviceInfoEntity.class.getName());
 
     /** This is the instance of App Engine memcache service java library */
@@ -64,8 +63,7 @@ public class DeviceInfoEntity implements Serializable {
     private Key parentKey;
 
     /** ID field using start timestamp */
-    @Id
-    private long id;
+    @Id private Long id;
 
     /** parent field based on Test and TestRun key */
     @Parent
@@ -86,15 +84,6 @@ public class DeviceInfoEntity implements Serializable {
     private String abiBitness;
 
     private String abiName;
-
-    /*
-    public final String branch;
-    public final String product;
-    public final String buildFlavor;
-    public final String buildId;
-    public final String abiBitness;
-    public final String abiName;
-    */
 
     /**
      * Create a DeviceInfoEntity object.
@@ -215,8 +204,8 @@ public class DeviceInfoEntity implements Serializable {
     }
 
     /** Saving function for the instance of this class */
-    public void save() {
-        ofy().save().entity(this).now();
+    public com.googlecode.objectify.Key<DeviceInfoEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     public Entity toEntity() {
@@ -270,12 +259,12 @@ public class DeviceInfoEntity implements Serializable {
     /**
      * Convert a device info message to a DeviceInfoEntity.
      *
-     * @param parentKey The ancestor key for the device entity.
+     * @param parent The ancestor key for the device entity.
      * @param device The device info report describing the target Android device.
      * @return The DeviceInfoEntity for the target device, or null if incompatible
      */
     public static DeviceInfoEntity fromDeviceInfoMessage(
-            Key parentKey, AndroidDeviceInfoMessage device) {
+            com.googlecode.objectify.Key parent, AndroidDeviceInfoMessage device) {
         if (!device.hasBuildAlias() || !device.hasBuildFlavor() || !device.hasProductVariant()
                 || !device.hasBuildId()) {
             return null;
@@ -287,7 +276,7 @@ public class DeviceInfoEntity implements Serializable {
         String abiBitness = device.getAbiBitness().toStringUtf8();
         String abiName = device.getAbiName().toStringUtf8();
         return new DeviceInfoEntity(
-                parentKey, branch, product, buildFlavor, buildId, abiBitness, abiName);
+                parent, branch, product, buildFlavor, buildId, abiBitness, abiName);
     }
 
     @Override
@@ -312,10 +301,11 @@ public class DeviceInfoEntity implements Serializable {
 
     /**
      * Create a copy of the device info under a near parent.
+     *
      * @param parentKey The new parent key.
      * @return A copy of the DeviceInfoEntity with the specified parent.
      */
-    public DeviceInfoEntity copyWithParent(Key parentKey) {
+    public DeviceInfoEntity copyWithParent(com.googlecode.objectify.Key parentKey) {
         return new DeviceInfoEntity(parentKey, this.branch, this.product, this.buildFlavor,
                 this.buildId, this.abiBitness, this.abiName);
     }
