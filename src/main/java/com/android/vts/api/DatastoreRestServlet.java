@@ -87,6 +87,7 @@ public class DatastoreRestServlet extends BaseApiServlet {
             return;
         }
 
+        String resultMsg = "";
         // Verify service account access token.
         if (postMessage.hasAccessToken()) {
             String accessToken = postMessage.getAccessToken();
@@ -109,15 +110,21 @@ public class DatastoreRestServlet extends BaseApiServlet {
                 }
 
                 response.setStatus(HttpServletResponse.SC_OK);
+                resultMsg = "Success!!";
             } else {
                 log.warn("service_client_id didn't match!");
                 log.debug("SERVICE_CLIENT_ID => " + tokenInfo.getIssuedTo());
+                resultMsg = "Your SERVICE_CLIENT_ID is incorrect!";
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
         } else {
             log.error("postMessage do not contain any accessToken!");
+            resultMsg = "Your message do not have access token!";
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{'result_msg': " + resultMsg + "}");
     }
 
     /**
@@ -445,13 +452,6 @@ public class DatastoreRestServlet extends BaseApiServlet {
 
         Map<com.googlecode.objectify.Key<TestRunEntity>, TestRunEntity> testRunEntityMap =
                 ofy().load().keys(() -> testRunKeyList.iterator());
-
-        testRunKeyList.forEach(
-                (v) -> {
-                    log.debug("TestRunEntity key value => " + v);
-                });
-        log.debug("testRunEntityMap value => " + testRunEntityMap.values());
-        log.debug("testRunEntityMap keySet => " + testRunEntityMap.keySet());
 
         long passCount = 0;
         long failCount = 0;
