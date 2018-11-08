@@ -20,8 +20,10 @@ import com.android.vts.entity.ApiCoverageEntity;
 import com.android.vts.entity.CoverageEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
 import com.android.vts.entity.TestPlanRunEntity;
+import com.android.vts.entity.TestRunEntity;
 import com.google.gson.Gson;
 import com.googlecode.objectify.Key;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,9 +106,9 @@ public class CoverageRestServlet extends BaseApiServlet {
         List<List<String>> allCoveredHalApiList = new ArrayList();
 
         Key<TestPlanRunEntity> key = Key.create(urlSafeKey);
-        TestPlanRunEntity testPlanRunEntity = ofy().load().key(key).now();
+        TestPlanRunEntity testPlanRunEntity = ofy().load().key(key).safe();
 
-        for (Key testRunKey : testPlanRunEntity.getTestRuns()) {
+        for (Key<TestRunEntity> testRunKey : testPlanRunEntity.getTestRuns()) {
             List<ApiCoverageEntity> apiCoverageEntityList =
                     ofy().load().type(ApiCoverageEntity.class).ancestor(testRunKey).list();
             for (ApiCoverageEntity apiCoverageEntity : apiCoverageEntityList) {

@@ -28,11 +28,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
@@ -46,10 +43,7 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @NoArgsConstructor
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonIgnoreProperties({"id", "parent"})
-public class ApiCoverageExcludedEntity {
-
-    // The maximum number of entity list size to insert datastore
-    private static final int maxNumEntitySize = 500;
+public class ApiCoverageExcludedEntity implements DashboardEntity {
 
     /** ApiCoverageEntity id field */
     @Id @Getter @Setter private String id;
@@ -82,11 +76,12 @@ public class ApiCoverageExcludedEntity {
             String interfaceName,
             String apiName,
             String comment) {
-
+        this.id = this.getObjectifyId();
         this.packageName = packageName;
         this.interfaceName = interfaceName;
         this.apiName = apiName;
         this.comment = comment;
+        this.updated = new Date();
 
         this.setVersions(version);
     }
@@ -125,44 +120,14 @@ public class ApiCoverageExcludedEntity {
     }
 
     /** Saving function for the instance of this class */
+    @Override
     public Key<ApiCoverageExcludedEntity> save() {
-        this.id = this.getObjectifyId();
-        this.updated = new Date();
         return ofy().save().entity(this).now();
-    }
-
-    /** Spliting a list based on a given size */
-    public static <T> Collection<List<T>> partitionBasedOnSize(List<T> inputList, int size) {
-        final AtomicInteger counter = new AtomicInteger(0);
-        return inputList
-                .stream()
-                .collect(Collectors.groupingBy(s -> counter.getAndIncrement() / size))
-                .values();
-    }
-
-    /** Saving function with parameter of this entity List */
-    public static void saveAll(List<ApiCoverageExcludedEntity> apiCoverageExcludedEntityList) {
-        List<ApiCoverageExcludedEntity> entityWithIdList =
-                apiCoverageExcludedEntityList
-                        .stream()
-                        .map(
-                                entity -> {
-                                    entity.setId(entity.getObjectifyId());
-                                    entity.setUpdated(new Date());
-                                    return entity;
-                                })
-                        .collect(Collectors.toList());
-
-        partitionBasedOnSize(entityWithIdList, maxNumEntitySize)
-                .stream()
-                .forEach(
-                        entityList -> {
-                            ofy().save().entities(entityList).now();
-                        });
     }
 
     /** Get All Key List of ApiCoverageExcludedEntity */
     public static List<Key<ApiCoverageExcludedEntity>> getAllKeyList() {
         return ofy().load().type(ApiCoverageExcludedEntity.class).keys().list();
     }
+
 }

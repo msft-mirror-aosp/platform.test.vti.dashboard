@@ -46,6 +46,7 @@ public class ApiCoverageExcludedEntityTest extends ObjectifyTestBase {
 
     @Test
     public void getUrlSafeKeyTest() {
+        factory().register(CodeCoverageEntity.class);
         factory().register(ApiCoverageExcludedEntity.class);
 
         Key testParentKey = Key.create(TestEntity.class, "test1");

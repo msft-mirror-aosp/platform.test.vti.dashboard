@@ -490,14 +490,14 @@ public class TestDataForDevServlet extends HttpServlet {
                                                     BuildTargetEntity buildTargetEntity =
                                                             new BuildTargetEntity(
                                                                     buildTarget.targetName);
-                                                    datastore.put(buildTargetEntity.toEntity());
+                                                    buildTargetEntity.save();
                                                 });
 
                                         testRun.branchList.forEach(
                                                 branch -> {
                                                     BranchEntity branchEntity =
                                                             new BranchEntity(branch.branchName);
-                                                    datastore.put(branchEntity.toEntity());
+                                                    branchEntity.save();
                                                 });
 
                                         boolean hasCodeCoverage =
@@ -630,13 +630,14 @@ public class TestDataForDevServlet extends HttpServlet {
                                             testBuildId,
                                             passCount,
                                             failCount,
-                                        0L,
-                                        0L,
+                                            0L,
+                                            0L,
                                             testRunKeys);
 
                             // Create the device infos.
                             for (DeviceInfoEntity device : devices) {
-                                datastore.put(device.copyWithParent(testPlanRun.key).toEntity());
+                                datastore.put(
+                                        device.copyWithParent(testPlanRun.getOfyKey()).toEntity());
                             }
                             datastore.put(testPlanRun.toEntity());
 

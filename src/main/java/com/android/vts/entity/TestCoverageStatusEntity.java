@@ -23,7 +23,6 @@ import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Index;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -42,7 +41,7 @@ import lombok.Setter;
 @Cache
 @NoArgsConstructor
 /** Entity describing test coverage status. */
-public class TestCoverageStatusEntity implements Serializable {
+public class TestCoverageStatusEntity implements DashboardEntity {
 
     protected static final Logger logger =
             Logger.getLogger(TestCoverageStatusEntity.class.getName());
@@ -190,9 +189,10 @@ public class TestCoverageStatusEntity implements Serializable {
     }
 
     /** Saving function for the instance of this class */
-    public void save() {
+    @Override
+    public Key<TestCoverageStatusEntity> save() {
         this.updatedDate = new Date();
-        ofy().save().entity(this).now();
+        return ofy().save().entity(this).now();
     }
 
     public Entity toEntity() {

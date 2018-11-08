@@ -22,7 +22,6 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Index;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -30,12 +29,14 @@ import java.util.logging.Logger;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import static com.googlecode.objectify.ObjectifyService.ofy;
+
 @com.googlecode.objectify.annotation.Entity(name = "TestStatus")
 @Cache
 @Data
 @NoArgsConstructor
 /** Entity describing test status. */
-public class TestStatusEntity implements Serializable {
+public class TestStatusEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(TestStatusEntity.class.getName());
 
     public static final String KIND = "TestStatus";
@@ -123,6 +124,12 @@ public class TestStatusEntity implements Serializable {
      */
     public TestStatusEntity(String testName) {
         this(testName, 0, -1, -1, new ArrayList<TestCaseReference>());
+    }
+
+    /** Saving function for the instance of this class */
+    @Override
+    public com.googlecode.objectify.Key<TestStatusEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     public Entity toEntity() {

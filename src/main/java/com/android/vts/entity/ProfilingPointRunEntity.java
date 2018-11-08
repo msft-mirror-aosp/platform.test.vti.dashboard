@@ -27,22 +27,21 @@ import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
 import com.googlecode.objectify.annotation.Parent;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+
+import static com.googlecode.objectify.ObjectifyService.ofy;
 
 @com.googlecode.objectify.annotation.Entity(name = "ProfilingPointRun")
 @Cache
 @Data
 @NoArgsConstructor
 /** Entity describing a profiling point execution. */
-public class ProfilingPointRunEntity implements Serializable {
+public class ProfilingPointRunEntity implements DashboardEntity {
     protected static final Logger logger =
             Logger.getLogger(ProfilingPointRunEntity.class.getName());
 
@@ -94,7 +93,7 @@ public class ProfilingPointRunEntity implements Serializable {
     /**
      * Create a ProfilingPointRunEntity object.
      *
-     * @param parentKey The Key object for the parent TestRunEntity in the database.
+     * @param parentKey The Key object for the parent TestRunEntity in datastore.
      * @param name The name of the profiling point.
      * @param type The (number) type of the profiling point data.
      * @param regressionMode The (number) mode to use for detecting regression.
@@ -125,6 +124,41 @@ public class ProfilingPointRunEntity implements Serializable {
         this.options = options;
     }
 
+
+    /**
+     * Create a ProfilingPointRunEntity object.
+     *
+     * @param parent The objectify Key for the parent TestRunEntity in datastore.
+     * @param name The name of the profiling point.
+     * @param type The (number) type of the profiling point data.
+     * @param regressionMode The (number) mode to use for detecting regression.
+     * @param labels List of data labels, or null if the data is unlabeled.
+     * @param values List of data values.
+     * @param xLabel The x axis label.
+     * @param yLabel The y axis label.
+     * @param options The list of key=value options for the profiling point run.
+     */
+    public ProfilingPointRunEntity(
+            com.googlecode.objectify.Key parent,
+            String name,
+            int type,
+            int regressionMode,
+            List<String> labels,
+            List<Long> values,
+            String xLabel,
+            String yLabel,
+            List<String> options) {
+        this.parent = parent;
+        this.name = name;
+        this.type = type;
+        this.regressionMode = regressionMode;
+        this.labels = labels == null ? null : new ArrayList<>(labels);
+        this.values = new ArrayList<>(values);
+        this.xLabel = xLabel;
+        this.yLabel = yLabel;
+        this.options = options;
+    }
+
     /**
      * Get VtsProfilingType from int value.
      *
@@ -141,6 +175,12 @@ public class ProfilingPointRunEntity implements Serializable {
      */
     public VtsProfilingRegressionMode getVtsProfilingRegressionMode(int regressionMode) {
         return VtsProfilingRegressionMode.forNumber(regressionMode);
+    }
+
+    /** Saving function for the instance of this class */
+    @Override
+    public com.googlecode.objectify.Key<ProfilingPointRunEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     public Entity toEntity() {
@@ -207,12 +247,12 @@ public class ProfilingPointRunEntity implements Serializable {
     /**
      * Convert a coverage report to a CoverageEntity.
      *
-     * @param parentKey The ancestor key for the coverage entity.
+     * @param parent The ancestor objectify key for the coverage entity.
      * @param profilingReport The profiling report containing profiling data.
      * @return The ProfilingPointRunEntity for the profiling report message, or null if incompatible
      */
     public static ProfilingPointRunEntity fromProfilingReport(
-            Key parentKey, ProfilingReportMessage profilingReport) {
+            com.googlecode.objectify.Key parent, ProfilingReportMessage profilingReport) {
         if (!profilingReport.hasName()
                 || !profilingReport.hasType()
                 || profilingReport.getType() == VtsProfilingType.UNKNOWN_VTS_PROFILING_TYPE
@@ -265,7 +305,7 @@ public class ProfilingPointRunEntity implements Serializable {
             }
         }
         return new ProfilingPointRunEntity(
-                parentKey,
+                parent,
                 name,
                 type.getNumber(),
                 regressionMode.getNumber(),

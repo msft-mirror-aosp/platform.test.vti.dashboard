@@ -16,13 +16,10 @@
 
 package com.android.vts.entity;
 
-import com.android.vts.util.UrlUtil;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.googlecode.objectify.Key;
 
 import com.googlecode.objectify.annotation.Cache;
@@ -35,10 +32,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
@@ -50,7 +44,7 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @NoArgsConstructor
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 @JsonIgnoreProperties({"id", "parent"})
-public class CodeCoverageEntity {
+public class CodeCoverageEntity implements DashboardEntity {
     protected static final Logger logger = Logger.getLogger(CodeCoverageEntity.class.getName());
 
     public static final String KIND = "CodeCoverage";
@@ -59,7 +53,7 @@ public class CodeCoverageEntity {
     public static final String TOTAL_LINE_COUNT = "totalLineCount";
 
     /** CodeCoverageEntity id field */
-    @Id @Getter @Setter long id;
+    @Id @Getter @Setter Long id;
 
     @Parent @Getter Key<?> parent;
 
@@ -75,6 +69,20 @@ public class CodeCoverageEntity {
             com.google.appengine.api.datastore.Key testRunKey,
             long coveredLineCount,
             long totalLineCount) {
+
+        this.parent = getParentKey(testRunKey);
+
+        this.coveredLineCount = coveredLineCount;
+        this.totalLineCount = totalLineCount;
+    }
+
+    /** Constructor function for ApiCoverageEntity Class */
+    public CodeCoverageEntity(
+            long id,
+            com.google.appengine.api.datastore.Key testRunKey,
+            long coveredLineCount,
+            long totalLineCount) {
+        this.id = id;
 
         this.parent = getParentKey(testRunKey);
 
@@ -102,6 +110,7 @@ public class CodeCoverageEntity {
     }
 
     /** Saving function for the instance of this class */
+    @Override
     public Key<CodeCoverageEntity> save() {
         this.id = this.getParent().getId();
         this.updated = new Date();

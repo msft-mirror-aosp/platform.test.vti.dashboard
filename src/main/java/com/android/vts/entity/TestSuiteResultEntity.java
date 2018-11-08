@@ -38,18 +38,13 @@ import org.apache.http.client.utils.URIUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 
-import javax.servlet.ServletContext;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -126,7 +121,7 @@ class TestTypeIndex {
 @Entity
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
-public class TestSuiteResultEntity {
+public class TestSuiteResultEntity implements DashboardEntity {
 
     private static final Logger logger = Logger.getLogger(TestSuiteResultEntity.class.getName());
 
@@ -314,6 +309,12 @@ public class TestSuiteResultEntity {
                 ofy().save().entity(this).now();
             });
         }
+    }
+
+    /** Saving function for the instance of this class */
+    @Override
+    public Key<TestSuiteResultEntity> save() {
+        return ofy().save().entity(this).now();
     }
 
     public static void setPropertyValues(Properties newSystemConfigProp) {

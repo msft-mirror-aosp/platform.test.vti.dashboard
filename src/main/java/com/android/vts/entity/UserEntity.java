@@ -38,7 +38,7 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @Entity
 @EqualsAndHashCode(of = "email")
 @NoArgsConstructor
-public class UserEntity {
+public class UserEntity implements DashboardEntity {
 
     /** User email field */
     @Id @Getter @Setter String email;
@@ -79,9 +79,10 @@ public class UserEntity {
     }
 
     /** Saving function for the instance of this class */
-    public void save() {
+    @Override
+    public Key<UserEntity> save() {
         this.updated = new Date();
-        ofy().save().entity(this).now();
+        return ofy().save().entity(this).now();
     }
 
     /** Get admin user list by admin email */

@@ -10696,6 +10696,23 @@ public final class VtsReportMessage {
      * <code>optional bytes hal_interface_name = 4;</code>
      */
     com.google.protobuf.ByteString getHalInterfaceName();
+
+    /**
+     * <pre>
+     * HAL release level (e.g. "current", "27", "28")
+     * </pre>
+     *
+     * <code>optional bytes hal_release_level = 5;</code>
+     */
+    boolean hasHalReleaseLevel();
+    /**
+     * <pre>
+     * HAL release level (e.g. "current", "27", "28")
+     * </pre>
+     *
+     * <code>optional bytes hal_release_level = 5;</code>
+     */
+    com.google.protobuf.ByteString getHalReleaseLevel();
   }
   /**
    * <pre>
@@ -10717,6 +10734,7 @@ public final class VtsReportMessage {
       halVersionMajor_ = 0;
       halVersionMinor_ = 0;
       halInterfaceName_ = com.google.protobuf.ByteString.EMPTY;
+      halReleaseLevel_ = com.google.protobuf.ByteString.EMPTY;
     }
 
     @java.lang.Override
@@ -10765,6 +10783,11 @@ public final class VtsReportMessage {
             case 34: {
               bitField0_ |= 0x00000008;
               halInterfaceName_ = input.readBytes();
+              break;
+            }
+            case 42: {
+              bitField0_ |= 0x00000010;
+              halReleaseLevel_ = input.readBytes();
               break;
             }
           }
@@ -10884,6 +10907,29 @@ public final class VtsReportMessage {
       return halInterfaceName_;
     }
 
+    public static final int HAL_RELEASE_LEVEL_FIELD_NUMBER = 5;
+    private com.google.protobuf.ByteString halReleaseLevel_;
+    /**
+     * <pre>
+     * HAL release level (e.g. "current", "27", "28")
+     * </pre>
+     *
+     * <code>optional bytes hal_release_level = 5;</code>
+     */
+    public boolean hasHalReleaseLevel() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    /**
+     * <pre>
+     * HAL release level (e.g. "current", "27", "28")
+     * </pre>
+     *
+     * <code>optional bytes hal_release_level = 5;</code>
+     */
+    public com.google.protobuf.ByteString getHalReleaseLevel() {
+      return halReleaseLevel_;
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -10908,6 +10954,9 @@ public final class VtsReportMessage {
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         output.writeBytes(4, halInterfaceName_);
       }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeBytes(5, halReleaseLevel_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -10931,6 +10980,10 @@ public final class VtsReportMessage {
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(4, halInterfaceName_);
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(5, halReleaseLevel_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -10969,6 +11022,11 @@ public final class VtsReportMessage {
         result = result && getHalInterfaceName()
             .equals(other.getHalInterfaceName());
       }
+      result = result && (hasHalReleaseLevel() == other.hasHalReleaseLevel());
+      if (hasHalReleaseLevel()) {
+        result = result && getHalReleaseLevel()
+            .equals(other.getHalReleaseLevel());
+      }
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -10995,6 +11053,10 @@ public final class VtsReportMessage {
       if (hasHalInterfaceName()) {
         hash = (37 * hash) + HAL_INTERFACE_NAME_FIELD_NUMBER;
         hash = (53 * hash) + getHalInterfaceName().hashCode();
+      }
+      if (hasHalReleaseLevel()) {
+        hash = (37 * hash) + HAL_RELEASE_LEVEL_FIELD_NUMBER;
+        hash = (53 * hash) + getHalReleaseLevel().hashCode();
       }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
@@ -11126,6 +11188,8 @@ public final class VtsReportMessage {
         bitField0_ = (bitField0_ & ~0x00000004);
         halInterfaceName_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000008);
+        halReleaseLevel_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
 
@@ -11166,6 +11230,10 @@ public final class VtsReportMessage {
           to_bitField0_ |= 0x00000008;
         }
         result.halInterfaceName_ = halInterfaceName_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000010;
+        }
+        result.halReleaseLevel_ = halReleaseLevel_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -11219,6 +11287,9 @@ public final class VtsReportMessage {
         }
         if (other.hasHalInterfaceName()) {
           setHalInterfaceName(other.getHalInterfaceName());
+        }
+        if (other.hasHalReleaseLevel()) {
+          setHalReleaseLevel(other.getHalReleaseLevel());
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -11442,6 +11513,57 @@ public final class VtsReportMessage {
       public Builder clearHalInterfaceName() {
         bitField0_ = (bitField0_ & ~0x00000008);
         halInterfaceName_ = getDefaultInstance().getHalInterfaceName();
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.ByteString halReleaseLevel_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <pre>
+       * HAL release level (e.g. "current", "27", "28")
+       * </pre>
+       *
+       * <code>optional bytes hal_release_level = 5;</code>
+       */
+      public boolean hasHalReleaseLevel() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      /**
+       * <pre>
+       * HAL release level (e.g. "current", "27", "28")
+       * </pre>
+       *
+       * <code>optional bytes hal_release_level = 5;</code>
+       */
+      public com.google.protobuf.ByteString getHalReleaseLevel() {
+        return halReleaseLevel_;
+      }
+      /**
+       * <pre>
+       * HAL release level (e.g. "current", "27", "28")
+       * </pre>
+       *
+       * <code>optional bytes hal_release_level = 5;</code>
+       */
+      public Builder setHalReleaseLevel(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000010;
+        halReleaseLevel_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * HAL release level (e.g. "current", "27", "28")
+       * </pre>
+       *
+       * <code>optional bytes hal_release_level = 5;</code>
+       */
+      public Builder clearHalReleaseLevel() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        halReleaseLevel_ = getDefaultInstance().getHalReleaseLevel();
         onChanged();
         return this;
       }
@@ -19759,6 +19881,55 @@ public final class VtsReportMessage {
      */
     com.android.vts.proto.VtsReportMessage.UrlResourceMessageOrBuilder getPartnerReportOrBuilder(
         int index);
+
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    java.util.List<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage> 
+        getHalApiReportList();
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage getHalApiReport(int index);
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    int getHalApiReportCount();
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    java.util.List<? extends com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder> 
+        getHalApiReportOrBuilderList();
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder getHalApiReportOrBuilder(
+        int index);
   }
   /**
    * <pre>
@@ -19780,6 +19951,7 @@ public final class VtsReportMessage {
       testModuleStartTimestamp_ = java.util.Collections.emptyList();
       testPlanName_ = "";
       partnerReport_ = java.util.Collections.emptyList();
+      halApiReport_ = java.util.Collections.emptyList();
     }
 
     @java.lang.Override
@@ -19855,6 +20027,15 @@ public final class VtsReportMessage {
                   input.readMessage(com.android.vts.proto.VtsReportMessage.UrlResourceMessage.PARSER, extensionRegistry));
               break;
             }
+            case 330: {
+              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+                halApiReport_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage>();
+                mutable_bitField0_ |= 0x00000010;
+              }
+              halApiReport_.add(
+                  input.readMessage(com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.PARSER, extensionRegistry));
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -19871,6 +20052,9 @@ public final class VtsReportMessage {
         }
         if (((mutable_bitField0_ & 0x00000008) == 0x00000008)) {
           partnerReport_ = java.util.Collections.unmodifiableList(partnerReport_);
+        }
+        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
+          halApiReport_ = java.util.Collections.unmodifiableList(halApiReport_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -20069,6 +20253,66 @@ public final class VtsReportMessage {
       return partnerReport_.get(index);
     }
 
+    public static final int HAL_API_REPORT_FIELD_NUMBER = 41;
+    private java.util.List<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage> halApiReport_;
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    public java.util.List<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage> getHalApiReportList() {
+      return halApiReport_;
+    }
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    public java.util.List<? extends com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder> 
+        getHalApiReportOrBuilderList() {
+      return halApiReport_;
+    }
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    public int getHalApiReportCount() {
+      return halApiReport_.size();
+    }
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    public com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage getHalApiReport(int index) {
+      return halApiReport_.get(index);
+    }
+    /**
+     * <pre>
+     * Available HAL APIs for coverage measurement.
+     * Only used for profiling test plan.
+     * </pre>
+     *
+     * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+     */
+    public com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder getHalApiReportOrBuilder(
+        int index) {
+      return halApiReport_.get(index);
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -20092,6 +20336,9 @@ public final class VtsReportMessage {
       }
       for (int i = 0; i < partnerReport_.size(); i++) {
         output.writeMessage(31, partnerReport_.get(i));
+      }
+      for (int i = 0; i < halApiReport_.size(); i++) {
+        output.writeMessage(41, halApiReport_.get(i));
       }
       unknownFields.writeTo(output);
     }
@@ -20125,6 +20372,10 @@ public final class VtsReportMessage {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(31, partnerReport_.get(i));
       }
+      for (int i = 0; i < halApiReport_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(41, halApiReport_.get(i));
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -20153,6 +20404,8 @@ public final class VtsReportMessage {
       }
       result = result && getPartnerReportList()
           .equals(other.getPartnerReportList());
+      result = result && getHalApiReportList()
+          .equals(other.getHalApiReportList());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -20179,6 +20432,10 @@ public final class VtsReportMessage {
       if (getPartnerReportCount() > 0) {
         hash = (37 * hash) + PARTNER_REPORT_FIELD_NUMBER;
         hash = (53 * hash) + getPartnerReportList().hashCode();
+      }
+      if (getHalApiReportCount() > 0) {
+        hash = (37 * hash) + HAL_API_REPORT_FIELD_NUMBER;
+        hash = (53 * hash) + getHalApiReportList().hashCode();
       }
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
@@ -20299,6 +20556,7 @@ public final class VtsReportMessage {
         if (com.google.protobuf.GeneratedMessageV3
                 .alwaysUseFieldBuilders) {
           getPartnerReportFieldBuilder();
+          getHalApiReportFieldBuilder();
         }
       }
       public Builder clear() {
@@ -20314,6 +20572,12 @@ public final class VtsReportMessage {
           bitField0_ = (bitField0_ & ~0x00000008);
         } else {
           partnerReportBuilder_.clear();
+        }
+        if (halApiReportBuilder_ == null) {
+          halApiReport_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+        } else {
+          halApiReportBuilder_.clear();
         }
         return this;
       }
@@ -20361,6 +20625,15 @@ public final class VtsReportMessage {
           result.partnerReport_ = partnerReport_;
         } else {
           result.partnerReport_ = partnerReportBuilder_.build();
+        }
+        if (halApiReportBuilder_ == null) {
+          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+            halApiReport_ = java.util.Collections.unmodifiableList(halApiReport_);
+            bitField0_ = (bitField0_ & ~0x00000010);
+          }
+          result.halApiReport_ = halApiReport_;
+        } else {
+          result.halApiReport_ = halApiReportBuilder_.build();
         }
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -20452,6 +20725,32 @@ public final class VtsReportMessage {
                    getPartnerReportFieldBuilder() : null;
             } else {
               partnerReportBuilder_.addAllMessages(other.partnerReport_);
+            }
+          }
+        }
+        if (halApiReportBuilder_ == null) {
+          if (!other.halApiReport_.isEmpty()) {
+            if (halApiReport_.isEmpty()) {
+              halApiReport_ = other.halApiReport_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+            } else {
+              ensureHalApiReportIsMutable();
+              halApiReport_.addAll(other.halApiReport_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.halApiReport_.isEmpty()) {
+            if (halApiReportBuilder_.isEmpty()) {
+              halApiReportBuilder_.dispose();
+              halApiReportBuilder_ = null;
+              halApiReport_ = other.halApiReport_;
+              bitField0_ = (bitField0_ & ~0x00000010);
+              halApiReportBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getHalApiReportFieldBuilder() : null;
+            } else {
+              halApiReportBuilder_.addAllMessages(other.halApiReport_);
             }
           }
         }
@@ -21097,6 +21396,336 @@ public final class VtsReportMessage {
           partnerReport_ = null;
         }
         return partnerReportBuilder_;
+      }
+
+      private java.util.List<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage> halApiReport_ =
+        java.util.Collections.emptyList();
+      private void ensureHalApiReportIsMutable() {
+        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
+          halApiReport_ = new java.util.ArrayList<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage>(halApiReport_);
+          bitField0_ |= 0x00000010;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder> halApiReportBuilder_;
+
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public java.util.List<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage> getHalApiReportList() {
+        if (halApiReportBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(halApiReport_);
+        } else {
+          return halApiReportBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public int getHalApiReportCount() {
+        if (halApiReportBuilder_ == null) {
+          return halApiReport_.size();
+        } else {
+          return halApiReportBuilder_.getCount();
+        }
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage getHalApiReport(int index) {
+        if (halApiReportBuilder_ == null) {
+          return halApiReport_.get(index);
+        } else {
+          return halApiReportBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder setHalApiReport(
+          int index, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage value) {
+        if (halApiReportBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureHalApiReportIsMutable();
+          halApiReport_.set(index, value);
+          onChanged();
+        } else {
+          halApiReportBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder setHalApiReport(
+          int index, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder builderForValue) {
+        if (halApiReportBuilder_ == null) {
+          ensureHalApiReportIsMutable();
+          halApiReport_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          halApiReportBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder addHalApiReport(com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage value) {
+        if (halApiReportBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureHalApiReportIsMutable();
+          halApiReport_.add(value);
+          onChanged();
+        } else {
+          halApiReportBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder addHalApiReport(
+          int index, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage value) {
+        if (halApiReportBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureHalApiReportIsMutable();
+          halApiReport_.add(index, value);
+          onChanged();
+        } else {
+          halApiReportBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder addHalApiReport(
+          com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder builderForValue) {
+        if (halApiReportBuilder_ == null) {
+          ensureHalApiReportIsMutable();
+          halApiReport_.add(builderForValue.build());
+          onChanged();
+        } else {
+          halApiReportBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder addHalApiReport(
+          int index, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder builderForValue) {
+        if (halApiReportBuilder_ == null) {
+          ensureHalApiReportIsMutable();
+          halApiReport_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          halApiReportBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder addAllHalApiReport(
+          java.lang.Iterable<? extends com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage> values) {
+        if (halApiReportBuilder_ == null) {
+          ensureHalApiReportIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, halApiReport_);
+          onChanged();
+        } else {
+          halApiReportBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder clearHalApiReport() {
+        if (halApiReportBuilder_ == null) {
+          halApiReport_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000010);
+          onChanged();
+        } else {
+          halApiReportBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public Builder removeHalApiReport(int index) {
+        if (halApiReportBuilder_ == null) {
+          ensureHalApiReportIsMutable();
+          halApiReport_.remove(index);
+          onChanged();
+        } else {
+          halApiReportBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder getHalApiReportBuilder(
+          int index) {
+        return getHalApiReportFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder getHalApiReportOrBuilder(
+          int index) {
+        if (halApiReportBuilder_ == null) {
+          return halApiReport_.get(index);  } else {
+          return halApiReportBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public java.util.List<? extends com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder> 
+           getHalApiReportOrBuilderList() {
+        if (halApiReportBuilder_ != null) {
+          return halApiReportBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(halApiReport_);
+        }
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder addHalApiReportBuilder() {
+        return getHalApiReportFieldBuilder().addBuilder(
+            com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.getDefaultInstance());
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder addHalApiReportBuilder(
+          int index) {
+        return getHalApiReportFieldBuilder().addBuilder(
+            index, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.getDefaultInstance());
+      }
+      /**
+       * <pre>
+       * Available HAL APIs for coverage measurement.
+       * Only used for profiling test plan.
+       * </pre>
+       *
+       * <code>repeated .android.vts.ApiCoverageReportMessage hal_api_report = 41;</code>
+       */
+      public java.util.List<com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder> 
+           getHalApiReportBuilderList() {
+        return getHalApiReportFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder> 
+          getHalApiReportFieldBuilder() {
+        if (halApiReportBuilder_ == null) {
+          halApiReportBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessage.Builder, com.android.vts.proto.VtsReportMessage.ApiCoverageReportMessageOrBuilder>(
+                  halApiReport_,
+                  ((bitField0_ & 0x00000010) == 0x00000010),
+                  getParentForChildren(),
+                  isClean());
+          halApiReport_ = null;
+        }
+        return halApiReportBuilder_;
       }
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -22593,61 +23222,63 @@ public final class VtsReportMessage {
       "(\014\022\034\n\024line_coverage_vector\030\027 \003(\003\022\030\n\020tota" +
       "l_line_count\030e \001(\005\022\032\n\022covered_line_count" +
       "\030f \001(\005\022\024\n\010dir_path\030\001 \001(\014B\002\030\001\022\025\n\tfile_nam" +
-      "e\030\002 \001(\014B\002\030\001\022\020\n\004html\030\003 \001(\014B\002\030\001\"\201\001\n\023HalInt" +
+      "e\030\002 \001(\014B\002\030\001\022\020\n\004html\030\003 \001(\014B\002\030\001\"\234\001\n\023HalInt" +
       "erfaceMessage\022\030\n\020hal_package_name\030\001 \001(\014\022" +
       "\031\n\021hal_version_major\030\002 \001(\005\022\031\n\021hal_versio" +
       "n_minor\030\003 \001(\005\022\032\n\022hal_interface_name\030\004 \001(" +
-      "\014\"}\n\030ApiCoverageReportMessage\0227\n\rhal_int" +
-      "erface\030\001 \001(\0132 .android.vts.HalInterfaceM" +
-      "essage\022\017\n\007hal_api\030\013 \003(\014\022\027\n\017covered_hal_a",
-      "pi\030\014 \003(\014\"8\n\nLogMessage\022\013\n\003url\030\001 \001(\014\022\014\n\004n" +
-      "ame\030\002 \001(\014\022\017\n\007content\030\003 \001(\014\"@\n\022UrlResourc" +
-      "eMessage\022\013\n\003url\030\001 \001(\014\022\014\n\004name\030\002 \001(\014\022\017\n\007c" +
-      "ontent\030\003 \001(\014\"\310\005\n\021TestReportMessage\022\026\n\nte" +
-      "st_suite\030\001 \001(\014B\002\030\001\022\014\n\004test\030\002 \001(\014\022+\n\ttest" +
-      "_type\030\003 \001(\0162\030.android.vts.VtsTestType\022:\n" +
-      "\013device_info\030\004 \003(\0132%.android.vts.Android" +
-      "DeviceInfoMessage\0221\n\nbuild_info\030\005 \001(\0132\035." +
-      "android.vts.AndroidBuildInfo\022\030\n\020subscrib" +
-      "er_email\030\006 \003(\014\022+\n\thost_info\030\007 \001(\0132\030.andr",
-      "oid.vts.VtsHostInfo\0225\n\ttest_case\030\013 \003(\0132\"" +
-      ".android.vts.TestCaseReportMessage\0226\n\tpr" +
-      "ofiling\030\025 \003(\0132#.android.vts.ProfilingRep" +
-      "ortMessage\0228\n\010systrace\030\026 \003(\0132\".android.v" +
-      "ts.SystraceReportMessageB\002\030\001\022\027\n\017start_ti" +
-      "mestamp\030e \001(\003\022\025\n\rend_timestamp\030f \001(\003\0224\n\010" +
-      "coverage\030g \003(\0132\".android.vts.CoverageRep" +
-      "ortMessage\022;\n\014api_coverage\030h \003(\0132%.andro" +
-      "id.vts.ApiCoverageReportMessage\022%\n\003log\030\351" +
-      "\007 \003(\0132\027.android.vts.LogMessage\0227\n\rlink_r",
-      "esource\030\363\007 \003(\0132\037.android.vts.UrlResource" +
-      "Message\"\247\001\n\025TestPlanReportMessage\022\030\n\020tes" +
-      "t_module_name\030\013 \003(\t\022#\n\033test_module_start" +
-      "_timestamp\030\014 \003(\003\022\026\n\016test_plan_name\030\025 \001(\t" +
-      "\0227\n\016partner_report\030\037 \003(\0132\037.android.vts.U" +
-      "rlResourceMessage\"\237\001\n\024DashboardPostMessa" +
-      "ge\022\024\n\014access_token\030\001 \001(\t\0223\n\013test_report\030" +
-      "\002 \003(\0132\036.android.vts.TestReportMessage\022<\n" +
-      "\020test_plan_report\030\003 \003(\0132\".android.vts.Te" +
-      "stPlanReportMessage*\263\001\n\016TestCaseResult\022\022",
-      "\n\016UNKNOWN_RESULT\020\000\022\031\n\025TEST_CASE_RESULT_P" +
-      "ASS\020\001\022\031\n\025TEST_CASE_RESULT_FAIL\020\002\022\031\n\025TEST" +
-      "_CASE_RESULT_SKIP\020\003\022\036\n\032TEST_CASE_RESULT_" +
-      "EXCEPTION\020\004\022\034\n\030TEST_CASE_RESULT_TIMEOUT\020" +
-      "\005*\234\001\n\013VtsTestType\022\030\n\024UNKNOWN_VTS_TESTTYP" +
-      "E\020\000\022\036\n\032VTS_HOST_DRIVEN_STRUCTURAL\020\001\022\033\n\027V" +
-      "TS_HOST_DRIVEN_FUZZING\020\002\022\031\n\025VTS_TARGET_S" +
-      "IDE_GTEST\020\003\022\033\n\027VTS_TARGET_SIDE_FUZZING\020\004" +
-      "*\243\001\n\032VtsProfilingRegressionMode\022\033\n\027UNKNO" +
-      "WN_REGRESSION_MODE\020\000\022 \n\034VTS_REGRESSION_M",
-      "ODE_DISABLED\020\001\022\"\n\036VTS_REGRESSION_MODE_IN" +
-      "CREASING\020\002\022\"\n\036VTS_REGRESSION_MODE_DECREA" +
-      "SING\020\003*\244\001\n\020VtsProfilingType\022\036\n\032UNKNOWN_V" +
-      "TS_PROFILING_TYPE\020\000\022 \n\034VTS_PROFILING_TYP" +
-      "E_TIMESTAMP\020\001\022%\n!VTS_PROFILING_TYPE_LABE" +
-      "LED_VECTOR\020\002\022\'\n#VTS_PROFILING_TYPE_UNLAB" +
-      "ELED_VECTOR\020\003B+\n\025com.android.vts.protoB\020" +
-      "VtsReportMessageP\000"
+      "\014\022\031\n\021hal_release_level\030\005 \001(\014\"}\n\030ApiCover" +
+      "ageReportMessage\0227\n\rhal_interface\030\001 \001(\0132" +
+      " .android.vts.HalInterfaceMessage\022\017\n\007hal",
+      "_api\030\013 \003(\014\022\027\n\017covered_hal_api\030\014 \003(\014\"8\n\nL" +
+      "ogMessage\022\013\n\003url\030\001 \001(\014\022\014\n\004name\030\002 \001(\014\022\017\n\007" +
+      "content\030\003 \001(\014\"@\n\022UrlResourceMessage\022\013\n\003u" +
+      "rl\030\001 \001(\014\022\014\n\004name\030\002 \001(\014\022\017\n\007content\030\003 \001(\014\"" +
+      "\310\005\n\021TestReportMessage\022\026\n\ntest_suite\030\001 \001(" +
+      "\014B\002\030\001\022\014\n\004test\030\002 \001(\014\022+\n\ttest_type\030\003 \001(\0162\030" +
+      ".android.vts.VtsTestType\022:\n\013device_info\030" +
+      "\004 \003(\0132%.android.vts.AndroidDeviceInfoMes" +
+      "sage\0221\n\nbuild_info\030\005 \001(\0132\035.android.vts.A" +
+      "ndroidBuildInfo\022\030\n\020subscriber_email\030\006 \003(",
+      "\014\022+\n\thost_info\030\007 \001(\0132\030.android.vts.VtsHo" +
+      "stInfo\0225\n\ttest_case\030\013 \003(\0132\".android.vts." +
+      "TestCaseReportMessage\0226\n\tprofiling\030\025 \003(\013" +
+      "2#.android.vts.ProfilingReportMessage\0228\n" +
+      "\010systrace\030\026 \003(\0132\".android.vts.SystraceRe" +
+      "portMessageB\002\030\001\022\027\n\017start_timestamp\030e \001(\003" +
+      "\022\025\n\rend_timestamp\030f \001(\003\0224\n\010coverage\030g \003(" +
+      "\0132\".android.vts.CoverageReportMessage\022;\n" +
+      "\014api_coverage\030h \003(\0132%.android.vts.ApiCov" +
+      "erageReportMessage\022%\n\003log\030\351\007 \003(\0132\027.andro",
+      "id.vts.LogMessage\0227\n\rlink_resource\030\363\007 \003(" +
+      "\0132\037.android.vts.UrlResourceMessage\"\346\001\n\025T" +
+      "estPlanReportMessage\022\030\n\020test_module_name" +
+      "\030\013 \003(\t\022#\n\033test_module_start_timestamp\030\014 " +
+      "\003(\003\022\026\n\016test_plan_name\030\025 \001(\t\0227\n\016partner_r" +
+      "eport\030\037 \003(\0132\037.android.vts.UrlResourceMes" +
+      "sage\022=\n\016hal_api_report\030) \003(\0132%.android.v" +
+      "ts.ApiCoverageReportMessage\"\237\001\n\024Dashboar" +
+      "dPostMessage\022\024\n\014access_token\030\001 \001(\t\0223\n\013te" +
+      "st_report\030\002 \003(\0132\036.android.vts.TestReport",
+      "Message\022<\n\020test_plan_report\030\003 \003(\0132\".andr" +
+      "oid.vts.TestPlanReportMessage*\263\001\n\016TestCa" +
+      "seResult\022\022\n\016UNKNOWN_RESULT\020\000\022\031\n\025TEST_CAS" +
+      "E_RESULT_PASS\020\001\022\031\n\025TEST_CASE_RESULT_FAIL" +
+      "\020\002\022\031\n\025TEST_CASE_RESULT_SKIP\020\003\022\036\n\032TEST_CA" +
+      "SE_RESULT_EXCEPTION\020\004\022\034\n\030TEST_CASE_RESUL" +
+      "T_TIMEOUT\020\005*\234\001\n\013VtsTestType\022\030\n\024UNKNOWN_V" +
+      "TS_TESTTYPE\020\000\022\036\n\032VTS_HOST_DRIVEN_STRUCTU" +
+      "RAL\020\001\022\033\n\027VTS_HOST_DRIVEN_FUZZING\020\002\022\031\n\025VT" +
+      "S_TARGET_SIDE_GTEST\020\003\022\033\n\027VTS_TARGET_SIDE",
+      "_FUZZING\020\004*\243\001\n\032VtsProfilingRegressionMod" +
+      "e\022\033\n\027UNKNOWN_REGRESSION_MODE\020\000\022 \n\034VTS_RE" +
+      "GRESSION_MODE_DISABLED\020\001\022\"\n\036VTS_REGRESSI" +
+      "ON_MODE_INCREASING\020\002\022\"\n\036VTS_REGRESSION_M" +
+      "ODE_DECREASING\020\003*\244\001\n\020VtsProfilingType\022\036\n" +
+      "\032UNKNOWN_VTS_PROFILING_TYPE\020\000\022 \n\034VTS_PRO" +
+      "FILING_TYPE_TIMESTAMP\020\001\022%\n!VTS_PROFILING" +
+      "_TYPE_LABELED_VECTOR\020\002\022\'\n#VTS_PROFILING_" +
+      "TYPE_UNLABELED_VECTOR\020\003B+\n\025com.android.v" +
+      "ts.protoB\020VtsReportMessageP\000"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -22708,7 +23339,7 @@ public final class VtsReportMessage {
     internal_static_android_vts_HalInterfaceMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_android_vts_HalInterfaceMessage_descriptor,
-        new java.lang.String[] { "HalPackageName", "HalVersionMajor", "HalVersionMinor", "HalInterfaceName", });
+        new java.lang.String[] { "HalPackageName", "HalVersionMajor", "HalVersionMinor", "HalInterfaceName", "HalReleaseLevel", });
     internal_static_android_vts_ApiCoverageReportMessage_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_android_vts_ApiCoverageReportMessage_fieldAccessorTable = new
@@ -22738,7 +23369,7 @@ public final class VtsReportMessage {
     internal_static_android_vts_TestPlanReportMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_android_vts_TestPlanReportMessage_descriptor,
-        new java.lang.String[] { "TestModuleName", "TestModuleStartTimestamp", "TestPlanName", "PartnerReport", });
+        new java.lang.String[] { "TestModuleName", "TestModuleStartTimestamp", "TestPlanName", "PartnerReport", "HalApiReport", });
     internal_static_android_vts_DashboardPostMessage_descriptor =
       getDescriptor().getMessageTypes().get(13);
     internal_static_android_vts_DashboardPostMessage_fieldAccessorTable = new
