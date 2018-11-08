@@ -56,10 +56,10 @@ public class HalApiEntity implements DashboardEntity {
     @Index @Getter @Setter String halPackageName;
 
     /** HAL (major) version. e.g. 1. */
-    @Index @Getter @Setter int halVersionMajor;
+    @Index @Getter @Setter int halMajorVersion;
 
     /** HAL (minor) version. e.g. 0. */
-    @Index @Getter @Setter int halVersionMinor;
+    @Index @Getter @Setter int halMinorVersion;
 
     /** HAL interface name. e.g. IFoo. */
     @Index @Getter @Setter String halInterfaceName;
@@ -78,8 +78,8 @@ public class HalApiEntity implements DashboardEntity {
             com.googlecode.objectify.Key testRunKey,
             String halApiReleaseLevel,
             String halPackageName,
-            int halVersionMajor,
-            int halVersionMinor,
+            int halMajorVersion,
+            int halMinorVersion,
             String halInterfaceName,
             List<String> halApi,
             List<String> coveredHalApi) {
@@ -89,8 +89,8 @@ public class HalApiEntity implements DashboardEntity {
 
         this.halApiReleaseLevel = halApiReleaseLevel;
         this.halPackageName = halPackageName;
-        this.halVersionMajor = halVersionMajor;
-        this.halVersionMinor = halVersionMinor;
+        this.halMajorVersion = halMajorVersion;
+        this.halMinorVersion = halMinorVersion;
         this.halInterfaceName = halInterfaceName;
         this.halApi = halApi;
         this.coveredHalApi = coveredHalApi;
