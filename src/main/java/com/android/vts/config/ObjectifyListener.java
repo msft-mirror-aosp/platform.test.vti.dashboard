@@ -28,6 +28,7 @@ import com.android.vts.entity.ProfilingPointEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.ProfilingPointSummaryEntity;
 import com.android.vts.entity.RoleEntity;
+import com.android.vts.entity.TestAcknowledgmentEntity;
 import com.android.vts.entity.TestCaseRunEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
 import com.android.vts.entity.TestEntity;
