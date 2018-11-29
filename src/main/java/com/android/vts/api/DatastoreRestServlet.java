@@ -379,15 +379,13 @@ public class DatastoreRestServlet extends BaseApiServlet {
                                     List listEntity = (List) entity;
                                     if (listEntity.size() > 0
                                             && listEntity.get(0) instanceof TestCaseRunEntity) {
-                                        List<TestCaseRunEntity> dashboardEntityList =
-                                                (List<TestCaseRunEntity>) entity;
                                         Map<
                                                         com.googlecode.objectify.Key<
                                                                 TestCaseRunEntity>,
                                                         TestCaseRunEntity>
                                                 testCaseRunEntityMap =
                                                         DashboardEntity.saveAll(
-                                                                dashboardEntityList,
+                                                                testCaseRunEntityList,
                                                                 this
                                                                         .MAX_ENTITY_SIZE_PER_TRANSACTION);
 
@@ -401,11 +399,9 @@ public class DatastoreRestServlet extends BaseApiServlet {
                                                         .collect(Collectors.toList());
                                     } else if (listEntity.size() > 0
                                             && listEntity.get(0) instanceof TestRunEntity) {
-                                        List<TestRunEntity> dashboardEntityList =
-                                                (List<TestRunEntity>) entity;
-                                        dashboardEntityList.get(0).setTestCaseIds(testCaseIds);
+                                        testRunEntityList.get(0).setTestCaseIds(testCaseIds);
                                         DashboardEntity.saveAll(
-                                                dashboardEntityList,
+                                                testRunEntityList,
                                                 this.MAX_ENTITY_SIZE_PER_TRANSACTION);
                                     } else {
                                         List<DashboardEntity> dashboardEntityList =
