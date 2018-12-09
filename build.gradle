@@ -9,6 +9,7 @@ buildscript {
         googleCloudVersion = '0.47.0-alpha'
         googleJavaFormatVersion = '0.7.1'
         googleHttpClientVersion = '1.25.0'
+        lombokVersion = '1.18.4'
         appGradlePluginVersion = '2.0.0-rc3'
         googleSheetsAPI = 'v4-rev548-1.25.0'
     }
@@ -91,7 +92,8 @@ dependencies {
     testCompile 'com.google.appengine:appengine-api-stubs:+'
     testCompile 'com.google.appengine:appengine-tools-sdk:+'
 
-    providedCompile group: 'org.projectlombok', name: 'lombok', version: '1.16.20'
+    runtimeOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
 }
 
 // Always run unit tests
