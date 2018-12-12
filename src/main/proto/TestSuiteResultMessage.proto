@@ -15,11 +15,10 @@
 syntax = "proto2";
 
 package android.vts;
-import "vti/test_serving/proto/TestScheduleConfigMessage.proto";
+import "TestScheduleConfigMessage.proto";
 option java_package = "com.android.vts.proto";
 option java_outer_classname = "TestSuiteResultMessageProto";
 option java_multiple_files = false;
-
 
 // To specify the test results which are uploaded to vts dashboard.
 message TestSuiteResultMessage {
@@ -66,5 +65,6 @@ message TestSuiteResultMessage {
   // Fetch info used to fetch and flash certain builds for retry_prompt command.
   optional string vendor_build_id = 61;
   optional string gsi_build_id = 62;
-  optional android.test.lab.ScheduleConfigMessage schedule_config = 63;
+
+  optional android.test.lab.ScheduleConfigMessage schedule_config = 63 [ deprecated = true ];
 }
