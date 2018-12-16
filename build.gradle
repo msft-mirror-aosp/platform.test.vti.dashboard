@@ -11,6 +11,7 @@ buildscript {
         googleHttpClientVersion = '1.25.0'
         lombokVersion = '1.18.4'
         appGradlePluginVersion = '2.0.0-rc3'
+        protobufGradlePlugin = '0.8.7'
         googleSheetsAPI = 'v4-rev548-1.25.0'
     }
     repositories {
@@ -25,6 +26,7 @@ buildscript {
     }
     dependencies {
         classpath "com.google.cloud.tools:appengine-gradle-plugin:${appGradlePluginVersion}"    // latest App Engine Gradle tasks
+        classpath "com.google.protobuf:protobuf-gradle-plugin:${protobufGradlePlugin}"
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
     }
 }
@@ -34,6 +36,7 @@ plugins {
     id "com.github.sherter.google-java-format" version "0.7.1"
 }
 
+apply plugin: 'com.google.protobuf'
 apply plugin: 'com.google.cloud.tools.appengine-standard'  // App Engine tasks
 
 apply from: rootProject.file('gradle/profiles.gradle')
@@ -92,7 +95,7 @@ dependencies {
     testCompile 'com.google.appengine:appengine-api-stubs:+'
     testCompile 'com.google.appengine:appengine-tools-sdk:+'
 
-    runtimeOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+    compile group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
     annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
 }
 
@@ -107,6 +110,33 @@ googleJavaFormat {
     include '**/*.java'
     exclude '**/*Template.java'
     exclude 'src/test/template_*'
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir '../test_serving/proto'
+            include 'TestScheduleConfigMessage.proto'
+        }
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+protobuf {
+    generateProtoTasks {
+        ofSourceSet('main').each { task ->
+            task.builtins {
+                python {
+                    outputSubDir = 'python'
+                }
+                java {
+                    outputSubDir = 'java'
+                }
+            }
+        }
+    }
 }
 
 appengine {  // App Engine tasks configuration
@@ -147,6 +177,23 @@ test {
     }
     afterTest { descriptor, result ->
         logger.lifecycle("test: " + descriptor + ": " + result )
+    }
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name =~ /generate.*Proto/) {
+        task.finalizedBy(copyGeneratedProtoFiles)
+    }
+}
+
+task copyGeneratedProtoFiles(type: Copy) {
+    into(projectDir)
+
+    from("build/generated/source/proto/main/java") {
+        into "src/main/java"
+    }
+    from("build/generated/source/proto/main/python") {
+        into "python"
     }
 }
 
