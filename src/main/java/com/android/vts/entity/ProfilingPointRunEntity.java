@@ -22,17 +22,20 @@ import com.android.vts.proto.VtsReportMessage.VtsProfilingType;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.annotation.Ignore;
+import com.googlecode.objectify.annotation.Index;
 import com.googlecode.objectify.annotation.Parent;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Objects;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
@@ -40,10 +43,9 @@ import static com.googlecode.objectify.ObjectifyService.ofy;
 @Cache
 @Data
 @NoArgsConstructor
+@Log4j2
 /** Entity describing a profiling point execution. */
 public class ProfilingPointRunEntity implements DashboardEntity {
-    protected static final Logger logger =
-            Logger.getLogger(ProfilingPointRunEntity.class.getName());
 
     public static final String KIND = "ProfilingPointRun";
 
@@ -55,6 +57,9 @@ public class ProfilingPointRunEntity implements DashboardEntity {
     public static final String X_LABEL = "xLabel";
     public static final String Y_LABEL = "yLabel";
     public static final String OPTIONS = "options";
+
+    /** This value will set the limit size of values array field */
+    public static final int VALUE_SIZE_LIMIT = 50000;
 
     @Ignore
     private Key key;
@@ -89,6 +94,7 @@ public class ProfilingPointRunEntity implements DashboardEntity {
     private List<String> options;
 
     /** When this record was created or updated */
+    @Index Date updated;
 
     /**
      * Create a ProfilingPointRunEntity object.
@@ -122,6 +128,7 @@ public class ProfilingPointRunEntity implements DashboardEntity {
         this.xLabel = xLabel;
         this.yLabel = yLabel;
         this.options = options;
+        this.updated = new Date();
     }
 
 
@@ -157,6 +164,7 @@ public class ProfilingPointRunEntity implements DashboardEntity {
         this.xLabel = xLabel;
         this.yLabel = yLabel;
         this.options = options;
+        this.updated = new Date();
     }
 
     /**
@@ -175,6 +183,46 @@ public class ProfilingPointRunEntity implements DashboardEntity {
      */
     public VtsProfilingRegressionMode getVtsProfilingRegressionMode(int regressionMode) {
         return VtsProfilingRegressionMode.forNumber(regressionMode);
+    }
+
+    /**
+     * Save multi rows function when the record exceed the limit which is 1MB.
+     *
+     * @return ProfilingPointRunEntity's key value.
+     */
+    public com.googlecode.objectify.Key<ProfilingPointRunEntity> saveMultiRow() {
+        if (this.getValues().size() > VALUE_SIZE_LIMIT) {
+
+            List<List<Long>> partitionedValueList =
+                    Lists.partition(this.getValues(), VALUE_SIZE_LIMIT);
+            int partitionedValueListSize = partitionedValueList.size();
+
+            List<List<String>> partitionedLabelList = new ArrayList<>();
+            if (Objects.nonNull(this.getLabels()) && this.getLabels().size() > VALUE_SIZE_LIMIT) {
+                partitionedLabelList = Lists.partition(this.getLabels(), VALUE_SIZE_LIMIT);
+            }
+
+            com.googlecode.objectify.Key<ProfilingPointRunEntity> profilingPointRunEntityKey = null;
+            if (partitionedValueListSize < VALUE_SIZE_LIMIT) {
+                for (int index = 0; index < partitionedValueListSize; index++) {
+                    if (index > 0) {
+                        this.values.addAll(partitionedValueList.get(index));
+                        if (index < partitionedLabelList.size()) {
+                            this.labels.addAll(partitionedLabelList.get(index));
+                        }
+                    } else {
+                        this.values = partitionedValueList.get(index);
+                        if (index < partitionedLabelList.size()) {
+                            this.labels = partitionedLabelList.get(index);
+                        }
+                    }
+                    profilingPointRunEntityKey = ofy().save().entity(this).now();
+                }
+            }
+            return profilingPointRunEntityKey;
+        } else {
+            return ofy().save().entity(this).now();
+        }
     }
 
     /** Saving function for the instance of this class */
@@ -215,8 +263,7 @@ public class ProfilingPointRunEntity implements DashboardEntity {
                 || !e.hasProperty(VALUES)
                 || !e.hasProperty(X_LABEL)
                 || !e.hasProperty(Y_LABEL)) {
-            logger.log(
-                    Level.WARNING, "Missing profiling point attributes in entity: " + e.toString());
+            log.error("Missing profiling point attributes in entity: " + e.toString());
             return null;
         }
         try {
@@ -239,7 +286,7 @@ public class ProfilingPointRunEntity implements DashboardEntity {
                     parentKey, name, type, regressionMode, labels, values, xLabel, yLabel, options);
         } catch (ClassCastException exception) {
             // Invalid cast
-            logger.log(Level.WARNING, "Error parsing profiling point run entity.", exception);
+            log.warn("Error parsing profiling point run entity.", exception);
         }
         return null;
     }
@@ -296,6 +343,9 @@ public class ProfilingPointRunEntity implements DashboardEntity {
                 break;
             default: // should never happen
                 return null;
+        }
+        if (values.size() > VALUE_SIZE_LIMIT) {
+            values = values.subList(0, VALUE_SIZE_LIMIT);
         }
         List<String> options = null;
         if (profilingReport.getOptionsCount() > 0) {
