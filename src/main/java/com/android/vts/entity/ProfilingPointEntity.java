@@ -109,6 +109,7 @@ public class ProfilingPointEntity implements DashboardEntity {
         this.regressionMode = regressionMode;
         this.xLabel = xLabel;
         this.yLabel = yLabel;
+        this.updated = new Date();
     }
 
     /**
