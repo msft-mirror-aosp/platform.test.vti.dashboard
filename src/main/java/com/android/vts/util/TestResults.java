@@ -16,6 +16,7 @@
 
 package com.android.vts.util;
 
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.ProfilingPointRunEntity;
 import com.android.vts.entity.TestCaseRunEntity;
@@ -251,6 +252,7 @@ public class TestResults {
         // Iterate through the test runs
         for (int col = 0; col < testRuns.size(); col++) {
             TestRunEntity testRun = testRuns.get(col);
+            CodeCoverageEntity codeCoverageEntity = testRun.getCodeCoverageEntity();
 
             // Process the device information
             List<DeviceInfoEntity> devices = deviceInfoMap.get(testRun.getKey());
@@ -287,8 +289,13 @@ public class TestResults {
             int passCount = (int) testRun.getPassCount();
             int nonpassCount = (int) testRun.getFailCount();
             TestCaseResult aggregateStatus = TestCaseResult.UNKNOWN_RESULT;
-            long totalLineCount = testRun.getTotalLineCount();
-            long coveredLineCount = testRun.getCoveredLineCount();
+
+            long totalLineCount = 0;
+            long coveredLineCount = 0;
+            if (testRun.getHasCodeCoverage()) {
+                totalLineCount = codeCoverageEntity.getTotalLineCount();
+                coveredLineCount = codeCoverageEntity.getCoveredLineCount();
+            }
 
             // Process test case results
             for (TestCaseRunEntity testCaseEntity : testCaseRunMap.get(testRun.getKey())) {
@@ -372,8 +379,8 @@ public class TestResults {
             List<String[]> linkEntries = new ArrayList<>();
             logInfoMap.put(Integer.toString(col), linkEntries);
 
-            if (testRun.getLinks() != null) {
-                for (String rawUrl : testRun.getLinks()) {
+            if (testRun.getLogLinks() != null) {
+                for (String rawUrl : testRun.getLogLinks()) {
                     LinkDisplay validatedLink = UrlUtil.processUrl(rawUrl);
                     if (validatedLink == null) {
                         logger.log(Level.WARNING, "Invalid logging URL : " + rawUrl);

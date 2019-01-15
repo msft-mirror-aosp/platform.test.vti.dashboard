@@ -116,6 +116,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet>
 
 <servlet>
+  <servlet-name>data_api</servlet-name>
+  <servlet-class>com.android.vts.api.DataRestServlet</servlet-class>
+</servlet>
+
+<servlet>
   <servlet-name>coverage_api</servlet-name>
   <servlet-class>com.android.vts.api.CoverageRestServlet</servlet-class>
 </servlet>
@@ -168,6 +173,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 <servlet>
   <servlet-name>vts_inactivity_job</servlet-name>
   <servlet-class>com.android.vts.job.VtsInactivityJobServlet</servlet-class>
+</servlet>
+
+<servlet>
+  <servlet-name>vts_spreadsheet_sync_job</servlet-name>
+  <servlet-class>com.android.vts.job.VtsSpreadSheetSyncServlet</servlet-class>
 </servlet>
 
 <servlet>
@@ -266,6 +276,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 </servlet-mapping>
 
 <servlet-mapping>
+  <servlet-name>data_api</servlet-name>
+  <url-pattern>/api/data/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
   <servlet-name>coverage_api</servlet-name>
   <url-pattern>/api/coverage/*</url-pattern>
 </servlet-mapping>
@@ -313,6 +328,11 @@ Copyright 2016 Google Inc. All Rights Reserved.
 <servlet-mapping>
   <servlet-name>vts_inactivity_job</servlet-name>
   <url-pattern>/cron/vts_inactivity_job/*</url-pattern>
+</servlet-mapping>
+
+<servlet-mapping>
+  <servlet-name>vts_spreadsheet_sync_job</servlet-name>
+  <url-pattern>/cron/vts_spreadsheet_sync_job/*</url-pattern>
 </servlet-mapping>
 
 <servlet-mapping>

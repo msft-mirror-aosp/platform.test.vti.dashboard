@@ -38,18 +38,13 @@ import org.apache.http.client.utils.URIUtils;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 
-import javax.servlet.ServletContext;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -126,7 +121,7 @@ class TestTypeIndex {
 @Entity
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
-public class TestSuiteResultEntity {
+public class TestSuiteResultEntity implements DashboardEntity {
 
     private static final Logger logger = Logger.getLogger(TestSuiteResultEntity.class.getName());
 
@@ -316,6 +311,12 @@ public class TestSuiteResultEntity {
         }
     }
 
+    /** Saving function for the instance of this class */
+    @Override
+    public Key<TestSuiteResultEntity> save() {
+        return ofy().save().entity(this).now();
+    }
+
     public static void setPropertyValues(Properties newSystemConfigProp) {
         systemConfigProp = newSystemConfigProp;
         bugTrackingSystemProp = getBugTrackingSystemProp(newSystemConfigProp);
@@ -389,6 +390,16 @@ public class TestSuiteResultEntity {
         String deviceName =
                 Stream.of(this.buildVendorFingerprint.split("/")).skip(1).findFirst().orElse("");
         return deviceName;
+    }
+
+    public String getScreenResultLogPath() {
+        String gcsBucketName = systemConfigProp.getProperty("gcs.bucketName");
+        return resultPath.replace("gs://" + gcsBucketName + "/", "");
+    }
+
+    public String getScreenInfraLogPath() {
+        String gcsInfraLogBucketName = systemConfigProp.getProperty("gcs.infraLogBucketName");
+        return infraLogPath.replace("gs://" + gcsInfraLogBucketName + "/", "");
     }
 
     private String getNormalizedVersion(String fingerprint) {

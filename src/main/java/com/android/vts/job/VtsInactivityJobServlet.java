@@ -50,7 +50,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /** Test inactivity notification job. */
-public class VtsInactivityJobServlet extends HttpServlet {
+public class VtsInactivityJobServlet extends BaseJobServlet {
     private static final String INACTIVITY_ALERT_URL = "/cron/vts_inactivity_job";
     protected static final Logger logger =
             Logger.getLogger(VtsInactivityJobServlet.class.getName());
@@ -77,7 +77,7 @@ public class VtsInactivityJobServlet extends HttpServlet {
         // After 7 full days have passed, notifications will no longer be sent (i.e. the
         // test is assumed to be deprecated).
         if (diff >= TimeUnit.DAYS.toMicros(1) && diff < TimeUnit.DAYS.toMicros(8)) {
-            String uploadTimeString = TimeUtil.getDateTimeString(lastRunTime);
+            String uploadTimeString = TimeUtil.getDateTimeZoneString(lastRunTime);
             String subject = "Warning! Inactive test: " + test.getTestName();
             String body =
                     "Hello,<br><br>Test \""

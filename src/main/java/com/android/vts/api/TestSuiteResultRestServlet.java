@@ -18,8 +18,7 @@ package com.android.vts.api;
 
 import com.android.vts.entity.TestSuiteFileEntity;
 import com.android.vts.entity.TestSuiteResultEntity;
-import com.android.vts.proto.TestSuiteResultMessageProto.TestSuiteResultMessage;
-import com.android.vts.servlet.BaseServlet;
+import com.android.vts.proto.TestSuiteResultMessageProto;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson.JacksonFactory;
@@ -29,20 +28,14 @@ import com.google.gson.Gson;
 import com.googlecode.objectify.Key;
 import org.apache.commons.codec.binary.Base64;
 
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
@@ -64,11 +57,12 @@ public class TestSuiteResultRestServlet extends BaseApiServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         // Retrieve the params
-        TestSuiteResultMessage testSuiteResultMessage;
+        TestSuiteResultMessageProto.TestSuiteResultMessage testSuiteResultMessage;
         try {
             String payload = request.getReader().lines().collect(Collectors.joining());
             byte[] value = Base64.decodeBase64(payload);
-            testSuiteResultMessage = TestSuiteResultMessage.parseFrom(value);
+            testSuiteResultMessage =
+                    TestSuiteResultMessageProto.TestSuiteResultMessage.parseFrom(value);
         } catch (IOException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             logger.log(Level.WARNING, "Invalid proto: " + e.getLocalizedMessage());
@@ -88,8 +82,10 @@ public class TestSuiteResultRestServlet extends BaseApiServlet {
             Tokeninfo tokenInfo = oauth2.tokeninfo().setAccessToken(accessToken).execute();
 
             if (tokenInfo.getIssuedTo().equals(SERVICE_CLIENT_ID)) {
+                String filePath = "suite_result/2019/04/06/132343.bin";
                 Key<TestSuiteFileEntity> testSuiteFileParent =
-                        Key.create(TestSuiteFileEntity.class, "suite_result/2019/04/06/132343.bin");
+                        Key.create(TestSuiteFileEntity.class, filePath);
+                TestSuiteFileEntity newTestSuiteFileEntity = new TestSuiteFileEntity(filePath);
                 TestSuiteResultEntity testSuiteResultEntity =
                         new TestSuiteResultEntity(
                                 testSuiteFileParent,
@@ -114,7 +110,7 @@ public class TestSuiteResultRestServlet extends BaseApiServlet {
                                 testSuiteResultMessage.getPassedTestCaseCount(),
                                 testSuiteResultMessage.getFailedTestCaseCount());
 
-                testSuiteResultEntity.save();
+                testSuiteResultEntity.save(newTestSuiteFileEntity);
                 resultMap.put("result", "successfully saved!");
             } else {
                 logger.log(Level.WARNING, "service_client_id didn't match!");

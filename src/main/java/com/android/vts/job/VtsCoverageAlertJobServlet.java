@@ -18,21 +18,18 @@ package com.android.vts.job;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
+import com.android.vts.entity.CodeCoverageEntity;
 import com.android.vts.entity.DeviceInfoEntity;
 import com.android.vts.entity.TestCoverageStatusEntity;
 import com.android.vts.entity.TestRunEntity;
-import com.android.vts.util.DatastoreHelper;
 import com.android.vts.util.EmailHelper;
-import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.DatastoreTimeoutException;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Transaction;
 import com.google.appengine.api.taskqueue.Queue;
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
@@ -41,7 +38,6 @@ import java.io.UnsupportedEncodingException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +45,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang.StringUtils;
@@ -57,7 +52,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Coverage notification job.
  */
-public class VtsCoverageAlertJobServlet extends HttpServlet {
+public class VtsCoverageAlertJobServlet extends BaseJobServlet {
 
   private static final String COVERAGE_ALERT_URL = "/task/vts_coverage_job";
   protected static final Logger logger =
@@ -115,14 +110,18 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
     }
 
     TestRunEntity testRunEntity = TestRunEntity.fromEntity(testRun);
-    if (testRunEntity == null || !testRunEntity.isHasCoverage()) {
+        if (testRunEntity == null || !testRunEntity.getHasCodeCoverage()) {
       return null;
     }
-    if (testRunEntity.getTotalLineCount() <= 0 || testRunEntity.getCoveredLineCount() < 0) {
-      coveragePct = 0;
+    CodeCoverageEntity codeCoverageEntity = testRunEntity.getCodeCoverageEntity();
+
+    if (codeCoverageEntity.getTotalLineCount() <= 0
+            || codeCoverageEntity.getCoveredLineCount() < 0) {
+        coveragePct = 0;
     } else {
-      coveragePct =
-          ((double) testRunEntity.getCoveredLineCount()) / testRunEntity.getTotalLineCount();
+        coveragePct =
+                ((double) codeCoverageEntity.getCoveredLineCount())
+                        / codeCoverageEntity.getTotalLineCount();
     }
 
     Set<String> buildIdList = new HashSet<>();
@@ -262,11 +261,12 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
         logger.log(Level.WARNING, "Error composing email : ", e);
       }
     }
-    return new TestCoverageStatusEntity(
-        testName,
-        testRunEntity.getStartTimestamp(),
-        testRunEntity.getCoveredLineCount(),
-        testRunEntity.getTotalLineCount());
+        return new TestCoverageStatusEntity(
+                testName,
+                testRunEntity.getStartTimestamp(),
+                codeCoverageEntity.getCoveredLineCount(),
+                codeCoverageEntity.getTotalLineCount(),
+                devices.size() > 0 ? devices.get(0).getId() : 0);
   }
 
   /**
@@ -300,7 +300,7 @@ public class VtsCoverageAlertJobServlet extends HttpServlet {
     TestCoverageStatusEntity status = ofy().load().type(TestCoverageStatusEntity.class).id(testName)
         .now();
     if (status == null) {
-      status = new TestCoverageStatusEntity(testName, 0, -1, -1);
+            status = new TestCoverageStatusEntity(testName, 0, -1, -1, 0);
     }
 
     StringBuffer fullUrl = request.getRequestURL();

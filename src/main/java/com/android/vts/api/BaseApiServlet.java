@@ -17,61 +17,51 @@
 package com.android.vts.api;
 
 import com.google.apphosting.api.ApiProxy;
-import com.google.gson.Gson;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.Logger;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * REST endpoint for posting test suite data to the Dashboard.
- */
+/** An abstract class to be subclassed to create API Servlet */
 public class BaseApiServlet extends HttpServlet {
 
-  private static final Logger logger =
-      Logger.getLogger(BaseApiServlet.class.getName());
+    private static final Logger logger = Logger.getLogger(BaseApiServlet.class.getName());
 
-  /**
-   * System Configuration Property class
-   */
-  protected Properties systemConfigProp = new Properties();
+    /** System Configuration Property class */
+    protected Properties systemConfigProp = new Properties();
 
-  /**
-   * Appengine server host name
-   */
-  protected String hostName;
+    /** Appengine server host name */
+    protected String hostName;
 
-  @Override
-  public void init(ServletConfig cfg) throws ServletException {
-    super.init(cfg);
+    /**
+     * This variable is for maximum number of entities per transaction You can find the detail here
+     * (https://cloud.google.com/datastore/docs/concepts/limits)
+     */
+    protected int MAX_ENTITY_SIZE_PER_TRANSACTION = 300;
 
-    ApiProxy.Environment env = ApiProxy.getCurrentEnvironment();
-    hostName = env.getAttributes().get("com.google.appengine.runtime.default_version_hostname")
-        .toString();
-    try {
-      InputStream defaultInputStream =
-          BaseApiServlet.class
-              .getClassLoader()
-              .getResourceAsStream("config.properties");
-      systemConfigProp.load(defaultInputStream);
+    @Override
+    public void init(ServletConfig cfg) throws ServletException {
+        super.init(cfg);
 
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
+        systemConfigProp =
+                Properties.class.cast(cfg.getServletContext().getAttribute("systemConfigProp"));
+
+        this.MAX_ENTITY_SIZE_PER_TRANSACTION =
+                Integer.parseInt(systemConfigProp.getProperty("datastore.maxEntitySize"));
+
+        ApiProxy.Environment env = ApiProxy.getCurrentEnvironment();
+        hostName =
+                env.getAttributes()
+                        .get("com.google.appengine.runtime.default_version_hostname")
+                        .toString();
     }
-  }
 
-  protected void setAccessControlHeaders(HttpServletResponse resp) {
-    resp.setHeader("Access-Control-Allow-Origin", hostName);
-    resp.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, DELETE");
-    resp.addHeader("Access-Control-Allow-Headers", "Content-Type");
-    resp.addHeader("Access-Control-Max-Age", "86400");
-  }
+    protected void setAccessControlHeaders(HttpServletResponse resp) {
+        resp.setHeader("Access-Control-Allow-Origin", hostName);
+        resp.setHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, DELETE");
+        resp.addHeader("Access-Control-Allow-Headers", "Content-Type");
+        resp.addHeader("Access-Control-Max-Age", "86400");
+    }
 }
